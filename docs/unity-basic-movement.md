@@ -17,9 +17,9 @@ The Transform has three main properties:
 
 In Unity, every object’s position in 3D space is represented by a **Vector3**, which is a combination of three numbers: X, Y, and Z.
 
-- X : Left and right
-- Y : Up and down
-- Z : Forward and backward
+- **X** : Left and right
+- **Y **: Up and down
+- **Z** : Forward and backward
  
 **Vector3** represents **direction** and **magnitude**. Positive and negative values on each axis determine **which way** and **how far** the object moves. 
  
@@ -41,7 +41,7 @@ These shortcuts make it easier to write movement code without remembering the ex
 >[!TIP]
 > Using `Vector3` shortcuts like `Vector3.up` or `Vector3.right` makes your code more readable and reduces mistakes when specifying directions manually.
 
-### Setting Object's Transfom
+## Setting Object's Transfom
 GameObject's transform values can be set in the **Inspector Window** in the editor. More often than not, however, this transofrm should be dynamic, through code. To do this we need to reference the `transform` component and the property we wnat to manimulate, in this case `position`, followed by the value we want.
 
 For example:
