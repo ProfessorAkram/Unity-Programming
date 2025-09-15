@@ -101,6 +101,7 @@ Therefore, in this example, we would set our position in the `Awake()` method as
 ```csharp
 private void Awake()
 {
+    //Set GameObject's inital position
     transform.position = Vector3.zero;
 }//end Awake()
 
@@ -120,7 +121,8 @@ For example, to move an object 1 unit to the right every frame:
 ```csharp
 private void Update()
 {
-    transform.position += Vector3.right;
+   //Move GameObject to the right
+   transform.position += Vector3.right; 
 } // end Update()
 ```
 
@@ -141,11 +143,12 @@ While the example for moving a GameObject works, there is a slight problem: the 
 While using `Time.deltaTime` fixes frame-rate dependency, we often want to **control how fast the object moves**, i.e., the rate of change of its position. We can do this by creating a **speed** variable that represents the distance the object should move per second.
 
 ```csharp
-private float speed = 5f; // units per second
+private float _speed = 5f; // units per second
 
 private void Update()
 {
-    transform.position += Vector3.right * speed * Time.deltaTime;
+    //Move GameObject to the right
+    transform.position += Vector3.right * _speed * Time.deltaTime;
 }//end Update()
 
 ```
@@ -161,7 +164,7 @@ This concept can be thought of as calculating the object’s **rate of change be
 In object-oriented programming, it’s best practice to keep class fields **private**. This ensures **encapsulation**, meaning that the internal state of an object is protected from unintended external changes.
 
 ```csharp
-private float speed = 5f; // Good practice: keep fields private
+private float _speed = 5f; // Good practice: keep fields private
 ```
 
 However, in Unity, **public fields** are automatically displayed in the Inspector, which makes it convenient to adjust values without touching the code. This is especially useful when:
@@ -170,7 +173,7 @@ However, in Unity, **public fields** are automatically displayed in the Inspecto
 - You are working on a team, and a designer or level designer needs access to adjust variables like speed, jump height, or health.
 
 ```csharp
-public float speed = 5f; // Automatically shown in Inspector, but breaks encapsulation
+public float _speed = 5f; // Automatically shown in Inspector, but breaks encapsulation
 
 ```
 
@@ -178,7 +181,7 @@ To maintain encapsulation while still exposing the field in the Inspector, Unity
 
 ```csharp
 [SerializeField]
-private float speed = 5f; // Private field, but editable in Inspector
+private float _speed = 5f; // Private field, but editable in Inspector
 ```
 
 - The field remains private, so other scripts cannot access it directly.  
@@ -200,20 +203,22 @@ Just as we created a field for **speed**, we can also create a field for **direc
 
 ```csharp
 [SerializeField]
-private float speed = 5f; // Private field, but editable in Inspector
+private float _speed = 5f; // Private field, but editable in Inspector
 
 [SerializeField]
-private Vector3 direction = Vector3.right; // Default direction is right
+private Vector3 _direction = Vector3.right; // Default direction is right
 
 
 private void Awake()
 {
-    transform.position = Vector3.zero; //set inital position
+    //Set GameObject's inital position
+    transform.position = Vector3.zero;
 }//end Awake()
 
 private void Update()
 {
-    transform.position += direction * speed * Time.deltaTime; //Move GameObject 
+   //Move GameObject
+   transform.position += _direction * _speed * Time.deltaTime; 
 }//end Update()
 
 ```
@@ -232,14 +237,14 @@ Properties are **methods that act like fields**, allowing you to control how a v
 ```csharp
  public float Speed 
 { 
-    get { return speed; } 
-    set { speed = value; } 
+    get { return _speed; } 
+    set { _speed = value; } 
 }
 
 public Vector3 Direction
 {
-    get { return direction; }
-    set { direction = value; }
+    get { return _direction; }
+    set { _direction = value; }
 }
 
 ```
@@ -257,21 +262,21 @@ For example, imagine we want to prevent the object from moving too fast. Let’s
 
 ```csharp
 [SerializeField]
-private float speed = 5f; // Default speed
+private float _speed = 5f; // Default speed
 
 public float Speed
 {
-    get { return speed; }
+    get { return _speed; }
     set
     {
         if (value > 10f)
         {
-            speed = 10f; // Clamp speed to 10
+            _speed = 10f; // Clamp speed to 10
             Debug.LogWarning("Speed too high! Clamped to 10.");
         }
         else
         {
-            speed = value; // Accept valid value
+            _speed = value; // Accept valid value
 
         }//end if (value > 10f)
     }
@@ -286,3 +291,204 @@ public float Speed
 
 > [!NOTE]
 > `Debug.Log` is a Unity method used to **print messages to the Console window**. It’s extremely useful for **testing**, **debugging**, and **tracking** what your code is doing at runtime.
+
+### Accessing Properties vs. Fields in Methods
+
+When we define **properties** for fields, especially with validation or additional logic, it’s important that all methods in the class use the properties rather than directly accessing the private fields.
+
+#### Why Use Properties Internally?
+
+- **Validation is Applied** – If the property limits values (e.g., `Speed` cannot exceed 10), using the property ensures this rule is enforced consistently.  
+- **Consistency Across the Class** – All internal and external accesses go through the same logic, reducing bugs caused by bypassing validation.  
+- **Future-proofing** – If you add side effects to the property later (such as triggering events or updating UI), every method that uses the property automatically benefits.
+
+#### When Not to Use Properties
+
+- During object construction or initialization, where the property logic may not yet be ready.  
+- Performance-critical situations where the property logic introduces measurable overhead, and you are certain bypassing it is safe.
+
+With these coniderations in mind we need to update our `transform.position` in the `Update()` method. 
+
+```csharp
+transform.position += Direction * Speed * Time.deltaTime;
+```
+
+--- 
+## Refactoring the `Update()` Method
+
+Right now, all of the functionality for moving the GameObject happens directly inside the `Update()` method.
+
+```csharp
+
+private void Update()
+{
+    //Move GameObject
+    transform.position += Direction * Speed * Time.deltaTime;  
+}//end Update()
+
+```
+
+While this works, placing everything in `Update()` is not best practice. Here’s why:
+
+### Potential for Errors
+- `Update()` runs every frame, so any logic inside it executes constantly.  
+- If multiple actions are added here, it’s easy to introduce bugs or unintended behavior.
+
+### Reusability (DRY Principle)
+- If we need the same movement logic in other places (e.g., triggered by an event or another script), duplicating code in multiple `Update()` methods violates the **Don’t Repeat Yourself (DRY)** principle.  
+- By creating a separate method, we can reuse the same movement logic whenever it’s needed.
+
+### Single Responsibility Principle
+- Each method should have **one responsibility**.  
+- If `Update()` both moves the object and handles other logic (like animations, collisions, or input), it breaks this principle.
+
+--- 
+
+## Creating a `Move()` Method
+
+To address the issues with placing all logic in `Update()`, we can move the movement logic into a dedicated method, like `Move()` and call the method from the `Update()`. This allows us to:
+
+- Keep `Update()` clean and focused.  
+- Trigger movement from other events or scripts without duplicating code.  
+- Maintain a single responsibility for each method.
+
+```csharp
+private void Update()
+{
+    Move();
+}//end Update()
+
+///<summary>
+/// Move the object by the transform position
+///</summary>
+private void Move()
+{
+    //Move GameObject 
+    transform.position += Direction * Speed * Time.deltaTime; 
+}//end Move()
+
+```
+
+### Public or Private?
+In our example, the `Move()` method is **private**, enforcing encapsulation. Deciding whether a method should be public or private can be tricky, so here are some guiding questions to consider:
+
+- Does any external class truly need to call this method directly?  
+- Would exposing this method create unnecessary dependencies between objects?  
+- Could the behavior be triggered in a safer or more modular way, such as through events, signals, or internal condition checks?  
+
+### Example
+
+Imagine a player pulls a lever that causes platforms to move. Does the lever need direct access to the platform’s `Move()` method? Not necessarily. Instead:
+
+- The platform could listen for an event triggered by the lever.  
+- Or it could check conditions internally before moving.  
+
+By keeping the method private, we avoid creating tight dependencies between unrelated objects, making the system easier to maintain and less error-prone.
+
+> [!Tip]
+> Use **private methods** to keep behavior self-contained, and carefully consider external access to avoid unnecessary dependencies.
+
+### Dynamic Inputs
+While we usually keep the `Move()` method **private** to encapsulate behavior, there are times when we want the same movement logic to work with dynamic inputs—for example, applying a speed boost or changing direction.
+
+In such cases, we can make the method **public** and allow other scripts to pass parameters. This approach lets us:
+
+- **Reuse logic without duplication** – no need to write separate movement code for each object.  
+- **Control behavior dynamically** – adjust speed, direction, or other movement properties on the fly.  
+- **Maintain modular design** – the object still controls how it moves, but external scripts can influence it safely through parameters.
+
+---
+## Dynamic Movement Using Parameters
+
+In the instance of making our method **public**, we might also want to extend its capabilities so that it can handle dynamic inputs—for example, changing speed, direction, or other movement properties at runtime. 
+
+This allows multiple objects or events to use the same movement logic without directly accessing internal fields or properties, keeping the design **modular** and **reusable**.
+
+To do this we can modify the original private `Move()` method to accept **direction** and speed as **parameters**:
+
+```csharp
+/// <summary>
+/// Moves the object in a specified direction at a specified speed.
+/// </summary>
+/// <param name="direction">The direction to move the object.</param>
+/// <param name="speed">The speed at which the object should move.</param>
+private void Move(Vector3 direction, float speed)
+{
+   //Set Properites
+   Direction = direction;
+   Speed = speed
+
+  //Move GameObject 
+  transform.position += Direction * Speed * Time.deltaTime; 
+}
+
+```
+**Code Breakdown**
+The `<param>` comments document each parameter, making it clear to anyone reading the code what values the method expects:
+
+- **direction** – lets external scripts specify which way the object moves.  
+- **speed** – lets external scripts adjust the object’s movement speed.  
+
+Since the parameters provide temporary input to the method, we now assign these values to the corresponding properties. This is important because:
+
+- It ensures any validation logic in the property setter is applied automatically.  
+- It updates the object’s internal state, so future movement calls reflect the new direction or speed.  
+- It keeps the class consistent, letting the object “remember” the most recent movement values rather than only using temporary variables.
+
+### Handling Default Values
+
+While the above works, there’s a downside: every time we call `Move()`, we **must provide both parameters**, even if we want the default behavior.
+
+- If we only care about the object’s current **Direction** or **Speed**, passing parameters becomes repetitive.
+
+- This adds unnecessary steps and goes against the **KISS principle** (“Keep It Simple, Stupid”).
+
+To solve this, we can allow the parameters to be **nullable** (`Vector3?` and `float?`) and fall back to the object’s properties if no value is provide. In this instance, we need a **local method variable** to store the actual values being used, either the passed paramter or fall back default value. 
+
+```csharp
+/// <summary>
+/// Moves the object in a specified direction at a specified speed.
+/// </summary>
+/// <param name="direction">The direction to move the object.</param>
+/// <param name="speed">The speed at which the object should move.</param>
+private void Move(Vector3? direction = null, float? speed = null)
+{
+   //Set local values
+   moveDirection = direction ?? Direction;
+   moveSpeed = speed ?? Speed;
+
+  //Move GameObject 
+  transform.position += moveDirection * moveSpeed * Time.deltaTime; 
+}
+
+```
+**Code Breakdown**
+
+**1. Nullable Parameters (`Vector3?` and `float?`)**
+
+  - The `?` after the type allows the parameter to be **nullable**, meaning it can hold a `null` value.  
+  - If the caller doesn’t provide a value, `direction` or `speed` will be `null`.  
+  - Using the `??` **null-coalescing operator**, which checks if the value on the left-hand side is null.
+     - If it is not null, the left-hand value is used.
+     - If it is null, the right-hand value is used as a fallback.
+
+**2. Local Variables**
+Since we have check for null paramters we need be able to store the resulting value, 
+These local variables store the **resolved values** that the method will use for this frame.  
+
+- They ensure clarity, readability, and consistency when calculating the movement.
+
+**3.  Naming the Local Variables**
+
+  - **moveDirection** – clearly indicates the direction applied this frame.  
+  - **moveSpeed** – clearly indicates the speed applied this frame.  
+
+This naming distinguishes temporary, per-call values from the object’s persistent properties.
+
+**4. Updating the Movement Calculation**
+
+ - Uses the resolved local variables for **frame-rate independent movement**.
+
+
+--- 
+
