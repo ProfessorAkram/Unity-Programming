@@ -62,7 +62,7 @@ GameObject's transform values can be set in the **Inspector Window** in the edit
 
 For example:
 ```csharp
-transform.position = Vector3.zeero;
+transform.position = Vector3.zero;
 ```
 Code Breakdown: 
 - `transform` references the GameObject’s Transform component.  
@@ -101,7 +101,7 @@ Therefore, in this example, we would set our position in the `Awake()` method as
 ```csharp
 private void Awake()
 {
-    //Set GameObject's inital position
+    //Set GameObject's initial position
     transform.position = Vector3.zero;
 }//end Awake()
 
@@ -126,24 +126,45 @@ private void Update()
 } // end Update()
 ```
 
->[!Warning]
->This moves the object by 1 unit per frame, which can be very fast depending on your frame rate. To make movement **frame-rate** independent, multiply by `Time.deltaTime`.
-
-### Smooth Transitions with Time.Delta Time
+### Understanding Frame Rate
 While the example for moving a GameObject works, there is a slight problem: the object’s **speed now depends on the frame rate**.  
 
-The position change is taking place in the `Update()` method, which runs once per frame, so the object moves **once per frame**.  
+**Frame Rate** is the number of frames (images) displayed per second in a game or animation. It is measured in **FPS (Frames Per Second)**.
 
-- On a fast computer running 120 FPS, it moves twice as fast as on a slower computer running 60 FPS.  
+Frame rates can vary widely depending on hardware and game performance, but most games target around **60 FPS** for smooth gameplay.
+
+- Lower frame rates, like **30 FPS**, can appear choppy.
+- Higher frame rates, such as **120 FPS**, feel very smooth and responsive.
+
+Currently, our game object's position change occurs in the `Update()` method, which runs once per frame, so the object moves **once per frame**, which means: 
+
+- On a fast computer running 120 FPS, it moves twice as fast as on a slower computer running 60 FPS.
+- On slower machines, the movement appears sluggish, which can make gameplay feel **unfair** or **unbalanced** for the player.
+
+Because frame rates can vary depending on hardware and game load, we need a way to make the object's movement **independent of the frame rate**. That’s where `Time` and `Time.deltaTime` come in.
+
+### Using `Time.deltaTime`?
+
+In Unity, `Time` is a class that keeps track of various aspects of game time, including:
+
+- The total time since the game started (`Time.time`)  
+- The time elapsed since the last frame (`Time.deltaTime`)  
+
+The “delta” in `deltaTime` (Δ) is a mathematical symbol meaning **“change in”**. In this case, it is calculated as:  
+```
+Δt=tcurrent frame​−tlast frame​
+```
+
+
+
+
+
+
+
+
 
 - To fix this, we use `Time.deltaTime`, which represents the **time elapsed since the last frame**. Multiplying by `Time.deltaTime` scales the movement by **real-world time**, ensuring consistent motion across all frame rates.
 
-
->[!NOTE]
-> **Frame Rate** is the number of frames (images) displayed per second in a game or animation. It is measured in **FPS (Frames Per Second)**.
-> Frame rates can vary widely depending on hardware and game performance, but most games target around **60 FPS** for smooth gameplay.
-> - Lower frame rates, like **30 FPS**, can appear choppy.
-> - Higher frame rates, such as **120 FPS**, feel very smooth and responsive.
 
 # Using `Time.deltaTime`
 In Unity, `Time.deltaTime` represents the **time elapsed since the last frame**.  
