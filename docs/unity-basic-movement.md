@@ -42,6 +42,21 @@ These shortcuts make it easier to write movement code without remembering the ex
 >[!TIP]
 > Using `Vector3` shortcuts like `Vector3.up` or `Vector3.right` makes your code more readable and reduces mistakes when specifying directions manually.
 
+---
+## Create the `MoveTransform` Class
+Before we can get started moving GameObjects via code, we need to create a class that moves a GameObject by directly manipulating its **Transform** component.
+
+It’s important to clearly recognize the purpose of the class in its name, following proper naming conventions. Since this class is responsible for moving objects using the Transform system, we will name it: **`MoveTransform`**
+
+This name makes the purpose of the class explicit:
+
+- It indicates that the class is a behavior attached to a GameObject.  
+- It differentiates it from future movement classes, like `MoveRigidbody`, which will use physics.  
+
+By choosing clear and descriptive names, we make our code easier to understand, maintain, and extend.
+
+---
+
 ## Setting Object's Transfom
 GameObject's transform values can be set in the **Inspector Window** in the editor. More often than not, however, this transformation should be dynamic, through code. To do this, we need to reference the `transform` component and the property we want to manipulate, in this case `position`, followed by the value we want.
 
@@ -240,6 +255,28 @@ While exposing fields directly (even with `[SerializeField]`) works, **propertie
 
 For example, imagine we want to prevent the object from moving too fast. Let’s say a speed higher than **10 units per second** is too fast. With a property, we can enforce this rule:
 
+```csharp
+[SerializeField]
+private float speed = 5f; // Default speed
+
+public float Speed
+{
+    get { return speed; }
+    set
+    {
+        if (value > 10f)
+        {
+            speed = 10f; // Clamp speed to 10
+            Debug.LogWarning("Speed too high! Clamped to 10.");
+        }
+        else
+        {
+            speed = value; // Accept valid value
+
+        }//end if (value > 10f)
+    }
+}//end Speed
+```
 
 **Code breakdown:**
 - `get { return speed; }` → Returns the current speed value.  
