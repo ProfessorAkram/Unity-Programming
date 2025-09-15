@@ -489,6 +489,27 @@ This naming distinguishes temporary, per-call values from the object’s persist
 
  - Uses the resolved local variables for **frame-rate independent movement**.
 
-
 --- 
+
+## Extending functionality
+## Adding Higher-Level Control
+
+So far, we’ve given our `Move()` method flexibility by allowing parameters for speed and direction, along with sensible fallbacks to default values. This gives programmers more dynamic control at runtime.
+
+But what about control at a higher level? Imagine situations where we don’t want the object to move at all—regardless of speed or direction. For example:
+
+- A player might be frozen by a trap or spell.  
+- An NPC could be paused during a cutscene.  
+- A platform might be inactive until the player triggers it.  
+
+In these cases, passing parameters isn’t enough. We need a way to enable or disable motion entirely—something that gives level designers and game systems a simple “on/off switch” for movement.
+
+## Why Not Just Set Values to Zero?
+
+It’s important to note that simply setting the values (like speed or direction) to zero isn’t an optimal solution.  
+
+Right now, our `Move()` method is being called in `Update()`, so even if the object isn’t moving, the method is still **wasting processing time every frame**.  
+
+Instead, we want a true **movement gatekeeper** that prevents unnecessary calculations altogether when motion is disabled.
+
 
