@@ -127,68 +127,48 @@ private void Update()
 ```
 
 ### Understanding Frame Rate
-While the example for moving a GameObject works, there is a slight problem: the object’s **speed now depends on the frame rate**.  
+While the example for moving a GameObject works, there’s a big problem: the **object’s speed depends on the frame rate**.  
 
-**Frame Rate** is the number of frames (images) displayed per second in a game or animation. It is measured in **FPS (Frames Per Second)**.
+**Frame rate** is the number of frames (images) displayed per second in a game or animation. It is measured in **FPS** (*Frames Per Second*).  
 
-Frame rates can vary widely depending on hardware and game performance, but most games target around **60 FPS** for smooth gameplay.
+Right now, our movement code simply adds a direction vector (e.g., `Vector3.right → (1, 0, 0)`) to the object’s position once per frame. That means:  
 
-- Lower frame rates, like **30 FPS**, can appear choppy.
-- Higher frame rates, such as **120 FPS**, feel very smooth and responsive.
+- At **60 FPS**, the object moves **60 units per second** (`1 unit each frame × 60 frames`).  
+- At **120 FPS**, the object moves **120 units per second**.  
 
-Currently, our game object's position change occurs in the `Update()` method, which runs once per frame, so the object moves **once per frame**, which means: 
+In other words, faster machines make the object move *twice as fast*, while slower machines make the movement feel *sluggish or unfair*.  
 
-- On a fast computer running 120 FPS, it moves twice as fast as on a slower computer running 60 FPS.
-- On slower machines, the movement appears sluggish, which can make gameplay feel **unfair** or **unbalanced** for the player.
+Frame rates can vary widely depending on hardware and performance, but most games target around **60 FPS** for smooth gameplay. 
 
-Because frame rates can vary depending on hardware and game load, we need a way to make the object's movement **independent of the frame rate**. That’s where `Time` and `Time.deltaTime` come in.
+To combat this issue, we need a method to make the object's movement **independent of the frame rate**. That’s where `Time` and `Time.deltaTime` come in.
 
-### Using `Time.deltaTime`?
+### Using `Time.deltaTime`
+Unity’s `Time` class keeps track of several aspects of game time, such as:
 
-In Unity, `Time` is a class that keeps track of various aspects of game time, including:
+- `Time.time` → the total time since the game started  
+- `Time.deltaTime` → the time elapsed since the last frame  
 
-- The total time since the game started (`Time.time`)  
-- The time elapsed since the last frame (`Time.deltaTime`)  
+The word **delta (Δ)** is a mathematical symbol meaning *“change in”*.  
+In this case, `deltaTime` is the change in time between frames, calculated as:
 
-The “delta” in `deltaTime` (Δ) is a mathematical symbol meaning **“change in”**. In this case, it is calculated as:  
 ```
 Δt=tcurrent frame​−tlast frame​
 ```
+Let's say that the game is running at 60 FPS, therefore each frame lasts about 1/60th of a second, so:
+```
+Time.deltaTime = 1 / 60 ≈ 0.016 seconds per frame
+```
+[!NOTE]
+Unity handles this calculation automatically. You don’t need to worry whether the game is running at 30 FPS, 60 FPS, or any other frame rate; `Time.deltaTime` always gives you the correct value.
+
+### Adding Speed
+In the example above, if `Time.deltaTime` returns a value like `0.016`, which, when multiplied by a direction vector (like `Vector3.right`) would move the object just `0.016` units per frame — far too small to be meaningful in gameplay.  
+
+What’s missing is **speed**, a variable that defines how fast the object should move, measured in *units per second*.  
+
+By multiplying **speed × deltaTime × direction**, we calculate the actual distance the object should move **this frame**, making the movement **smooth**, **consistent**, and **meaningful** regardless of frame rate.
 
 
-
-
-
-
-
-
-
-- To fix this, we use `Time.deltaTime`, which represents the **time elapsed since the last frame**. Multiplying by `Time.deltaTime` scales the movement by **real-world time**, ensuring consistent motion across all frame rates.
-
-
-# Using `Time.deltaTime`
-In Unity, `Time.deltaTime` represents the **time elapsed since the last frame**.  
-
-Using it, we scale movement by the **actual time passed**, not by the number of frames.  
-
-However, multiplying a direction vector (like `Vector3.right`) by `Time.deltaTime` isn’t enough to control the object’s motion. `deltaTime` only tells us how long the last frame lasted, not how fast we want the object to move in the game world.  
-
-To define the object’s **rate of motion**, we need a **speed** variable, a value in units per second. By multiplying the direction vector by both **speed** and `deltaTime`, we calculate how far the object should move during this frame, ensuring consistent movement across all frame rates.
-
-
-> [!NOTE]  
-> What's actually happening when we move an object using `speed` and `Time.deltaTime`, Math! 
->
->  _` Distance moved this frame = Speed (units/sec) × Time.deltaTime (sec/frame) `_
-> 
-> Example:
->  If `_speed = 5` and `deltaTime = 0.016` (60 FPS), the object moves:
-> 
->  _` 5 × 0.016 ≈ 0.08 units this frame `_
->
->  If you didn’t include `speed`, the movement would always be just `0.016` units, which is too slow and meaningless for gameplay.
-
-The code below has been refactored to include the `_speed` variable and incorporate `Time.deltaTime` to ensure smooth, **frame-rate-independent movement**:
 
 ```csharp
 private float _speed = 5f; // units per second
