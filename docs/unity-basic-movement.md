@@ -448,11 +448,29 @@ For example:
 
 - The UI could read the current `Speed` and `Direction` to display them on-screen.  
 - A boundary system could reverse the `Direction` when the object hits a wall.  
-- A power-up could temporarily double the `Speed` without directly modifying the private field.  
+- A power-up could temporarily double the `Speed` without directly modifying the private field.
 
-Using properties in this way keeps our code **encapsulated**, **flexible**, and **easier to maintain**, while still allowing other systems to interact with the object in meaningful ways.
+### Updating the `Move()`
+Since we now have properties for `Speed` and `Direction`, we should also update the `Move()` method to use them instead of the private fields. This ensures that any validation or dynamic changes applied through the properties are respected during movement.
+
+Currently our `Move()` method implments the following:
+
+```csharp
+transform.position += _speed * Time.deltaTime * _direction;
+```
+**Update** the `Move()` method applying the properties instead of fields: 
+
+```csharp
+transform.position += Speed * Time.deltaTime * Direction;
+
+```
+> [!TIP]
+> This is a small but important refactor that keeps your class **consistent**, **encapsulated**, and **flexible**.
+
+This change guarantees that the object moves according to the **current property values**, not just the initial field values. It also makes the movement logic fully compatible with external scripts that might change the speed or direction at runtime. 
 
 ---
+
 ## Add Validation for Speed (Capping)
 
 Once we have a **public property** for speed, we may want to **prevent invalid or excessively high values** that could break gameplay or feel unbalanced. For example, we might want to make sure the speed is never negative or higher than a certain maximum.
@@ -568,7 +586,7 @@ A more designer-friendly approach is to **limit the input directly in the Inspec
 
 ....
 
- // ✅ Levae Awake as it was before
+ // ✅ Leave Awake as it was before
      private void Awake()
      {
          //Set GameObject's inital position
@@ -580,123 +598,27 @@ A more designer-friendly approach is to **limit the input directly in the Inspec
 This approach improves clarity, prevents invalid input, and helps designers understand the constraints set by the script.
 
 ---
-## Adding Movement Control Flags
-In many games, we don’t always want an object to start moving immediately or move continuously without restriction. For example:
 
-- An enemy might wait before chasing the player.
-- A moving platform might start only when a button is pressed.
-- A power-up might temporarily freeze player movement.
+## Extending Move()
 
-To manage these situations, we can introduce **control flags** , which are simple **Boolean variables** that act as switches to turn certain behaviors **on or off**.
+In our current design, the `Move()` method is **private**, meaning only the script itself can call it. This is a safe default because it enforces **encapsulation**: the object controls how it moves, without interference from outside scripts.
 
-In our `MoveTransform` component, we will add two flags:
+However, in many games, other objects or events need to control movement. For example:
 
-- `canMove` → Determines whether the object is allowed to move at all.
+- A player pulls a lever that triggers a platform to move.  
+- A power-up temporarily boosts an enemy's speed.  
+- A boundary or collision triggers a change in direction.  
 
-- `moveOnAwake` → Determines whether the object starts moving automatically when initialized.
-
-Notice that `canMove` is written in the form of a **question**, which is a recommended convention for booleans. The second flag, `moveOnAwake`, isn’t explicitly a question, but its meaning is still clear: it indicates whether movement should happen **automatically on Awake**. The key point is that the name **should clearly convey the intended behavior**. While this helps programmers understand the function quickly, the meaning may not always be obvious to a designer working in the Inspector.
-
-To ensure the purpose of each flag is immediately clear to designers as well, we can add a **tooltip**. In Unity, a tooltip is added using the `[Tooltip("…")]` attribute above the field, which displays helpful information when the designer hovers over the variable in the Inspector:
-
-```csharp
-[SerializeField]
-[Tooltip("Controls whether the object can move during gameplay.")]
-private bool canMove = true;
-
-[SerializeField]
-[Tooltip("Determines whether the object starts moving automatically on Awake.")]
-private bool moveOnWake = true;
-```
-
-### Testing Movement Control Flags
-
-Now that we have added our `canMove` and `moveOnAwake` flags, we need to test them in our code to control when the object is allowed to move.
-
-In `Awake()`, we use `moveOnAwake` to determine the initial state of movement:
-
-```csharp
-private void Awake()
-{
-    // Set initial position
-    transform.position = Vector3.zero;
-
-    // Enable or disable movement on start based on moveOnAwake
-    canMove = moveOnAwake;
-
-}//end Awake()
-```
-- If `moveOnAwake` is `true`, the object will be allowed to move immediately.
-- If `moveOnAwake` is `false`, movement is temporarily disabled until explicitly started.
-
-In `Update()`, we check the `canMove` flag every frame to decide whether to call the Move() method:
-
-```csharp
-private void Update()
-{
-    // Only move if allowed
-    if (canMove)
-    {
-        Move();
-
-    } //end if(canMove)
-
-}//end Update()
-
-```
-
-- This ensures that movement only happens when `canMove` is `true`.
-- By toggling canMove at runtime, we can **start, stop, or pause movement dynamically** without changing any other code.
+Keeping `Move()` private avoids tight dependencies by default.However, to allow external scripts to influence movement safely and dynamically, we can make the method **public**.
 
 > [!TIP]
-> This pattern is useful for many gameplay scenarios, like pausing the game, triggering movement after a power-up, or controlling AI characters.
+>  Start with private methods to maintain self-contained behavior. When there’s a clear need for external control, you can expose the method through parameters or carefully designed public access.
 
----
+### Accepting Paramters
+Updating `Move()` to be public makes it accessible to other scripts. While our public properties allow external scripts to modify `Speed` and `Direction`, there are situations where it’s more convenient or efficient to pass temporary values directly to the method—such as responding to an event, applying a one-off speed adjustment, or triggering movement with a specific direction.
 
-Update Move() to Accept Parameters
+To support this, we can modify the original private `Move()` method to accept `direction` and `speed` as parameters:
 
-Refactor Move() to optionally accept speed and direction as parameters, falling back to the property values if none are provided.
-
-This makes movement flexible and reusable from other scripts or events.
-
-
-
-### Public or Private?
-In our example, the `Move()` method is **private**, enforcing encapsulation. Deciding whether a method should be public or private can be tricky, so here are some guiding questions to consider:
-
-- Does any external class truly need to call this method directly?  
-- Would exposing this method create unnecessary dependencies between objects?  
-- Could the behavior be triggered in a safer or more modular way, such as through events, signals, or internal condition checks?  
-
-### Example
-
-Imagine a player pulls a lever that causes platforms to move. Does the lever need direct access to the platform’s `Move()` method? Not necessarily. Instead:
-
-- The platform could listen for an event triggered by the lever.  
-- Or it could check conditions internally before moving.  
-
-By keeping the method private, we avoid creating tight dependencies between unrelated objects, making the system easier to maintain and less error-prone.
-
-> [!Tip]
-> Use **private methods** to keep behavior self-contained, and carefully consider external access to avoid unnecessary dependencies.
-
-### Dynamic Inputs
-While we usually keep the `Move()` method **private** to encapsulate behavior, there are times when we want the same movement logic to work with dynamic inputs—for example, applying a speed boost or changing direction.
-
-In such cases, we can make the method **public** and allow other scripts to pass parameters. This approach lets us:
-
-- **Reuse logic without duplication** – no need to write separate movement code for each object.  
-- **Control behavior dynamically** – adjust speed, direction, or other movement properties on the fly.  
-- **Maintain modular design** – the object still controls how it moves, but external scripts can influence it safely through parameters.
-
----
-## Dynamic Movement Using Parameters
-
-In the instance of making our method **public**, we might also want to extend its capabilities so that it can handle dynamic inputs—for example, changing speed, direction, or other movement properties at runtime. 
-
-This allows multiple objects or events to use the same movement logic without directly accessing internal fields or properties, keeping the design **modular** and **reusable**.
-
-To do this we can modify the original private `Move()` method to accept **direction** and speed as **parameters**:
 
 ```csharp
 /// <summary>
@@ -706,102 +628,75 @@ To do this we can modify the original private `Move()` method to accept **direct
 /// <param name="speed">The speed at which the object should move.</param>
 private void Move(Vector3 direction, float speed)
 {
-   //Set Properites
-   Direction = direction;
-   Speed = speed
+    // Assign parameters to properties
+    Direction = direction;
+    Speed = speed;
 
-  //Move GameObject 
-  transform.position += Direction * Speed * Time.deltaTime; 
-}
+    // Move the GameObject
+    transform.position += Direction * Speed * Time.deltaTime; 
+
+}//end Move()
 
 ```
-**Code Breakdown**
-The `<param>` comments document each parameter, making it clear to anyone reading the code what values the method expects:
+#### Why assign parameters to the properties?
 
-- **direction** – lets external scripts specify which way the object moves.  
-- **speed** – lets external scripts adjust the object’s movement speed.  
+Even though the values are temporary inputs for this method call, assigning them to the properties ensures that:
 
-Since the parameters provide temporary input to the method, we now assign these values to the corresponding properties. This is important because:
+- Validation logic in the property setter is automatically applied (e.g., `Speed` cannot exceed `_maxSpeed`).
 
-- It ensures any validation logic in the property setter is applied automatically.  
-- It updates the object’s internal state, so future movement calls reflect the new direction or speed.  
-- It keeps the class consistent, letting the object “remember” the most recent movement values rather than only using temporary variables.
+- The object’s internal state is updated, so future `Move()` calls reflect the most recent values.
+
+- The class remains consistent, keeping temporary changes in sync with the persistent properties without introducing additional state variables.
+  
 
 ### Handling Default Values
 
-While the above works, there’s a downside: every time we call `Move()`, we **must provide both parameters**, even if we want the default behavior.
+The method above works, but there’s a drawback: every time we call `Move()`, we must supply both parameters, even if we just want to use the current `Speed` or `Direction`. This can become repetitive and violates the KISS principle (“Keep It Simple, Stupid”).
 
-- If we only care about the object’s current **Direction** or **Speed**, passing parameters becomes repetitive.
-
-- This adds unnecessary steps and goes against the **KISS principle** (“Keep It Simple, Stupid”).
-
-To solve this, we can allow the parameters to be **nullable** (`Vector3?` and `float?`) and fall back to the object’s properties if no value is provide. In this instance, we need a **local method variable** to store the actual values being used, either the passed paramter or fall back default value. 
+To make the method more flexible, we can use nullable parameters (`Vector3?` and `float?`) and fall back to the object’s properties if no value is provided. We also use local variables to store the actual values being used in this frame:
 
 ```csharp
 /// <summary>
 /// Moves the object in a specified direction at a specified speed.
 /// </summary>
-/// <param name="direction">The direction to move the object.</param>
-/// <param name="speed">The speed at which the object should move.</param>
+/// <param name="direction">The direction to move the object (optional).</param>
+/// <param name="speed">The speed at which the object should move (optional).</param>
 private void Move(Vector3? direction = null, float? speed = null)
 {
-   //Set local values
-   moveDirection = direction ?? Direction;
-   moveSpeed = speed ?? Speed;
+    // Resolve the effective values for this frame
+    Vector3 moveDirection = direction ?? Direction;
+    float moveSpeed = speed ?? Speed;
 
-  //Move GameObject 
-  transform.position += moveDirection * moveSpeed * Time.deltaTime; 
-}
+    // Update properties to ensure validation and internal consistency
+    Direction = moveDirection;
+    Speed = moveSpeed;
 
+    // Move the GameObject
+    transform.position += moveDirection * moveSpeed * Time.deltaTime; 
+}//end Move()
 ```
-**Code Breakdown**
 
-**1. Nullable Parameters (`Vector3?` and `float?`)**
+#### How it Works 
 
-  - The `?` after the type allows the parameter to be **nullable**, meaning it can hold a `null` value.  
-  - If the caller doesn’t provide a value, `direction` or `speed` will be `null`.  
-  - Using the `??` **null-coalescing operator**, which checks if the value on the left-hand side is null.
-     - If it is not null, the left-hand value is used.
-     - If it is null, the right-hand value is used as a fallback.
+- **Nullable Parameters (`Vector3?` and `float?`)**
+   - The `?` allows the parameter to be nullable, so the caller can omit it.
+   - If `null` is passed (or the argument is omitted), the method uses the current property value.
+   - The `??` null-coalescing operator selects the parameter if it exists; otherwise, it falls back to the property.
 
-**2. Local Variables**
-Since we have check for null paramters we need be able to store the resulting value, 
-These local variables store the **resolved values** that the method will use for this frame.  
+- **Local Variables**
+   - `moveDirection` and `moveSpeed` store the resolved values for this frame.
+   - This ensures the movement calculation is clear, readable, and frame-consistent.
 
-- They ensure clarity, readability, and consistency when calculating the movement.
+- **Updating the Properties**
+   - Assigning the resolved values to `Direction` and `Speed` applies validation automatically.
+   - Keeps the object’s state consistent for subsequent method calls.
 
-**3.  Naming the Local Variables**
+- **Movement Calculation**
+   - Uses the resolved local variables for frame-rate independent movement.
 
-  - **moveDirection** – clearly indicates the direction applied this frame.  
-  - **moveSpeed** – clearly indicates the speed applied this frame.  
+This approach gives us the best of both worlds:
 
-This naming distinguishes temporary, per-call values from the object’s persistent properties.
-
-**4. Updating the Movement Calculation**
-
- - Uses the resolved local variables for **frame-rate independent movement**.
-
---- 
-
-## Extending functionality
-## Adding Higher-Level Control
-
-So far, we’ve given our `Move()` method flexibility by allowing parameters for speed and direction, along with sensible fallbacks to default values. This gives programmers more dynamic control at runtime.
-
-But what about control at a higher level? Imagine situations where we don’t want the object to move at all—regardless of speed or direction. For example:
-
-- A player might be frozen by a trap or spell.  
-- An NPC could be paused during a cutscene.  
-- A platform might be inactive until the player triggers it.  
-
-In these cases, passing parameters isn’t enough. We need a way to enable or disable motion entirely—something that gives level designers and game systems a simple “on/off switch” for movement.
-
-## Why Not Just Set Values to Zero?
-
-It’s important to note that simply setting the values (like speed or direction) to zero isn’t an optimal solution.  
-
-Right now, our `Move()` method is being called in `Update()`, so even if the object isn’t moving, the method is still **wasting processing time every frame**.  
-
-Instead, we want a true **movement gatekeeper** that prevents unnecessary calculations altogether when motion is disabled.
-
+- External scripts can influence movement without bypassing validation.  
+- Movement can respond to temporary or dynamic inputs without affecting the object’s persistent state unexpectedly.  
+- The class remains modular, flexible, and easy to maintain.
 
