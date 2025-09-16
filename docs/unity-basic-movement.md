@@ -65,7 +65,7 @@ When a class is attached to a GameObject, it is referred to as a **component**. 
 > [!IMPORTANT]
 > Before continuing, make sure the `MoveTransform` component has been added to a GameObject in your Unity scene.
 > To do this, you have a few options:
-> - Drag and drop the C# script from the **Project Window** onto the GameObject in the **Hierarchy Window** or the **Scene Window**.  
+> - Drag and drop the **C# script** from the **Project Window** onto the GameObject in the **Hierarchy Window** or the **Scene Window**.  
 > - With the GameObject selected, drag and drop the script into the **Inspector Window**.  
 > - Alternatively, in the **Inspector Window**, click the **Add Component** button, then type the name of the component (`MoveTransform`) and select it.  
 > Once added, the script becomes a component of the GameObject, allowing it to control its behavior during gameplay.
@@ -134,11 +134,13 @@ private void Awake()
 <br>
 
 > [!IMPORTANT]
-> Remember to always save your script before testing it in the Unity Editor.  
+> Remember to always **save your script** before testing it in the Unity Editor.  
 > Press **Play** in the Editor to see the script in action.
 
 <br>
+
 ---
+
 ## Moving GameObjects with Transform
 
 To move a GameObject, we can manipulate its **Transform** component at different points in the GameObject’s lifecycle. For example:
@@ -308,7 +310,7 @@ This makes the movement **flexible and data-driven**, which is a core principle 
 
 ---
 
-## Optimizing Movment: Streamlining `Update()`
+## Optimizing `Update()` by Adding a `Move()` Method
 
 Right now, all of the functionality for moving the GameObject happens directly inside the `Update()` method.
 
@@ -324,21 +326,19 @@ private void Update()
 
 While this works, placing all logic in `Update()` can make it **cluttered**, **harder to manage**, and **less efficient**. Streamlining `Update()` by delegating tasks to dedicated methods helps **optimize performance**, **reduce errors**, and make your **code easier to read** and maintain. Here’s why this matters:
 
-### Potential for Errors
-- `Update()` runs every frame, so any logic inside it executes constantly.  
-- If multiple actions are added here, it’s easy to introduce bugs or unintended behavior.
+- **Potential for Errors**
+    - `Update()` runs every frame, so any logic inside it executes constantly.  
+    - If multiple actions are added here, it’s easy to introduce bugs or unintended behavior.
 
-### Reusability (DRY Principle)
-- If we need the same movement logic in other places (e.g., triggered by an event or another script), duplicating code in multiple `Update()` methods violates the **Don’t Repeat Yourself (DRY)** principle.  
-- By creating a separate method, we can reuse the same movement logic whenever it’s needed.
+- **Reusability (DRY Principle)**
+    - If we need the same movement logic in other places (e.g., triggered by an event or another script), duplicating code in multiple `Update()` methods violates the **Don’t Repeat Yourself (DRY)** principle.  
+    - By creating a separate method, we can reuse the same movement logic whenever it’s needed.
 
-### Single Responsibility Principle
-- Each method should have **one responsibility**.  
-- If `Update()` both moves the object and handles other logic (like animations, collisions, or input), it breaks this principle.
+- **Single Responsibility Principle**
+    - Each method should have **one responsibility**.  
+    - If `Update()` both moves the object and handles other logic (like animations, collisions, or input), it breaks this principle.
 
---- 
-
-## Creating a `Move()` Method
+### Creating a `Move()` Method
 
 To address the issues with placing all logic in `Update()`, we can move the movement logic into a dedicated method, like `Move()` and call the method from the `Update()`. This allows us to:
 
@@ -372,19 +372,25 @@ We’ve now created a **MoveTransform component** that moves our GameObject on t
 ```csharp
 public class MoveTransform : MonoBehaviour
 {
+      // Serialized fields for initial values
+
+     // Current speed of the object (units per second)
      [SerializeField]
-     private float _speed = 5f; // Private field, but editable in Inspector
-     
+     private float _speed = 5f; 
+
+
+     // Direction of movement
      [SerializeField]
-     private Vector3 _direction = Vector3.right; // Default direction is right
-     
-     
+     private Vector3 _direction = Vector3.right; 
+
+     // Awake is called once on initialization         
      private void Awake()
      {
          //Set GameObject's inital position
          transform.position = Vector3.zero;
      }//end Awake()
-     
+
+     // Update is called once per frame
      private void Update()
      {
          Move();
@@ -499,12 +505,17 @@ Now that we understand how to cap the speed, we can create a private method call
 - Whenever we set the `Speed` property, the new value is passed through this method to ensure it stays within the allowed range.
 
 ```csharp
-private float ValidateSpeed(float speed)
-{
-    //Clamp Speed between 0 and maximum speed
-    return Mathf.Clamp(speed, 0f, _maxSpeed);
+    /// <summary>
+    /// Ensures the speed stays within 0 and _maxSpeed
+    /// </summary>
+    /// <param name="speed">Desired speed to validate</param>
+    /// <returns>Clamped speed</returns>
+    private float ValidateSpeed(float speed)
+    {
+        //Clamp Speed between 0 and maximum speed
+        return Mathf.Clamp(speed, 0f, _maxSpeed);
 
-}//end ValidateSpeed()
+    }//end ValidateSpeed()
 ```
 #### How it works
 
@@ -582,19 +593,63 @@ In our `MoveTransform` component, we will add two flags:
 
 - `canMove` → Determines whether the object is allowed to move at all.
 
-- `moveOnWake` → Determines whether the object starts moving automatically when initialized.
+- `moveOnAwake` → Determines whether the object starts moving automatically when initialized.
 
+Notice that `canMove` is written in the form of a **question**, which is a recommended convention for booleans. The second flag, `moveOnAwake`, isn’t explicitly a question, but its meaning is still clear: it indicates whether movement should happen **automatically on Awake**. The key point is that the name **should clearly convey the intended behavior**. While this helps programmers understand the function quickly, the meaning may not always be obvious to a designer working in the Inspector.
 
-Add Movement Control Flags
+To ensure the purpose of each flag is immediately clear to designers as well, we can add a **tooltip**. In Unity, a tooltip is added using the `[Tooltip("…")]` attribute above the field, which displays helpful information when the designer hovers over the variable in the Inspector:
 
-Introduce a canMove flag to test whether the object should move each frame.
+```csharp
+[SerializeField]
+[Tooltip("Controls whether the object can move during gameplay.")]
+private bool canMove = true;
 
-Add a moveOnWake flag to control whether movement starts automatically when the object is initialized.
+[SerializeField]
+[Tooltip("Determines whether the object starts moving automatically on Awake.")]
+private bool moveOnWake = true;
+```
 
-This sets up dynamic start/stop control.
+### Testing Movement Control Flags
 
-[SerializeField] private bool canMove = true;
-[SerializeField] private bool moveOnWake = true;
+Now that we have added our `canMove` and `moveOnAwake` flags, we need to test them in our code to control when the object is allowed to move.
+
+In `Awake()`, we use `moveOnAwake` to determine the initial state of movement:
+
+```csharp
+private void Awake()
+{
+    // Set initial position
+    transform.position = Vector3.zero;
+
+    // Enable or disable movement on start based on moveOnAwake
+    canMove = moveOnAwake;
+
+}//end Awake()
+```
+- If `moveOnAwake` is `true`, the object will be allowed to move immediately.
+- If `moveOnAwake` is `false`, movement is temporarily disabled until explicitly started.
+
+In `Update()`, we check the `canMove` flag every frame to decide whether to call the Move() method:
+
+```csharp
+private void Update()
+{
+    // Only move if allowed
+    if (canMove)
+    {
+        Move();
+
+    } //end if(canMove)
+
+}//end Update()
+
+```
+
+- This ensures that movement only happens when `canMove` is `true`.
+- By toggling canMove at runtime, we can **start, stop, or pause movement dynamically** without changing any other code.
+
+> [!TIP]
+> This pattern is useful for many gameplay scenarios, like pausing the game, triggering movement after a power-up, or controlling AI characters.
 
 ---
 
