@@ -370,6 +370,9 @@ private void Move()
 
 We’ve now created a **MoveTransform component** that moves our GameObject on the screen! 
 ```csharp
+
+using UnityEngine;
+
 public class MoveTransform : MonoBehaviour
 {
       // Serialized fields for initial values
@@ -406,7 +409,7 @@ public class MoveTransform : MonoBehaviour
      
      }//end Move()
 
-}//end class
+}//end MoveTransform
 ```
 This component can be attached to **any GameObject**, and it works the same way while still allowing us to **control the speed and direction** of each object individually.
 
