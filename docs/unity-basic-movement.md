@@ -439,9 +439,35 @@ To solve this, we use **properties**, special methods that behave like fields bu
 Let’s **add these properties** to our class so that we can safely access and modify the speed and direction of our MoveTransform component without exposing the underlying fields:
 
 ```csharp
-public float Speed { get; set; }
-public Vector3 Direction { get; set; }
+public float Speed
+{
+   get => _speed; 
+   set => _speed = value;
+}
+
+public Vector3 Direction
+{
+   get => _direction; 
+   set => _direction = value;
+}
 ```
+> [!NOTE]
+> In C#, when a method, property, or other member only needs to execute a **single expression**, you can use **expression-bodied member syntax**. This lets you replace the usual `{ }` block with `=>` for a more concise style.
+> For example, instead of writing: 
+> ```
+>  public int Square(int x)
+> {
+>    return x *x;
+> }
+> ```
+>  You can write it as:
+>  ```
+> public int Square(int x) => x * x;
+>  ```
+> 
+> It makes your code concise and readable, but if you need **multiple statements or more complex logic**, you still need the full `{ }` block. 
+
+
 By adding these **properties**, other parts of our game can interact with the `MoveTransform` component **safely and dynamically**.
 
 For example:
@@ -471,17 +497,61 @@ This change guarantees that the object moves according to the **current property
 
 ---
 
-## Add Validation for Speed (Capping)
+## Add Validation for Speed and Direction
 
-Once we have a **public property** for speed, we may want to **prevent invalid or excessively high values** that could break gameplay or feel unbalanced. For example, we might want to make sure the speed is never negative or higher than a certain maximum.
+Once we have **public properties** for **speed** and **direction**, we may want to **prevent invalid or problematic values** that could break gameplay or produce inconsistent movement.
 
-### Create a Maximum Speed Field
+### Normalizing Direction
+At the moment, there are no constraints on the **direction** value that can be assigned. This means a designer or script could set a vector of any length, not just a unit vector.
 
-First we will need a variable to define the **maximum allowed speed**. This should be a **private field** but **serialized** so we can adjust it in the Inspector:
+For example, suppose the designer sets the value **in the editor** to
+```
+Direction [3, 0, 4]
+```
+Although our variable is named **Direction**, we are actually assigning a **vector**, which has both **direction** and **magnitude**. The magnitude of a vector is calculated as:
+
+$\text{magnitude} = \sqrt{x^2 + y^2 + z^2}$
+
+In this example, the magnitude would be:
+$\sqrt{3^2 + 0^2 + 4^2} = 5$
+
+If we multiply this vector directly by a speed value in the movement calculation:
 
 ```csharp
+transform.position += Speed * Time.deltaTime * Direction;
+```
+
+The object would move **5 times farther in that frame than intended**, because the vector's length scales the movement. This makes movement inconsistent and breaks the assumption that `Speed` represents units per second.
+
+This inconsistency can be avoided by **normalizing the direction vector** when it’s assigned. Normalization converts any vector to a **unit vector** (magnitude = 1) while preserving its direction.
+
+**Update** the `Direction` property to **normilize** the set value: 
+
+```csharp
+public Vector3 Direction
+{
+    get => _direction;
+    set => _direction = value.normalized;
+}
+```
+
+With this approach:
+
+- The vector always has a **magnitude of 1**.
+- `Speed` now fully controls **how far the object moves per frame**.
+- The direction only determines the **path** of movement, not the distance traveled.
+
+By enforcing normalization in the property setter, we ensure **consistent and predictable movement**, regardless of the original vector assigned.
+
+### Capping Speed
+Just as we normalize our **Direction** to ensure consistent movement, we also need to **validate the** `Speed` to prevent invalid or excessively high values that could break gameplay or feel unbalanced. For example, we might want to ensure that speed is **never negative and does not exceed a certain maximum**.
+
+To enforce this, we define a **maximum allowed speed**. This should be a **private field** so it remains encapsulated, but we can **serialize** it to make adjustments easy in the Inspector:
+
+```csharp
+// Max speed set in the Inspector
 [SerializeField] 
-private float _maxSpeed = 10f; // Max speed set in the Inspector
+private float _maxSpeed = 10f; 
 ```
 <br>
 
@@ -490,112 +560,102 @@ private float _maxSpeed = 10f; // Max speed set in the Inspector
 
 <br>
 
-### Create Validation Method
+#### Testing Speed Value
 
-Now that we have `_maxSpeed` we can create a method to **validate or cap** speed whenever it’s set.
-In this instance, we want to make sure the speed stays within a valid range; **never below 0 and never above _maxSpeed**.
-One method of doing this would to be to manually check the values: 
+Now that we have `_maxSpeed`, we **could** create a method to **validate or cap the speed** whenever it’s set. In this case, we want to ensure the speed stays within a valid range, **never below 0 and never above** `_maxSpeed`.
+
+For example: 
 ```chsarp
 // ❌ Less Efficient
-if (Speed < 0f) Speed = 0f;
-else if (Speed > _maxSpeed) Speed = _maxSpeed;
+    private float ValidateSpeed(float speed)
+    {
+       if (Speed < 0f) Speed = 0f;
+       else if (Speed > _maxSpeed) Speed = _maxSpeed;
+
+    }//end ValidateSpeed()
+
 ```
-While manually checking values works, there’s a more concise and efficient way to enforce a value within a range using Unity’s built-in `Mathf.Clamp()` method.
 
-`Mathf.Clamp()` limits a value to a specific range using three parameters:
+This approach works, but we can simplify it further. Since **speed validation only occurs when assigning the property**, we don’t need a separate method — the check can be performed **directly in the setter**.
 
-1. The value to limit.  
-2. The minimum allowed value.  
-3. The maximum allowed value.  
+Unity's `Mathf.Clamp()` method allows us to **condense the conditional logic into a single line**. It returns the value constrained within a specified range, using three parameters:
 
-In this case, we can use it to ensure our speed stays between `0` and `_maxSpeed`:
+- The value to limit.
+- The minimum allowed value.
+- The maximum allowed value.
+
+**Update** the `Speed` property to ensure our speed always stays between `0` and` _maxSpeed`.
 
 ```cshapr
  // ✅ More Efficient
- return Mathf.Clamp(speed, 0f, _maxSpeed);
-```
-This single line replaces multiple `if` statements while keeping the code clean and readable.
-
-Now that we understand how to cap the speed, we can create a private method called `ValidateSpeed()` that will handle this.
-
-- It’s **private** because it is only used internally by the `MoveTransform` class and doesn’t need to be accessed from other scripts.  
-- It returns a `float`, which is the validated speed after applying the range check.  
-- Whenever we set the `Speed` property, the new value is passed through this method to ensure it stays within the allowed range.
-
-```csharp
-    /// <summary>
-    /// Ensures the speed stays within 0 and _maxSpeed
-    /// </summary>
-    /// <param name="speed">Desired speed to validate</param>
-    /// <returns>Clamped speed</returns>
-    private float ValidateSpeed(float speed)
-    {
-        //Clamp Speed between 0 and maximum speed
-        return Mathf.Clamp(speed, 0f, _maxSpeed);
-
-    }//end ValidateSpeed()
-```
-#### How it works
-
-1. A new speed value is assigned to the `Speed` property.  
-2. The property setter calls `ValidateSpeed()` and passes the value to it.  
-3. `ValidateSpeed()` returns the clamped value, ensuring it is never less than `0` or greater than `_maxSpeed`.  
-4. The returned value is then stored in the private `_speed` field.  
-
-By using this approach, any assignment to `Speed` automatically validates the value, keeping the movement logic **safe** and **predictable**.
-
-### Updating the Speed Property to Include Validation
-Now that we have our `ValidateSpeed()` method, we need to **update the `Speed` property** so that any time a new value is assigned, it automatically goes through the validation process.
-
-```csharp
 public float Speed
 {
-    get => _speed;
-
-    //Validate speed when set
-    set => _speed = ValidateSpeed(value); 
+   get => _speed; 
+   set => _speed = Mathf.Clamp(value, 0f, _maxSpeed);
 }
 ```
-### Validating Speed Field
-Currently, our speed validation only applies when the **property** is set. However, in the Editor, we are modifying the **field** directly. What if we want to ensure that a level designer sets the initial speed within a valid range?
+This ensures that `_speed` **always stays within the valid range**, and you don’t need a separate validation method or manual checks.
 
-One approach is to call `ValidateSpeed()` once when the component initializes, ensuring that any value set in the Inspector gets clamped correctly:
+### Validating Field
+Currently, our speed and direction validation only occurs when the **properties** are set. However, in the Unity Editor, a designer can modify the **fields** directly in the Inspector.
+
+We can ensure proper validation at initialization by assigning the fields to their respective properties in the `Awake()` method. This triggers the property setters, applying any validation logic when the game object is created:
 
 ```csharp
-// ☑️ Works, but less obvious to the designer
+private void Awake()
+{
+    // Validate initial speed and direction via properties
+    Speed = _speed;
+    Direction = _direction;
 
-     private void Awake()
-     {
-         //Set GameObject's inital position
-         transform.position = Vector3.zero;
-
-        //Validate initial speed
-        _speed ValdiateSpeed(_speed);
-
-     }//end Awake()
-
+    // Set the GameObject's initial position
+    transform.position = Vector3.zero;
+} // end Awake()
 ```
-While this works, it’s **less apparent** to a designer working in the Inspector what values are allowed.
 
-A more designer-friendly approach is to **limit the input directly in the Inspector** using Unity’s `[Range(min, max)]` attribute. This shows a slider for the field, making it immediately clear what values are valid. Using `[Range]`, runtime validation is only necessary if the value changes dynamically:
+This approach guarantees that values set in the Inspector are **clamped and normalized** correctly at the start of the game.
+
+## Visual Cues 
+While we have implemented validation for our fields, these constraints may not be immediately obvious in the Unity Editor. For example, if a level designer sets `Direction` to `(3, 0, 4)` or `Speed` to `20`, the property setters will automatically correct the values when the game runs. However, the designer might not understand why the values suddenly changed.
+
+One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in the Inspector. This displays a small piece of text when you hover your mouse over the field, providing guidance on its purpose, valid values, or expected behavior.
 
 ```csharp
- // ✅ Easier to understand
-     [SerializeField, Range(0f, 10f)]
+     [SerializeField]
+     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
      private float _speed = 5f;
 
-....
-
- // ✅ Leave Awake as it was before
-     private void Awake()
-     {
-         //Set GameObject's inital position
-         transform.position = Vector3.zero;
-
-     }//end Awake()
+     [SerializeField]
+     [Tooltip("Direction of movement. Will be normalized automatically to ensure consistent movement.")]
+     private Vector3 _direction = Vector3.right;
+     
 ```
 
-This approach improves clarity, prevents invalid input, and helps designers understand the constraints set by the script.
+### Tighter constraints
+While our `[Tooltip]` provides some visual context about the constraints on the `_speed` variable, and the mere inclusion of `_maxSpeed` should suggest a limit, these cues may not be **immediately obvious to the level designer**.
+
+With that said, we might want to might want to enforce **tighter constraints** while simultaneously making valid speed options more apparent to the designer.
+
+
+To make valid speed options clearer and enforce tighter constraints, we can convert `_maxSpeed` to a **constant** and apply Unity's `[Range(min, max)]` attribute to `_speed`.
+
+> [!NOTE]
+> We can set `MAX_SPEED` as the upper limit in `[Range(0f, MAX_SPEED)]` because it is a **constant**. Unity requires `[Range]` values to be fixed at compile time, so only constants (not regular variables) can be used here.
+
+**Update** the following fields: 
+```csharp
+[SerializeField]
+[Range(0f, MAX_SPEED)]
+[Tooltip("Speed of the object’s movement. Cannot exceed maximum speed.")]
+private float _speed = 5f;
+
+// Maximum speed allowed
+private const float MAX_SPEED = 10f;
+```
+
+> [!CAUTION]
+> **DO NOT** forget to also update the `Speed` property, after switching `_maxSpeed` to the `MAX_SPEED` **constant**.
+> 'set => _speed = Mathf.Clamp(value, 0f, MAX_SPEED);'
 
 ---
 
@@ -619,7 +679,6 @@ Updating `Move()` to be public makes it accessible to other scripts. While our p
 
 To support this, we can modify the original private `Move()` method to accept `direction` and `speed` as parameters:
 
-
 ```csharp
 /// <summary>
 /// Moves the object in a specified direction at a specified speed.
@@ -633,7 +692,7 @@ private void Move(Vector3 direction, float speed)
     Speed = speed;
 
     // Move the GameObject
-    transform.position += Direction * Speed * Time.deltaTime; 
+    transform.position += Speed * Time.deltaTime * Direction;
 
 }//end Move()
 
@@ -653,7 +712,7 @@ Even though the values are temporary inputs for this method call, assigning them
 
 The method above works, but there’s a drawback: every time we call `Move()`, we must supply both parameters, even if we just want to use the current `Speed` or `Direction`. This can become repetitive and violates the KISS principle (“Keep It Simple, Stupid”).
 
-To make the method more flexible, we can use nullable parameters (`Vector3?` and `float?`) and fall back to the object’s properties if no value is provided. We also use local variables to store the actual values being used in this frame:
+To make the method more flexible, we can use nullable parameters (`Vector3?` and `float?`) and fall back to the object’s properties if no value is provided. We also introduce two **local variables** (`moveDirection` and `moveSpeed`) to store the actual values being used in this frame:
 
 ```csharp
 /// <summary>
@@ -671,8 +730,9 @@ private void Move(Vector3? direction = null, float? speed = null)
     Direction = moveDirection;
     Speed = moveSpeed;
 
-    // Move the GameObject
-    transform.position += moveDirection * moveSpeed * Time.deltaTime; 
+   // Move the GameObject using the resolved frame values
+    transform.position += Speed * Time.deltaTime * Direction;
+
 }//end Move()
 ```
 
@@ -692,7 +752,8 @@ private void Move(Vector3? direction = null, float? speed = null)
    - Keeps the object’s state consistent for subsequent method calls.
 
 - **Movement Calculation**
-   - Uses the resolved local variables for frame-rate independent movement.
+   - Uses the **local variables** (`moveDirection` and `moveSpeed`) to guarantee that the movement reflects exactly the values we resolved for this frame.
+   - This ensures **frame-rate independent movement** and avoids unintended side effects from property access.
 
 This approach gives us the best of both worlds:
 
