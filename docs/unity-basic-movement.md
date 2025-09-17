@@ -16,12 +16,16 @@ The Transform has three main properties:
 ## Understanding 3D Positions with Vector3
 
 In Unity, every object’s position in 3D space is represented by a **Vector3**, which is a combination of three numbers: X, Y, and Z.
-
-- **X** : Left and right
-- **Y**: Up and down
-- **Z** : Forward and backward
- 
 **Vector3** represents **direction** and **magnitude**. Positive and negative values on each axis determine **which way** and **how far** the object moves. 
+
+It's important to note that Unity's coordinate system differs from some other 3D applications. In Unity:
+
+- **X** remains the horizontal axis (left and right).
+- **Y** is the vertical axis (up and down).
+- **Z** is the depth axis (forward and backward).
+
+In 3D programs like Blender, or in other game engines such as Unreal, the Z axis is used for vertical movement. This difference can be confusing when switching between tools, so keeping Unity’s coordinate system in mind will help avoid mistakes when importing models or reasoning about movement.
+
  
 ### Vector3 Shorthand
 
@@ -160,6 +164,14 @@ private void Update()
 } // end Update()
 ```
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ### Understanding Frame Rate
 While the example for moving a GameObject works, there’s a big problem: the **object’s speed depends on the frame rate**.  
 
@@ -236,6 +248,14 @@ This approach ensures that the object moves **smoothly**, **consistently**, and 
 
 <br>
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ---
 
 ## Private Fields and `[SerializeField]`
@@ -308,6 +328,15 @@ Now the designer can change the movement direction in the Inspector, for example
 
 This makes the movement **flexible and data-driven**, which is a core principle of good game design: allow designers to tweak behavior **without modifying scripts**.
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+
 ---
 
 ## Optimizing `Update()` by Adding a `Move()` Method
@@ -363,6 +392,15 @@ private void Move()
 }//end Move()
 
 ```
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+
 ---
 ## Using Debug.Log for Debugging
 
@@ -384,6 +422,15 @@ private void Move()
 }
 
 ```
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ### Debug.Log Variants and Viewing Messages
 Above, we made use of Unity's generic `Debug.Log`, which is used to track normal runtime values and flow. However, Unity provides two other types of console messages for debugging:
 
@@ -568,6 +615,14 @@ transform.position += Speed * Time.deltaTime * Direction;
 
 This change guarantees that the object moves according to the **current property values**, not just the initial field values. It also makes the movement logic fully compatible with external scripts that might change the speed or direction at runtime. 
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ---
 
 ## Add Validation for Speed and Direction
@@ -615,6 +670,14 @@ With this approach:
 - The direction only determines the **path** of movement, not the distance traveled.
 
 By enforcing normalization in the property setter, we ensure **consistent and predictable movement**, regardless of the original vector assigned.
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
 
 ### Capping Speed
 Just as we normalize our **Direction** to ensure consistent movement, we also need to **validate the** `Speed` to prevent invalid or excessively high values that could break gameplay or feel unbalanced. For example, we might want to ensure that speed is **never negative and does not exceed a certain maximum**.
@@ -669,6 +732,14 @@ public float Speed
 ```
 This ensures that `_speed` **always stays within the valid range**, and you don’t need a separate validation method or manual checks.
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ### Validating Field
 Currently, our speed and direction validation only occurs when the **properties** are set. However, in the Unity Editor, a designer can modify the **fields** directly in the Inspector.
 
@@ -688,6 +759,14 @@ private void Awake()
 
 This approach guarantees that values set in the Inspector are **clamped and normalized** correctly at the start of the game.
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ## Visual Cues 
 While we have implemented validation for our fields, these constraints may not be immediately obvious in the Unity Editor. For example, if a level designer sets `Direction` to `(3, 0, 4)` or `Speed` to `20`, the property setters will automatically correct the values when the game runs. However, the designer might not understand why the values suddenly changed.
 
@@ -706,6 +785,16 @@ One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in 
 
 > [!TIP]
 > Because `[Tooltip]` already describes the variable, adding an inline comment would be redundant.
+
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 
 ### Tighter constraints
 While our `[Tooltip]` provides some visual context about the constraints on the `_speed` variable, and the mere inclusion of `_maxSpeed` should suggest a limit, these cues may not be **immediately obvious to the level designer**.
@@ -789,6 +878,14 @@ Even though the values are temporary inputs for this method call, assigning them
 - The object’s internal state is updated, so future `Move()` calls reflect the most recent values.
 
 - The class remains consistent, keeping temporary changes in sync with the persistent properties without introducing additional state variables.
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>  
   
 
 ### Handling Default Values
@@ -846,6 +943,14 @@ This approach gives us the best of both worlds:
 - External scripts can influence movement without bypassing validation.  
 - Movement can respond to temporary or dynamic inputs without affecting the object’s persistent state unexpectedly.  
 - The class remains modular, flexible, and easy to maintain.
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
 
 ---
 
@@ -905,6 +1010,14 @@ Now that we have added our flags, we can use them to control when the object is 
 
 
 ```
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
   
 ### Updating `Move()` with `_isMoving`
 With the current flags implemented, `_isMoving` is only true if `_moveOnAwake` is `true`.
@@ -940,6 +1053,14 @@ But what if we want the object to remain still at the start and have an external
 ```
 This ensures that any external call to `Move()` triggers the object to **keep moving every frame**.
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ---
 ## Implement a Stop() method
 Once an object is moving, there is no way to stop it. At first, you might think we could simply set the speed to zero to halt movement. However, this approach has a drawback: if `Move()` is called again later, any new speed values would immediately override the zero, and the object would start moving again unintentionally.
@@ -957,6 +1078,14 @@ public void Stop()
 
 }//end Stop()
 ```
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
 
 ---
 # 🎉 New Achievement: Refactored Movement
