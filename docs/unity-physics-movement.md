@@ -51,6 +51,65 @@ Choosing the right type is important. Use `Static` for immovable objects, `Kinem
 
 By understanding these three types, you’ll know when to use `Rigidbody`, how your objects will interact, and how to design movement and collisions in your scene.
 
+### Accessing Rigidbody
+To move a GameObject with physics, you need to work with its `Rigidbody` component. Unlike the `Transform` (which every GameObject has by default), not all GameObjects automatically include a `Rigidbody`, you have to **add it yourself** in the Inspector.
+
+That means you can't just call it directly like we do with:
+
+`transform.position` 
+
+Instead we have to make a **reference** to store the `Rigidbody` attached to this object:
+```csharp
+    // Reference to the object's Rigidbody component
+    private Rigidbody _rigidBody;
+```
+Then we _set_ this variable to the actual `Rigidbody` on the GameObject:
+
+```csharp
+    //Set reference to the Rigidbody component
+    _rigidBody = GetComponent<Rigidbody>(); 
+```
+
+#### Using `GetComponet<T>()`
+Unity uses a **component-based system**, where each GameObject is made up of components (Transform, Rigidbody, Collider, etc.).
+
+To access any of these components via script, you use the `GetComponent<T>()` method, which essentially tells Unity to **find the component of type _T_ attached to this GameObject**.
+
+The type isn't limited to built-in Unity components, you can also use it for any custom component (i.e., class) you create and attach to a GameObject.
+
+Once you store the reference in a variable, you can use it to **access public properties** (like velocity, mass, or drag) or **call methods** on that component.
+
+#### What if No Component is Found?
+
+If `GetComponent<T>()` doesn’t find the requested component on the GameObject, it returns **null**.
+
+This means any logic that tries to access the component (e.g., `_rigidBody.velocity = ...`) will throw a `NullReferenceException`.
+
+To prevent this, it’s good practice to **check for null** before using the reference:
+
+```csharp
+if (_rigidBody == null)
+{
+    return; // Exit the method if the Rigidbody is missing
+}
+else
+{
+    _rigidBody.velocity = Speed * Direction;
+} 
+```
+
+If the **component is essential for the class to work**, you can enforce its presence using Unity’s `[RequireComponent]` attribute. This ensures that the **component is always added** to the GameObject, so the reference will never be `null`:
+```csharp
+    [RequireComponent(typeof(Rigidbody))]
+    public class MoveRigidbody : MonoBehaviour
+    {
+        // Your class logic here
+    }
+```
+
+Using `[RequireComponent]` helps avoid null reference errors and ensures your class always has the components it needs to function properly.
+
+
 ## Physics Movement 
 
 By default, if two objects with physics are placed above each other in the scene, gravity will immediately take effect, and they will fall naturally. But Unity’s physics system does more than just apply **gravity**, it also handles **collisions, momentum, and other forces**:
@@ -69,7 +128,50 @@ However, if you want **more control over how your GameObjects move**, Unity prov
 
 ### Velocity Movement 
 
-Velocity (v) describes how fast and in which direction an object moves. Units: meters per second (m/s). It’s essentially displacement over time.
+**Velocity** describes how fast and in which direction an object moves; essentially displacement over time, measured in meters per second **(m/s)**.
+Its basic equation is:
+
+$$
+v = \frac{\Delta x}{\Delta t}
+$$
+
+Where:  
+
+- **\( v \)** = velocity (vector, includes direction)  
+- **\( \Delta x \)** = change in position (displacement)  
+- **\( \Delta t \)** = change in time  
+
+**For Example**
+
+If a cube moves **5 meters to the right in 2 seconds**, its velocity is:
+
+$$
+v = \frac{5 \, \text{m}}{2 \, \text{s}} = 2.5 \, \text{m/s (to the right)}
+$$
+
+> [!NOTE]
+> 
+> In physics, **speed** is just **how fast an object moves**, while **velocity** includes both **speed and direction**.
+> Unity’s `Rigidbody.velocity` follows this definition, as it is a `Vector3`. Storing both **how fast and which way the object is moving**.
+
+
+
+
+
+
+
+Force-based movement
+
+rb.AddForce(direction * forceAmount);
+
+
+Feels more “realistic.”
+
+Acceleration, momentum, drag apply naturally.
+
+Good for cars, projectiles, floating objects.
+
+
 
 
 
