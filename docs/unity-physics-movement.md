@@ -264,10 +264,12 @@ Using `Rigibody.velocity` allows us to:
 - Automatic physics interactions (collisions, slopes, friction).  
 - Continuous motion without needing to update the position every frame manually.
 
+<br>
 > [!WARNING]
 >
 > The example above uses `Rigidbody.velocity` to demonstrate the syntax for accessing the property. However, in practice, you s**hould never use the class name directly**. You always access the velocity through a **reference to the component**.
 > In our case, that reference is `_rigidBody.velocity`. The reference name could vary, some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
+<br>
 
 This mirrors real-world physics: the veheical keeps moving at a set velocity until another force (collision, player input, braking) changes it.
 
@@ -302,9 +304,11 @@ private void Move(Vector3? direction = null, float? speed = null)
   - Instead we would check the velocity value :  `if (!_rigidbody.velocity == Vector3.zero)`
   - This check in nullfied here since we do not need to check the update for this condition any longer.
 
+<br>
 > [!NOTE]
 >
 > Remeber to remove the delecration for the flag `_isMoving` at the top of the class too.
+<br>
 
 **1. No `Time.deltaTime` Needed**
   - Rigidbody velocity is measured in **meters per second**, so Unity automatically moves the object each physics step.  
@@ -364,9 +368,11 @@ In our current class, **calling `Move()` was the only thing happening in `Update
 
 ```
 
+<br>
 > [!Caution]
 > 
 > If your `Update()` method contains other logic besides movement, you would only remove the `Move()` call, leaving the rest of the `Update()` intact.
+<br>
 
 ---
 
@@ -494,9 +500,11 @@ Finally, we provide a method to **trigger braking**. Unlike `Stop()`, which imme
 
 While _we could integrate_ this behavior into the `Stop()` method, keeping a separate `Brake()` method has a few advantages: it allows for **immediate stops when necessary**, provides **clearer, more explicit control**, and makes it easier to reason about the object’s behavior in different gameplay situations. 
 
+<br>
 > [!NOTE]
 >
 > Because the **gradual deceleration** using Lerp occurs over multiple physics steps, it must be handled in `FixedUpdate()`. The `Brake()` method’s role is simply to set the flag that signals when to start applying the Lerp-based slowdown.
+<br>
 
 ```csharp
 
@@ -511,7 +519,147 @@ public void Brake()
 }//end Brake()
 ```
 
+---
 
+## Modifiying FixedUpdate() for Braking
+
+To implement **gradual braking**, we first need to update `FixedUpdate()` to check if the object is currently braking by examining the `_isBraking` flag. This ensures that our physics calculations happen in sync with Unity’s physics system.
+
+```csharp
+    //Called at fixed intervals (i.e. physic steps) 
+    private void FixedUpdate()
+    {
+        // Only update velocity if speed or direction changed
+        if (Speed != _currentSpeed || Direction != _currentDirection)
+        {
+            Move(Direction, Speed);
+        }
+
+        // is the object currently braking 
+        if (_isBraking)
+        {
+            
+        }
+
+    }//end FixedUpdate()
+```
+If the object is **braking**, we need to implement `Vector3.Lerp`. In doing so, it’s important to understand how Lerp is calculated:
+
+$$
+\text{newValue} = \text{currentValue} + (\text{targetValue} - \text{currentValue}) \times t
+$$
+
+Where:
+
+- **newValue** = the updated value  
+- **currentValue** = the current value  
+- **targetValue** = the value you want to approach  
+- **t** = interpolation factor (usually between 0 and 1)
+
+In this case our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
+
+<br>
+
+> [!NOTE]
+>
+> When we set a Rigidbody’s velocity directly (e.g., `_rigidBody.velocity = Speed * Direction`), Unity applies it in meters per second and not by varing framerate, so there’s no need to multiply by `Time.deltaTime`.
+>
+> However, `Vector3.Lerp` moves a value by a **fraction per call**, not a real-world speed. To make the deceleration consistent over time, we multiply by `Time.fixedDeltaTime`, which **represents the duration of a single physics step**. This ensures that braking behaves consistently, regardless of the physics update rate.
+<br>
+
+Since the velocity is multiplied by a fraction each frame, it gets closer and closer to zero but **will never reach exactly zero**. Therfore, we need to define a **threshold** to decide when the object is “effectively stopped.”  
+
+A common approach is:
+
+$$
+\text{if } |\text{velocity}| < \epsilon, \text{ then consider velocity zero.}
+$$
+
+For our use case,  **ε** (epsilon) would be something like **0.01 m/s**.
+
+This means we not only need to perform the Lerp calculation, but also determine when the velocity is close enough to zero. Since this involves multiple calculations, placing all of this directly in `FixedUpdate()` would violate the **Single Responsibility Principle**, making the method harder to read and maintain.
+
+Instead, we can extract the braking logic into its own method—e.g., `ApplyBraking()`, and call it from `FixedUpdate()`. This keeps `FixedUpdate()` clean, containing only the minimal logic of **checking the braking flag and delegating the work**.
+
+**Modify `FixedUpdate()`** to call `ApplyBraking()`
+```csharp
+    //Called at fixed intervals (i.e. physic steps) 
+    private void FixedUpdate()
+    {
+        // Only update velocity if speed or direction changed
+        if (Speed != _currentSpeed || Direction != _currentDirection)
+        {
+            Move(Direction, Speed);
+        }
+
+        // is the object currently braking 
+        if (_isBraking)
+        {
+            ApplyBraking();
+        }
+
+    }//end FixedUpdate()
+```
+
+---
+## Create Method to Apply Braking 
+The `ApplyBrake()` method will be responsible for gradually reducing the Rigidbody’s velocity toward zero while ensuring that we stop once the object is effectively at rest.
+
+### Checking Velocity with Magnitude
+
+As mentioned above, Lerp gradually reduces the Rigidbody’s velocity toward zero but never reaches exactly zero. To determine when a GameObject is **effectively stopped**, we check the **magnitude** of its velocity vector.
+
+The **magnitude** represents the length of a vector, which in this case corresponds to the object’s overall speed:
+
+$$
+|\mathbf{v}| = \sqrt{v_x^2 + v_y^2 + v_z^2}
+$$
+
+Where:
+
+- \(v_x, v_y, v_z\) are the components of the velocity along each axis.  
+
+By comparing this magnitude to a small threshold (e.g., 0.01 m/s) as in:
+
+```csharp
+_rigidBody.velocity.magnitude < 0.01f
+```
+We can decide when to consider the object stopped and take any necessary actions, such as setting velocity explicitly to zero or disabling braking. 
+
+### Create `ApplyBraking()`
+
+Our `ApplyBraking()` method is called internally by `FixedUpdate()` and triggered via the public `Brake()` method. Since it is used only within the class, it can remain **private**.
+
+This method gradually interpolates the Rigidbody’s velocity toward zero and checks when it is close enough to stop. Once the object is effectively at rest, it calls `Stop()` and clears the `_isBraking` flag.
+
+```csharp
+    /// <summary>
+    /// Gradually reduces the Rigidbody's velocity toward zero using linear interpolation (Lerp).
+    /// </summary>
+    private void ApplyBrake()
+    {
+        // Gradually reduce velocity
+        _rigidBody.velocity = Vector3.Lerp(_rigidBody.velocity, Vector3.zero, _deceleration * Time.fixedDeltaTime);
+
+        // Stop braking once velocity is close enough to zero
+        if (_rigidBody.velocity.magnitude < 0.01f)
+        {
+            Stop();
+            _isBraking = false;
+        }
+
+    }//end Brake()
+
+```
+
+> [!NOTE]
+>
+> The object must have zero velocity to fully stop. While we could directly set `_rigidBody.velocity = Vector3.zero` here, we already handle that in the `Stop()` method. To follow the **DRY (Don't Repeat Yourself)** principle, we simply call `Stop()` instead of duplicating the code.
+
+
+
+
+----
 
 
 
@@ -525,12 +673,6 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
-
-## Updating FixedUpdate() for Braking
-
-When implementing gradual deceleration using Vector3.Lerp, it’s important to understand one key behavior: Lerp never reaches the target value exactly. Each frame, it moves a fraction of the remaining distance toward the target (in our case, zero velocity). Mathematically, this is because Lerp calculates:
-
-
 
 
 
