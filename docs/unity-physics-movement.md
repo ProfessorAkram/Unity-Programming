@@ -393,6 +393,31 @@ That said, **we don't need to call `Move()` every physics step**, only when **Sp
     private float _currentSpeed;
     private Vector3 _currentDirection;
 ```
+**2. Set Current Values** for  speed and direction in the `Start()`
+While our **Speed** and **Direction** properties are initialized in `Awake()`, we wait until `Start()` to copy those values into `_currentSpeed` and `_currentDirection`. The reason is order of execution:
+
+- `Awake()` runs very early in the Unity lifecycle and is responsible for preparing the object. Here, we make sure the properties are set and validated against their serialized field values from the Inspector.
+- By the time `Start()` runs, we can be confident those values are finalized. Assigning them to our "current" fields at this point gives us a reliable snapshot of the starting speed and direction as the game begins.
+
+In short, `Awake()` ensures the properties are correct, and `Start()` records those validated values as the object’s initial state for gameplay.
+
+```csharp
+    // Start is called once before the first Update
+    private void Start()
+    {
+        
+        _currentSpeed = Speed;
+        _currentDriection =Direction;
+
+        if (_moveOnStart)
+        {
+            Move();
+
+        }//end if(_moveOnStart)
+        
+    }//end Start()
+
+```
 
 **2. Create `FixedUpdate()`** and check for Speed and Direction changes
 
@@ -673,6 +698,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
