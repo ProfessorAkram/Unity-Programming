@@ -490,6 +490,26 @@ Next, we need a **flag to indicate when braking is active**. This is a simple **
 
 ```
 
+Finally, we provide a method to **trigger braking**. Unlike `Stop()`, which immediately sets the Rigidbody’s velocity to zero, the `Brake()` method does not **directly modify velocity**. Its sole responsibility is to **set a flag** that tells the physics system to start gradually decelerating the object.
+
+While _we could integrate_ this behavior into the `Stop()` method, keeping a separate `Brake()` method has a few advantages: it allows for **immediate stops when necessary**, provides **clearer, more explicit control**, and makes it easier to reason about the object’s behavior in different gameplay situations. 
+
+> [!NOTE]
+>
+> Because the **gradual deceleration** using Lerp occurs over multiple physics steps, it must be handled in `FixedUpdate()`. The `Brake()` method’s role is simply to set the flag that signals when to start applying the Lerp-based slowdown.
+
+```csharp
+
+/// <summary>
+/// Triggers gradual deceleration of the object.
+/// </summary>
+public void Brake()
+{
+    // Enable braking; FixedUpdate will handle slowing the Rigidbody
+    _isBraking = true;
+
+}//end Brake()
+```
 
 
 
@@ -506,6 +526,9 @@ Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
 
+## Updating FixedUpdate() for Braking
+
+When implementing gradual deceleration using Vector3.Lerp, it’s important to understand one key behavior: Lerp never reaches the target value exactly. Each frame, it moves a fraction of the remaining distance toward the target (in our case, zero velocity). Mathematically, this is because Lerp calculates:
 
 
 
