@@ -293,7 +293,7 @@ private Vector3 _direction = Vector3.right; // Default direction is right
 
 private void Awake()
 {
-    //Set GameObject's inital position
+    //Set GameObject's initial position
     transform.position = Vector3.zero;
 }//end Awake()
 
@@ -363,6 +363,75 @@ private void Move()
 }//end Move()
 
 ```
+---
+## Using Debug.Log for Debugging
+
+So far, we’ve focused on getting our object to move correctly. Up to this point, we haven’t needed to check the internal state of our code because the movement is simple and visible in the Scene view.
+
+However, as projects get more complex, it’s often not enough to just watch objects move. Sometimes you need to know what values your variables hold at runtime, or whether your methods are being called correctly. This is where `Debug.Log` comes in.
+
+`Debug.Log` is a simple way to print messages to the Unity Console, helping you understand what’s happening in your code as the game runs.
+
+For example, you can log the object’s position every frame:
+```csharp
+private void Move()
+{
+    // Move GameObject
+    transform.position += _speed * Time.deltaTime * _direction;
+
+    // Log the new position to the Console
+    Debug.Log("Current Position: " + transform.position);
+}
+
+```
+### Debug.Log Variants and Viewing Messages
+Above, we made use of Unity's generic `Debug.Log`, which is used to track normal runtime values and flow. However, Unity provides two other types of console messages for debugging:
+
+1. **Debug.LogWarning** – Highlights unusual situations that aren’t necessarily breaking the game, but might need attention. For example, if an object’s speed exceeds a threshold:
+```csharp
+Debug.LogWarning("Object is moving unusually fast!");
+```
+Warnings appear in the Console with a **yellow caution** icon before the message, helping them stand out.
+
+2. **Debug.LogError** – Marks critical problems or errors that need immediate fixing. For instance, if a position becomes invalid:
+
+```csharp
+Debug.LogError("Object position is invalid!");
+```
+Errors appear in the Console with a **yellow explanation** icon before the message, helping them stand out.
+
+### Viewing Messages in the Editor
+
+Since `Move()` runs every frame (inside `Update()`), using `Debug.Log` will print a new line to the Console each frame, which can quickly become overwhelming.
+
+> [!TIP]
+> Unity collapses repeated identical messages automatically. This keeps your Console readable by showing _“x repeated messages”_ instead of spamming new lines.
+
+Additionally, you can click the **Collapse** button at the top of the Console to combine repeated messages, making it much easier to track changes over time.
+
+### Best Practices for Debugging
+
+`Debug.Log`, as the name implies, is for **debugging**. Once you’ve used it to verify that your code is working correctly and your variables are behaving as expected, you typically no longer need these messages. At that point, it’s a good idea to **comment out or remove them**, especially inside methods like Update() that run every frame, to avoid unnecessary performance overhead.
+
+```csharp
+// Debug.Log("Current Position: " + transform.position);
+```
+#### Using `#if UNITY_EDITOR` for Editor-Only Debugging
+Sometimes, you want debug messages to **remain visible while working in the Unity Editor**, but ensure they are **excluded from the final build**. The `#if UNITY_EDITOR` preprocessor directive makes this easy.
+
+Code placed inside a `#if UNITY_EDITOR` block runs **only in the Editor**:
+
+```csharp
+#if UNITY_EDITOR
+Debug.Log("Current Position: " + transform.position);
+#endif
+```
+When you build the game for PC, mobile, or console, the compiler **completely removes this code**, so it has **no impact on performance or memory** in the final game. This allows you to keep helpful debug messages while testing, without worrying about them affecting your players or the shipped build.
+
+Using `#if UNITY_EDITOR` provides several advantages. It’s **safe for production builds**, letting you leave debug statements in your code without slowing down the game or cluttering output. It also helps produce **cleaner, more efficient builds**, since messages inside these blocks are automatically excluded, eliminating the need to manually remove or comment them out before shipping.
+
+> [!TIP]
+> Use `#if UNITY_EDITOR` whenever you have debug code that is helpful during development but not needed in the released game. This keeps your workflow efficient and ensures your builds remain optimized.
 
 ---
 
@@ -406,6 +475,8 @@ public class MoveTransform : MonoBehaviour
      {
          //Move GameObject
          transform.position += _speed * Time.deltaTime * _direction;
+
+        // Debug.Log("Current Position: " + transform.position); 
      
      }//end Move()
 
@@ -482,7 +553,7 @@ For example:
 ### Updating the `Move()`
 Since we now have properties for `Speed` and `Direction`, we should also update the `Move()` method to use them instead of the private fields. This ensures that any validation or dynamic changes applied through the properties are respected during movement.
 
-Currently our `Move()` method implments the following:
+Currently, our `Move()` method implements the following:
 
 ```csharp
 transform.position += _speed * Time.deltaTime * _direction;
@@ -491,7 +562,6 @@ transform.position += _speed * Time.deltaTime * _direction;
 
 ```csharp
 transform.position += Speed * Time.deltaTime * Direction;
-
 ```
 > [!TIP]
 > This is a small but important refactor that keeps your class **consistent**, **encapsulated**, and **flexible**.
@@ -621,7 +691,7 @@ This approach guarantees that values set in the Inspector are **clamped and norm
 ## Visual Cues 
 While we have implemented validation for our fields, these constraints may not be immediately obvious in the Unity Editor. For example, if a level designer sets `Direction` to `(3, 0, 4)` or `Speed` to `20`, the property setters will automatically correct the values when the game runs. However, the designer might not understand why the values suddenly changed.
 
-One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in the Inspector. This displays a small piece of text when you hover your mouse over the field, providing guidance on its purpose, valid values, or expected behavior.
+One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in the Inspector. This displays a small piece of text when you hover your mouse over the field, providing information on its purpose, valid values, or expected behavior.
 
 ```csharp
      [SerializeField]
@@ -640,7 +710,7 @@ One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in 
 ### Tighter constraints
 While our `[Tooltip]` provides some visual context about the constraints on the `_speed` variable, and the mere inclusion of `_maxSpeed` should suggest a limit, these cues may not be **immediately obvious to the level designer**.
 
-With that said, we might want to might want to enforce **tighter constraints** while simultaneously making valid speed options more apparent to the designer.
+With that said, we might want to enforce **tighter constraints** while simultaneously making valid speed options more apparent to the designer.
 
 
 To make valid speed options clearer and enforce tighter constraints, we can convert `_maxSpeed` to a **constant** and apply Unity's `[Range(min, max)]` attribute to `_speed`.
@@ -661,7 +731,7 @@ private const float MAX_SPEED = 10f;
 
 > [!CAUTION]
 > **DO NOT** forget to also update the `Speed` property, after switching `_maxSpeed` to the `MAX_SPEED` **constant**.
-> 'set => _speed = Mathf.Clamp(value, 0f, MAX_SPEED);'
+> `set => _speed = Mathf.Clamp(value, 0f, MAX_SPEED);`
 
 ---
 
@@ -675,12 +745,12 @@ However, in many games, other objects or events need to control movement. For ex
 - A power-up temporarily boosts an enemy's speed.  
 - A boundary or collision triggers a change in direction.  
 
-Keeping `Move()` private avoids tight dependencies by default.However, to allow external scripts to influence movement safely and dynamically, we can make the method **public**.
+Keeping `Move()` private avoids tight dependencies by default. However, to allow external scripts to influence movement safely and dynamically, we can make the method **public**.
 
 > [!TIP]
->  Start with private methods to maintain self-contained behavior. When there’s a clear need for external control, you can expose the method through parameters or carefully designed public access.
+>  Start with **private** methods to **maintain self-contained behavior**. When there’s a clear need for **external control**, you can expose the method through parameters or carefully designed **public** access.
 
-### Accepting Paramters
+### Accepting Parameters
 Updating `Move()` to be public makes it accessible to other scripts. While our public properties allow external scripts to modify `Speed` and `Direction`, there are situations where it’s more convenient or efficient to pass temporary values directly to the method—such as responding to an event, applying a one-off speed adjustment, or triggering movement with a specific direction.
 
 To support this, we can modify the original private `Move()` method to accept `direction` and `speed` as parameters:
@@ -697,12 +767,19 @@ private void Move(Vector3 direction, float speed)
     Direction = direction;
     Speed = speed;
 
+    //Debug.Log("Direction: " + Direction);
+    //Debug.Log("Speed " + Speed);
+
     // Move the GameObject
     transform.position += Speed * Time.deltaTime * Direction;
 
 }//end Move()
 
 ```
+> [!TIP]
+> When dynamically setting variables, as in this case, it’s a good idea to verify that the **values are updating correctly**. Using `Debug.Log` here can help confirm that the `direction` and `speed` passed to the method are being applied as expected. Once you’ve verified that the values are correct and the movement behaves as intended, you should **remove or comment out the** `Debug.Log` **statements** to avoid unnecessary console output and potential performance overhead.
+
+
 #### Why assign parameters to the properties?
 
 Even though the values are temporary inputs for this method call, assigning them to the properties ensures that:
@@ -735,6 +812,9 @@ private void Move(Vector3? direction = null, float? speed = null)
     // Update properties to ensure validation and internal consistency
     Direction = moveDirection;
     Speed = moveSpeed;
+
+    //Debug.Log("Direction: " + Direction);
+    //Debug.Log("Speed " + Speed);
 
    // Move the GameObject using the resolved frame values
     transform.position += Speed * Time.deltaTime * Direction;
@@ -796,7 +876,7 @@ private bool _isMoving;
 > We do not set a value for `_isMoving` here. Instead, we will determine if the object should start moving at initialization using the value of `_moveOnAwake`.
 
 ### Testing Movement Control Flags
-Now that we added our flags, we can use them to control when the object is allowed to move.
+Now that we have added our flags, we can use them to control when the object is allowed to move.
 
 ```csharp
    private void Awake()
@@ -846,6 +926,9 @@ But what if we want the object to remain still at the start and have an external
         // Update properties to ensure validation and internal consistency
         Direction = moveDirection;
         Speed = moveSpeed;
+
+        //Debug.Log("Direction: " + Direction);
+        //Debug.Log("Speed " + Speed);
 
         // Flags the object as moving
         _isMoving = true;
@@ -973,6 +1056,9 @@ public class MoveTransform : MonoBehaviour
         // Update properties to ensure validation and internal consistency
         Direction = moveDirection;
         Speed = moveSpeed;
+
+        //Debug.Log("Direction: " + Direction);
+        //Debug.Log("Speed " + Speed);
         
         // Flags the object as moving
         _isMoving = true;
