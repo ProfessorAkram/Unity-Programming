@@ -389,7 +389,7 @@ public class MoveTransform : MonoBehaviour
      // Awake is called once on initialization         
      private void Awake()
      {
-         //Set GameObject's inital position
+         //Set GameObject's initial position
          transform.position = Vector3.zero;
      }//end Awake()
 
@@ -634,6 +634,9 @@ One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in 
      
 ```
 
+> [!TIP]
+> Because `[Tooltip]` already describes the variable, adding an inline comment would be redundant.
+
 ### Tighter constraints
 While our `[Tooltip]` provides some visual context about the constraints on the `_speed` variable, and the mere inclusion of `_maxSpeed` should suggest a limit, these cues may not be **immediately obvious to the level designer**.
 
@@ -763,4 +766,235 @@ This approach gives us the best of both worlds:
 - External scripts can influence movement without bypassing validation.  
 - Movement can respond to temporary or dynamic inputs without affecting the object’s persistent state unexpectedly.  
 - The class remains modular, flexible, and easy to maintain.
+
+---
+
+## Adding Movement Control Flags
+In many games, we don’t always want an object to start moving immediately or move continuously without restriction. For example:
+
+- An enemy might wait before chasing the player.
+- A moving platform might start only when a button is pressed.
+- A power-up might temporarily freeze player movement.
+
+To manage these situations, we can introduce **control flags** — simple **Boolean variables** that act as switches to turn certain behaviors **on or off**. Flags provide flexible control without rewriting code. Instead of hard-coding when movement should occur, we can toggle these flags based on game logic.
+
+In our `MoveTransform` component, we will add two flags:
+
+- **_moveOnAwake** → Determines whether the object starts moving automatically when initialized.
+- **_isMoving** → Tracks whether the object is currently moving. This is updated whenever `Move()` or `Stop()` is called.
+
+```csharp
+[SerializeField]
+[Tooltip("Should the object be moving on initialization?")]
+private bool _moveOnAwake = true;
+
+// Runtime movement flag
+private bool _isMoving;
+
+```
+> [!NOTE]
+> We do not set a value for `_isMoving` here. Instead, we will determine if the object should start moving at initialization using the value of `_moveOnAwake`.
+
+### Testing Movement Control Flags
+Now that we added our flags, we can use them to control when the object is allowed to move.
+
+```csharp
+   private void Awake()
+    {
+        // Validate initial speed and direction via properties
+        Speed = _speed;
+        Direction = _direction;
+        
+        //Set GameObject's initial position
+        transform.position = Vector3.zero;
+
+        // Determine if the object should start moving
+       _isMoving = _moveOnAwake;
+      
+    }//end Awake()
+
+    private void Update()
+    {
+       if(_isMoving)
+       {
+         Move();
+
+       }//end if(_isMoving)
+
+    }//end Update()
+
+
+```
+  
+### Updating `Move()` with `_isMoving`
+With the current flags implemented, `_isMoving` is only true if `_moveOnAwake` is `true`.
+
+But what if we want the object to remain still at the start and have an external script trigger movement? In that case, we need to ensure that whenever `Move()` is called, `_isMoving` is set to `true`.
+
+```csharp
+    /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    private void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
+
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
+
+        // Flags the object as moving
+        _isMoving = true;
+
+        // Move the GameObject using the resolved frame values
+        transform.position += Speed * Time.deltaTime * Direction;
+
+    }//end Move()
+```
+This ensures that any external call to `Move()` triggers the object to **keep moving every frame**.
+
+---
+## Implement a Stop() method
+Once an object is moving, there is no way to stop it. At first, you might think we could simply set the speed to zero to halt movement. However, this approach has a drawback: if `Move()` is called again later, any new speed values would immediately override the zero, and the object would start moving again unintentionally.
+
+Instead, we can use our `_isMoving` flag to control movement. By setting `_isMoving` to `false`, we tell the object to **stop updating its position**, regardless of its speed. This approach separates the concept of _“how fast the object moves” _ from _“whether it is moving at all,”_ giving us cleaner and more predictable control over movement.
+
+```csharp
+    /// <summary>
+    /// Stops the object's movement by updating the movement flag.
+    /// </summary>
+public void Stop()
+{
+    // Flags the object as stopped
+    _isMoving = false;
+
+}//end Stop()
+```
+
+---
+# 🎉 New Achievement: Refactored Movement
+
+Congratulations! You've **refactored** the `MoveTransform` component and with these improvements, the object now:
+
+- Implements properties with validation for `Speed` and `Direction`.
+
+- Moves automatically if `_moveOnAwake` is `true`.
+
+- Can be started and stopped dynamically via `Move()` and `Stop()`.
+
+- Maintains `_speed` and `_direction` limits to prevent unintended behavior.
+
+These changes make the movement system more **robust**, **predictable**, and **easier to extend** in future gameplay scenarios.
+
+```csharp
+using UnityEngine;
+
+public class MoveTransform : MonoBehaviour
+{
+    // Serialized fields for initial values
+
+    [SerializeField]
+    [Range(0f, MAX_SPEED)]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    private float _speed = 5f;
+
+
+    // Maximum speed allowed
+    private const float MAX_SPEED = 10f;
+
+    
+    // Direction of movement
+    [SerializeField]
+    private Vector3 _direction = Vector3.right; 
+    
+    [SerializeField]
+    [Tooltip("Should the object be moving on initialization?")]
+    private bool _moveOnAwake = true;
+
+    // Runtime movement flag
+    private bool _isMoving;
+    
+    
+    // Public properties with encapsulation
+    
+    public float Speed
+    {
+        get => _speed; 
+        set => _speed = Mathf.Clamp(value, 0f, MAX_SPEED);
+    }
+    
+    public Vector3 Direction
+    {
+        get => _direction;
+        set => _direction = value.normalized;
+    }
+    
+    
+
+    // Awake is called once on initialization         
+    private void Awake()
+    {
+        // Validate initial speed and direction via properties
+        Speed = _speed;
+        Direction = _direction;
+        
+        //Set GameObject's initial position
+        transform.position = Vector3.zero;
+        
+        // Determine if the object should start moving
+        _isMoving = _moveOnAwake;
+    }//end Awake()
+
+    // Update is called once per frame
+    private void Update()
+    {
+        if(_isMoving)
+        {
+            Move();
+
+        }//end if(_isMoving)
+    }//end Update()
+     
+    /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    private void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
+
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
+        
+        // Flags the object as moving
+        _isMoving = true;
+
+        // Move the GameObject using the resolved frame values
+        transform.position += Speed * Time.deltaTime * Direction;
+
+    }//end Move()
+    
+    /// <summary>
+    /// Stops the object's movement by updating the movement flag.
+    /// </summary>
+    public void Stop()
+    {
+        // Flags the object as stopped
+        _isMoving = false;
+
+    }//end Stop()
+
+}//end MoveTransform
+```
+
+
+
 
