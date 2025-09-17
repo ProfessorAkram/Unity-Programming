@@ -17,7 +17,7 @@ A `Rigidbody` component allows a GameObject to be affected by Unity’s physics 
 
 The key difference is that movement should now **happen through the `Rigidbody`**, not by changing `transform.position` directly. If you continue to move an object by setting its `Transform`, you’ll bypass physics again, resulting in unrealistic behavior and broken collision detection.
 
-> **🗡️ Quest: Enter the Physical Realm**
+> **🗡️ Quest: Adding a Rigidbody**
 >
 > Test how game objects react when using physcis.
 > 
@@ -53,7 +53,23 @@ By understanding these three types, you’ll know when to use `Rigidbody`, how y
 
 ## Physics Movement 
 
+By default, if two objects with physics are placed above each other in the scene, gravity will immediately take effect, and they will fall naturally. But Unity’s physics system does more than just apply **gravity**, it also handles **collisions, momentum, and other forces**:
 
+- **Collisions:** When two Rigidbody objects collide, Unity calculates how they should bounce, slide, or stop based on their mass, velocity, and drag. For example, a heavy ball hitting a lighter cube will push the cube more than the other way around.
+
+- **Momentum:** Moving objects carry momentum, which affects how they interact during collisions. A fast-moving object will have a stronger impact than a slow one.
+
+- **Forces and Drag:** Objects can be affected by forces like wind, explosions, or friction. Drag (air resistance) slows them down naturally over time.
+
+- **Continuous Interaction:** Physics objects automatically respond to each other and the environment. For instance, stacking boxes will cause them to settle realistically, topple over, or slide if one is pushed.
+
+Once a Rigidbody is added, Unity simulates all of these physics behaviors automatically, based on the setting applied in the Rigidbody. This allows for realistic interactions between objects without you having to manually calculate collisions or momentum.
+
+However, if you want **more control over how your GameObjects move**, Unity provides two main approaches using physics: **velocity-based movement** and **force-based movement**.
+
+### Velocity Movement 
+
+Velocity (v) describes how fast and in which direction an object moves. Units: meters per second (m/s). It’s essentially displacement over time.
 
 
 
