@@ -1398,14 +1398,18 @@ This method keeps our **`Update()` loop clean** by separating the decision-makin
 
 
 <br> 
+
 > [!NOTE]
 > When checking multiple discrete options (`Move`, `Stop`, `None`), a **switch** is clearer than using multiple `if` statements, making the code more readable and easy to extend. Adding future actions like `Brake` or `Reverse` only requires adding new case blocks.
+
 <br>
 
 <br>
+
 > **✔️ CHECK POINT**
 > 
 > Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+> 
 <br>
 
 
