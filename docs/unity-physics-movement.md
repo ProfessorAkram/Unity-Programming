@@ -1,4 +1,4 @@
-# Unity Physcis Movment
+# Unity Physics Movement
 
 Previously, we created a [`MoveTransform Class`](unity-basic-movement.md) class that allowed for basic movement of a GameObject using transform.position. While functional, there’s one drawback: it doesn’t make use of **Unity’s physics system**. This means:
 
@@ -19,7 +19,7 @@ The key difference is that movement should now **happen through the `Rigidbody`*
 
 > **🗡️ Side-Quest: Adding a Rigidbody**
 >
-> Test how game objects react when using physcis.
+> Test how game objects react when using physics.
 > 
 > 1. Create a simple **Cube** in your scene.
 > 2. Add a `Rigidbody` component from the Inspector.
@@ -36,29 +36,29 @@ Objects that never move should be set as `Static` in the **Inspector**. These ob
 - **Use case:** Floors, walls, platforms—anything that stays in place but should block or support other objects.
 
 **2. Kinematic Objects**
-Objects whoes movement is controlled entirely through scripts, usually via `trasnform.position`, and **ignore physic forces** like gravity, but still need to collide with other objects. 
+Objects whose movement is controlled entirely through scripts, usually via `transform.position`, and **ignore physical forces** like gravity, but still need to collide with other objects. 
   - **Use case:** Moving platforms, doors, or any object that must be animated or moved by code while still interacting with dynamic objects.
 
 > [!NOTE]
 >
-> If you only moved it with `transform.position` and no `Rigidbody`, fast-moving objects might clip through these objects. For examplea moving platform in a platformer where the player can land on it, and the platform moves via `trasnform.position`. Since the platform still needs interact with the player ( and possibly other objects), they still require a `Rigidbody` with `Is Kinematic` checked. This ensures **collisions** work correctly **without applying physics forces** to the object itself.
+> If you only moved it with `transform.position` and no `Rigidbody`, fast-moving objects might clip through these objects. For example, a moving platform in a platformer where the player can land on it, and the platform moves via `transform.position`. Since the platform still needs to interact with the player ( and possibly other objects), it still requires a `Rigidbody` with `Is Kinematic` checked. This ensures **collisions** work correctly **without applying physics forces** to the object itself.
 
 **3. Dynamic Objects**
- Objects that are fully affected by physcis (e.g. gravity, forces, drag, and collisions). 
+ Objects that are fully affected by physics (e.g. gravity, forces, drag, and collisions). 
   - **Use case:** Characters, balls, projectiles—anything that moves naturally in response to forces or collisions.
 
-Choosing the right type is important. Use `Static` for immovable objects, `Kinematic` when you need scripted motion without full physics control and `Dynamic` for physics-driven objects.
+Choosing the right type is important. Use `Static` for immovable objects, `Kinematic` when you need scripted motion without full physics control, and `Dynamic` for physics-driven objects.
 
 By understanding these three types, you’ll know when to use `Rigidbody`, how your objects will interact, and how to design movement and collisions in your scene.
 
 ### Accessing Rigidbody
-To move a GameObject with physics, you need to work with its `Rigidbody` component. Unlike the `Transform` (which every GameObject has by default), not all GameObjects automatically include a `Rigidbody`, you have to **add it yourself** in the Inspector.
+To move a GameObject with physics, you need to work with its `Rigidbody` component. Unlike the `Transform` (which every GameObject has by default), not all GameObjects automatically include a `Rigidbody`; you have to **add it yourself** in the Inspector.
 
 That means you can't just call it directly like we do with:
 
 `transform.position` 
 
-Instead we have to make a **reference** to store the `Rigidbody` attached to this object:
+Instead, we have to make a **reference** to store the `Rigidbody` attached to this object:
 ```csharp
     // Reference to the object's Rigidbody component
     private Rigidbody _rigidBody;
@@ -75,7 +75,7 @@ Unity uses a **component-based system**, where each GameObject is made up of com
 
 To access any of these components via script, you use the `GetComponent<T>()` method, which essentially tells Unity to **find the component of type _T_ attached to this GameObject**.
 
-The type isn't limited to built-in Unity components, you can also use it for any custom component (i.e., class) you create and attach to a GameObject.
+The type isn't limited to built-in Unity components; you can also use it for any custom component (i.e., class) you create and attach to a GameObject.
 
 Once you store the reference in a variable, you can use it to **access public properties** (like velocity, mass, or drag) or **call methods** on that component.
 
@@ -99,7 +99,7 @@ else
 ```
 
 If the **component is essential for the class to work**, you can enforce its presence using Unity’s `[RequireComponent]` attribute. 
-The attribute is placed before the class defintiion and the type of componet to be required is defined. Multiple `RequireComponent` attributes can be included.
+The attribute is placed before the class definition, and the type of component to be required is defined. Multiple `RequireComponent` attributes can be included.
 By using Unity’s `[RequireComponent]` attribute ensures that the **component is always added** to the GameObject, so the reference will never be `null`:
 ```csharp
     [RequireComponent(typeof(Rigidbody))]
@@ -126,8 +126,8 @@ Now that we are familiar with Unity's `Rigidbody` component, it’s time to crea
 This approach makes it easy to **reuse your existing logic** while upgrading your movement to use Unity's physics system.
 
 ### Get the `RigidBody` Component
-Before we can move our game object we need to get access to the `Rigidbody` componet as mentioned above. 
-To do this we need to update our `MoveRigidbody` class to the following: 
+Before we can move our game object, we need to get access to the `Rigidbody` component as mentioned above. 
+To do this, we need to update our `MoveRigidbody` class to the following: 
 
 ```csharp
 
@@ -162,7 +162,7 @@ public class MoveRigidbody: MonoBehaviour
 ### Enforce Physics for Dynamic Objects
 Earlier, we discussed the differences between the types of Unity physics objects. If we want this GameObject to interact properly with physics, it must be **dynamic** and not **kinematic**.
 
-By default, the `isKinematic` property is set to `false` when a `Rigidbody` is added. However, since our functionality **depends on the `Rigidbody` being dynamic**, and we can't be sure that the level designer has not manually changed this value. Whether intentional or not, we can avoid issues by enforcing it in `Awake()` after obtaining the Rigidbody reference:
+By default, the `isKinematic` property is set to `false` when a `Rigidbody` is added. However, since our functionality **depends on the `Rigidbody` being dynamic**, we can't be sure that the level designer has not manually changed this value. Whether intentional or not, we can avoid issues by enforcing it in `Awake()` after obtaining the Rigidbody reference:
 
 ```csharp
  // Awake is called once on initialization         
@@ -200,11 +200,19 @@ Setting `isKinematic = false` in code ensures that your `Rigidbody` will always 
 
 <br>
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ---
 
 ## Physics Movement 
 
-By default, if two objects with physics are placed above each other in the scene, gravity will immediately take effect, and they will fall naturally. But Unity’s physics system does more than just apply **gravity**, it also handles **collisions, momentum, and other forces**:
+By default, if two objects with physics are placed above each other in the scene, gravity will immediately take effect, and they will fall naturally. But Unity’s physics system does more than just apply **gravity**; it also handles **collisions, momentum, and other forces**:
 
 - **Collisions:** When two Rigidbody objects collide, Unity calculates how they should bounce, slide, or stop based on their mass, velocity, and drag. For example, a heavy ball hitting a lighter cube will push the cube more than the other way around.
 
@@ -214,7 +222,7 @@ By default, if two objects with physics are placed above each other in the scene
 
 - **Continuous Interaction:** Physics objects automatically respond to each other and the environment. For instance, stacking boxes will cause them to settle realistically, topple over, or slide if one is pushed.
 
-Once a Rigidbody is added, Unity simulates all of these physics behaviors automatically, based on the setting applied in the Rigidbody. This allows for realistic interactions between objects without you having to manually calculate collisions or momentum.
+Once a Rigidbody is added, Unity simulates all of these physics behaviors automatically, based on the settings applied in the Rigidbody. This allows for realistic interactions between objects without requiring you to calculate collisions or momentum manually.
 
 However, if you want **more control over how your GameObjects move**, Unity provides two main approaches using physics: **velocity-based movement** and **force-based movement**.
 
@@ -254,13 +262,13 @@ $$
 <br>
 
 >[!IMPORTANT]
->Starting with Unity 6.0, the `Rigidbody.velocity` property has been renamed to **`Rigidbody.linearVelocity`**. This rename is meant to clarifies that it measures **linear motion** only, distinguishing it from **angularVelocity** and making the API more intuitive.
+>Starting with Unity 6.0, the `Rigidbody.velocity` property has been renamed to **`Rigidbody.linearVelocity`**. This rename is meant to clarify that it measures **linear motion** only, distinguishing it from **angularVelocity** and making the API more intuitive.
 
 
-### When to Use Velocity Over Tranform
-Let's say that you are creating a **racing game**, whcih the players move at a **constant speed** along a track, smoothly responding to input.
+### When to Use Velocity Over Transform
+Let's say that you are creating a **racing game**, in which the players move at a **constant speed** along a track, smoothly responding to input.
 
-If we were to use the standard `transform.position` , the object would move but it would **ignores collisions and physics**, so the vehcial could clip through walls or other racers.  
+If we were to use the standard `transform.position`, the object would move, but it would **ignore collisions and physics**, so the vehicle could clip through walls or other racers.  
 
 Using `Rigidbody.linearVelocity` allows us to: 
 - Direct and consistent control of speed and direction.  
@@ -272,16 +280,16 @@ Using `Rigidbody.linearVelocity` allows us to:
 > [!WARNING]
 >
 > The example above uses `Rigidbody.velocity` to demonstrate the syntax for accessing the property. However, in practice, you **should never use the class name directly**. You always access the velocity through a **reference to the component**.
-> In our case, that reference is `_rigidBody.linearVelocity`. The reference name could vary, some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
+> In our case, that reference is `_rigidBody.linearVelocity`. The reference name could vary; some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
 > 
 <br>
 
-This mirrors real-world physics: the veheical keeps moving at a set velocity until another force (collision, player input, braking) changes it.
+This mirrors real-world physics: the vehicle keeps moving at a set velocity until another force (collision, player input, braking) changes it.
 
 ---
 
 ## Update `Move()`
-To move our objects with velocity we need to rewrite the `Move()` method to use the Rigidbody's velocity instead of `transform.position`.
+To move our objects with velocity, we need to rewrite the `Move()` method to use the Rigidbody's velocity instead of `transform.position`.
 
 ```csharp
 /// <summary>
@@ -305,14 +313,14 @@ private void Move(Vector3? direction = null, float? speed = null)
 ```
 #### Key Changes
 **1. Remove the `_isMoving` flag** 
-  - If the game object's velocity is greater than zero it will be moving, we do not need a flag to check this.
-  - Instead we would check the velocity value :  `if (!_rigidBody.linearVelocity == Vector3.zero)`
-  - This check in nullfied here since we do not need to check the update for this condition any longer.
+  - If the game object's velocity is greater than zero, it will be moving; we do not need a flag to check this.
+  - Instead, we would check the velocity value:  `if (!_rigidBody.linearVelocity == Vector3.zero)`
+  - This check was nullified here since we do not need to check the update for this condition any longer.
 
 <br>
 > [!NOTE]
 >
-> Remeber to remove the delecration for the flag `_isMoving` at the top of the class too.
+> Remember to remove the declaration for the flag `_isMoving` at the top of the class too.
 <br>
 
 **1. No `Time.deltaTime` Needed**
@@ -341,7 +349,7 @@ To make this clearer, we’ll rename the flag to `_moveOnStart` and add a `Start
 // Start is called once before the first Update
     private void Start()
     {
-        //Check if object moves on start
+        //Check if the object moves on start
         if (_moveOnStart)
         {
             Move();
@@ -374,13 +382,21 @@ If the call to `Move()` were the only thing happening in `Update()`, we could re
 
 ```
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ---
 
 ## Updating Speed or Direction
 
 At this point, whenever the `Move()` method is called, the object will continue moving as long as the Rigidbody’s velocity is not zero. Whenever `Move()` is called, we can pass new **speed** and **direction** values as arguments to update the Rigidbody’s velocity.
 
-However, if **Speed** or **Direction** properties change during gameplay, for example, via a power-up or player input, the Rigidbody’s velocity wont automatically update, because `Move()` is no longer being called every frame.
+However, if **Speed** or **Direction** properties change during gameplay, for example, via a power-up or player input, the Rigidbody’s velocity won't automatically update, because `Move()` is no longer being called every frame.
 
 Since `Move()` relies on physics, we could call it in `FixedUpdate()`, which is Unity’s **physics-timed update loop**. `FixedUpdate()` runs at a **consistent, fixed interval** (default 0.02 seconds, or 50 times per second), ensuring physics calculations like velocity, forces, and collisions remain stable and predictable, regardless of the frame rate.
 
@@ -394,7 +410,7 @@ That said, **we don't need to call `Move()` every physics step**, only when **Sp
     private Vector3 _currentDirection;
 ```
 **2. Set Current Values** for  speed and direction in the `Start()`
-While our **Speed** and **Direction** properties are initialized in `Awake()`, we wait until `Start()` to copy those values into `_currentSpeed` and `_currentDirection`. The reason is order of execution:
+While our **Speed** and **Direction** properties are initialized in `Awake()`, we wait until `Start()` to copy those values into `_currentSpeed` and `_currentDirection`. The reason is the order of execution:
 
 - `Awake()` runs very early in the Unity lifecycle and is responsible for preparing the object. Here, we make sure the properties are set and validated against their serialized field values from the Inspector.
 - By the time `Start()` runs, we can be confident those values are finalized. Assigning them to our "current" fields at this point gives us a reliable snapshot of the starting speed and direction as the game begins.
@@ -410,7 +426,7 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
         _currentSpeed = Speed;
         _currentDriection =Direction;
         
-        //Check if object moves on start
+        //Check if the object moves on start
         if (_moveOnStart)
         {
             Move();
@@ -424,7 +440,7 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
 **2. Create `FixedUpdate()`** and check for Speed and Direction changes
 
 ```csharp
-    //Called at fixed intervals (i.e. physic steps) 
+    //Called at fixed intervals (i.e., physic steps) 
     private void FixedUpdate()
     {
         // Only update velocity if speed or direction changed
@@ -454,7 +470,7 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
         Direction = moveDirection;
         Speed = moveSpeed;
 
-        //Record the current direciton and speed
+        //Record the current direction and speed
         currentDirection = Direction;
         currentSpeed = Speed;
         
@@ -464,10 +480,19 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
     }//end Move()
 
 ```
----
-## Stoping Objects with Velocity 
 
-To stop our game objects all we need to do is update our `Stop()` method to set the Rigidbod's velocity to zero. 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+---
+## Stopping Objects with Velocity 
+
+To stop our game object, all we need to do is update our `Stop()` method to set the Rigidbody's velocity to zero. 
 
 **1. Update `Stop()`** and set velocity
 
@@ -483,7 +508,15 @@ To stop our game objects all we need to do is update our `Stop()` method to set 
     }//end Stop()
 ```
 
-This is an **immediate stop** and in some cases could be a bit jaring, especially in a racing style game. If you want the object to slow down naturally, you would need a different approach (like a gradual deceleration or “brake”).
+This is an **immediate stop** and in some cases could be a bit jarring, especially in a racing-style game. If you want the object to slow down naturally, you would need a different approach (like a gradual deceleration or “brake”).
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
 
 ---
 
@@ -521,9 +554,11 @@ Finally, we provide a method to **trigger braking**. Unlike `Stop()`, which imme
 While _we could integrate_ this behavior into the `Stop()` method, keeping a separate `Brake()` method has a few advantages: it allows for **immediate stops when necessary**, provides **clearer, more explicit control**, and makes it easier to reason about the object’s behavior in different gameplay situations. 
 
 <br>
+
 > [!NOTE]
 >
 > Because the **gradual deceleration** using Lerp occurs over multiple physics steps, it must be handled in `FixedUpdate()`. The `Brake()` method’s role is simply to set the flag that signals when to start applying the Lerp-based slowdown.
+> 
 <br>
 
 ```csharp
@@ -539,6 +574,7 @@ public void Brake()
 }//end Brake()
 ```
 
+
 ---
 
 ## Modifiying FixedUpdate() for Braking
@@ -548,7 +584,9 @@ To implement **gradual braking**, we first need to update `FixedUpdate()` to che
 <br>
 
 >[!NOTE]
->Since we will need to do multiple calculations to implment the gradual braking placing all of this directly in `FixedUpdate()` would violate the **Single Responsibility Principle**, making the method harder to read and maintain. Instead, we can extract the braking logic into its own method `ApplyBraking()`.
+>Since we will need to do multiple calculations to implement the gradual braking, placing all of this directly in `FixedUpdate()` would violate the **Single Responsibility Principle**, making the method harder to read and maintain. Instead, we can extract the braking logic into its own method `ApplyBraking()`.
+
+<br>
 
 ```csharp
     //Called at fixed intervals (i.e. physic steps) 
@@ -569,6 +607,7 @@ To implement **gradual braking**, we first need to update `FixedUpdate()` to che
     }//end FixedUpdate()
 ```
 
+
 ### Understanding Lerp
 
 If the object is **braking**, we need to implement `Vector3.Lerp`. In doing so, it’s important to understand how Lerp is calculated:
@@ -584,7 +623,7 @@ Where:
 - **targetValue** = the value you want to approach  
 - **t** = interpolation factor (usually between 0 and 1)
 
-In this case our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
+In this case, our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
 
 <br>
 
@@ -602,9 +641,9 @@ In this case our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
 The `ApplyBrake()` method will be responsible for gradually reducing the Rigidbody’s velocity toward zero while ensuring that we stop once the object is effectively at rest.
 
 ### Determining When a Rigidbody is Stopped
-When gradually reducing a Rigidbody’s velocity (e.g., using Lerp), the velocity **approaches zero but never reaches exactly zero**. To decide when an object is _“effectively stopped”_ . In this instance we would use an **epsilon (ε)**, is a small value used as a **threshold**.
+When gradually reducing a Rigidbody’s velocity (e.g., using Lerp), the velocity **approaches zero but never reaches exactly zero**. To decide when an object is _“effectively stopped”_ . In this instance, we would use an **epsilon (ε)**, which is a small value used as a **threshold**.
 
-The **magnitude** of the velocity vector represents the length of a vector i.e. the object’s overall speed:
+The **magnitude** of the velocity vector represents the length of a vector, i.e., the object’s overall speed:
 
 $$
 |\mathbf{v}| = \sqrt{v_x^2 + v_y^2 + v_z^2}
@@ -655,11 +694,20 @@ This method gradually interpolates the Rigidbody’s velocity toward zero and ch
     }//end Brake()
 
 ```
+
 <br>
 
 > [!NOTE]
 >
 > The object must have zero velocity to fully stop. While we could directly set `_rigidBody.linearVelocity = Vector3.zero` here, we already handle that in the `Stop()` method. To follow the **DRY (Don't Repeat Yourself)** principle, we simply call `Stop()` instead of duplicating the code.
+
+<br>
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
 
 <br>
 
@@ -681,6 +729,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
