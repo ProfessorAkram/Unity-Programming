@@ -737,7 +737,7 @@ This approach leverages our existing testing framework, allowing us to quickly v
 
 ```
 
-**2. Modify the `RunMovementTest()` to check for `Brake`
+**2. Modify the `RunMovementTest()` to check for `Brake`**
 
 ```csharp
 #if UNITY_EDITOR    
@@ -777,6 +777,14 @@ This approach leverages our existing testing framework, allowing us to quickly v
 #endif
 ```
 
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
 ---
 
 
@@ -796,6 +804,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
