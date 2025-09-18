@@ -268,10 +268,12 @@ Using `Rigidbody.linearVelocity` allows us to:
 - Continuous motion without needing to update the position every frame manually.
 
 <br>
+
 > [!WARNING]
 >
-> The example above uses `Rigidbody.velocity` to demonstrate the syntax for accessing the property. However, in practice, you s**hould never use the class name directly**. You always access the velocity through a **reference to the component**.
+> The example above uses `Rigidbody.velocity` to demonstrate the syntax for accessing the property. However, in practice, you **should never use the class name directly**. You always access the velocity through a **reference to the component**.
 > In our case, that reference is `_rigidBody.linearVelocity`. The reference name could vary, some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
+> 
 <br>
 
 This mirrors real-world physics: the veheical keeps moving at a set velocity until another force (collision, player input, braking) changes it.
@@ -339,6 +341,7 @@ To make this clearer, we’ll rename the flag to `_moveOnStart` and add a `Start
 // Start is called once before the first Update
     private void Start()
     {
+        //Check if object moves on start
         if (_moveOnStart)
         {
             Move();
@@ -351,32 +354,25 @@ To make this clearer, we’ll rename the flag to `_moveOnStart` and add a `Start
 
 Since Rigidbody velocity continues automatically once set, **we no longer need to call `Move()` in `Update()` every frame**. The Rigidbody will keep moving according to the assigned velocity, and Unity handles all the physics calculations during FixedUpdate steps.
 
-In our current class, **calling `Move()` was the only thing happening in `Update()`**, so we can safely **remove the entire `Update()` method**.
+If the call to `Move()` were the only thing happening in `Update()`, we could remove the method entirely. However, since `Update()` also performs the `_enableEditorTesting` check, we’ll keep it and simply remove the condition that calls `Move()`.
 
-**2. Remove** the `Update()` method: 
+**2. Modify** the `Update()` method: 
 
 ```csharp
-    // Start is called once before the first Update
-    private void Start()
+    private void Update()
     {
-        if (_moveOnStart)
-        {
-            Move();
-
-        }//end if(_moveOnStart)
         
-    }//end Start()
+#if UNITY_EDITOR
+        if (_enableEditorTesting)
+        {
+            RunMovementTest();
 
-    // ... Removed Update
+        } //end if(_enableEditorTesting)
+#endif
+
+    }//end Update()
 
 ```
-
-<br>
-
-> [!Caution]
-> If your `Update()` method contains other logic besides movement, you would only remove the `Move()` call, leaving the rest of the `Update()` intact.
-> 
-<br>
 
 ---
 
@@ -410,9 +406,11 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
     private void Start()
     {
         
+        //Store current speed and direction
         _currentSpeed = Speed;
         _currentDriection =Direction;
-
+        
+        //Check if object moves on start
         if (_moveOnStart)
         {
             Move();
@@ -433,7 +431,8 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
         if (Speed != _currentSpeed || Direction != _currentDirection)
         {
             Move(Direction, Speed);
-        }
+
+        }//end if(current speed/direction)
 
     }//end FixedUpdate()
 ```
@@ -473,13 +472,15 @@ To stop our game objects all we need to do is update our `Stop()` method to set 
 **1. Update `Stop()`** and set velocity
 
 ```csharp
-/// <summary>
-/// Stops the object's movement immediately by zeroing its Rigidbody velocity.
-/// </summary>
-public void Stop()
-{
-    _rigidBody.linearVelocity = Vector3.zero;  // Immediately halts motion
-}
+    /// <summary>
+    /// Stops the object's movement immediately by zeroing its Rigidbody velocity.
+    /// </summary>
+    public void Stop()
+    {
+        // Immediately halts motion
+        _rigidBody.linearVelocity = Vector3.zero;  
+        
+    }//end Stop()
 ```
 
 This is an **immediate stop** and in some cases could be a bit jaring, especially in a racing style game. If you want the object to slow down naturally, you would need a different approach (like a gradual deceleration or “brake”).
@@ -501,20 +502,10 @@ In Unity, we can make a GameObject slow down smoothly by **interpolating** its v
 Now that we understand how Lerp works, we need a way to **control how quickly the object decelerates**. To do this, we declare a **`_deceleration` field**, which acts as the **“factor”** in our Lerp calculation. This value determines how fast the object slows down each physics step, and by exposing it in the Inspector, it’s easy to tweak for different gameplay behaviors.
 
 ```csharp
-    [SerializeField]
-    [Range(0f, MAX_SPEED)]
-    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
-    private float _speed = 5f;
-
-
-    // Direction of movement
-    [SerializeField]
-    private Vector3 _direction = Vector3.right;
 
     [SerializeField]
     [Tooltip("How quickly the object slows down when braking.")]
     private float _deceleration = 5f;
-
 
 ```
 Next, we need a **flag to indicate when braking is active**. This is a simple **boolean variable** that we set to true whenever we want the GameObject to begin decelerating:
@@ -690,6 +681,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
