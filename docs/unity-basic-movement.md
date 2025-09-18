@@ -1282,8 +1282,10 @@ An **enum (short for "enumeration")** is a special type in C# that lets you defi
 ```
 
 <br>
+
 > [!NOTE]
 > Because an **enum** act as a new **data type**, the naming convnetion should always be in **ParsalCase**. 
+
 <br>
 
 ### Storing Enum Selection 
@@ -1312,9 +1314,11 @@ With the enum defined, the next step is to make **a variable of that type** and 
 ```
 
 <br>
+
 > **✔️ CHECK POINT**
 > 
 > Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+> 
 <br>
 
 ## Execute Movement Tests in Editor
