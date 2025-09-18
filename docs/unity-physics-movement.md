@@ -151,9 +151,6 @@ public class MoveRigidbody: MonoBehaviour
         //Set reference to the Rigidbody component
         _rigidBody = GetComponent<Rigidbody>(); 
         
-        //Set GameObject's initial position
-        transform.position = Vector3.zero;
-        
         // Determine if the object should start moving
         _isMoving = _moveOnAwake;
     }//end Awake()
@@ -180,10 +177,7 @@ By default, the `isKinematic` property is set to `false` when a `Rigidbody` is a
 
         //Ensure that Rigidbody is dynamic
         _rigidBody.isKinematic = false; 
-        
-        //Set GameObject's initial position
-        transform.position = Vector3.zero;
-        
+              
         // Determine if the object should start moving
         _isMoving = _moveOnAwake;
     }//end Awake()
@@ -696,6 +690,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
