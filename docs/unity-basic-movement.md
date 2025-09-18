@@ -1238,10 +1238,10 @@ To safely test our `MoveTransform` component in the Editor, we need a master swi
 The flag should be a `[SerializeField]` to allow for **Inspector** modification and should be set to **false**, so nothing will run accidentally while you’re working on other parts of your game. Since this flag is not needed in the game build, we can place it inside a `#if UNITY_EDITOR` wrapper:
 
 ```csharp
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
     [SerializeField] 
     private bool _enableEditorTesting = false;
-    #endif
+#endif
 
 ```
 This makes testing optional and keeps the code clean and ensuring that temporary test logic only runs when explicitly enabled in the Editor.
@@ -1250,6 +1250,32 @@ This makes testing optional and keeps the code clean and ensuring that temporary
 
 > [!TIP]
 > The code inside a `#if UNITY_EDITOR` wrapper only runs in the Unity Editor. Many IDEs will render it as a comment, which can make it harder to read while typing. To avoid mistakes, write your code **first**, then wrap it with `#if UNITY_EDITOR`.
+
+### Organizing Fields in the Inspector with Headers
+
+When working with multiple `[SerializeField]` fields, it’s helpful to visually organize them in the Inspector. This makes it easier for designers or team members to understand which collection of fields do what, in our case we have general behavior and ones meant only for testing.
+
+In Unity, you can use the `[Header("Header Text")]` attribute to add a clear label above related fields:
+
+```csharp
+  // Serialized fields for initial values
+    
+    [Header("GENERAL SETTINGS")]
+    
+    [SerializeField]
+    [Range(0f, MAX_SPEED)]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    private float _speed = 5f;
+
+.....
+#if UNITY_EDITOR
+    [Header("FOR TESTING ONLY")]
+    [SerializeField] 
+    private bool _enableEditorTesting = false;
+#endif
+
+```
+
 
 ## Testing Actions with Enums
 
