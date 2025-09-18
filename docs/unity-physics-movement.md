@@ -239,9 +239,9 @@ $$
 
 Where:  
 
-- **\( v \)** = velocity (vector, includes direction)  
-- **\( \Delta x \)** = change in position (displacement)  
-- **\( \Delta t \)** = change in time  
+- **$$v$$** = velocity (vector, includes direction)  
+- **$$\Delta x$$** = change in position (displacement)  
+- **$$\Delta t$$** = change in time  
 
 **For Example**
 
@@ -580,11 +580,7 @@ public class MoveRigidbody : MonoBehaviour
     [Range(0f, MAX_SPEED)]
     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
     private float _speed = 5f;
-    
-    [SerializeField]
-    [Tooltip("How quickly the object slows down when braking.")]
-    private float _deceleration = 5f;
-   
+
     // Direction of movement
     [SerializeField]
     private Vector3 _direction = Vector3.right; 
@@ -768,11 +764,163 @@ While `Rigidbody.linearVelocity` gives us **snappy, arcade-style controls**, usi
 
 ---
 
+## Understanding Force-Based Movement
+
+Force-based movement uses **forces applied to a Rigidbody** to move objects, rather than directly setting velocity. In physics, force causes acceleration according to Newton’s second law:
+
+$$
+F = m \cdot a
+$$
+
+Where:
+- **$$F$$** = force applied (in Newtons)  
+- **$$m$$** = mass of the object (kg)  
+- **$$a$$** = acceleration (m/s²)
 
 
+For example, if a 2 kg cube has a force of 10 N applied to the right:
 
+$$
+a = \frac{F}{m} = \frac{10 \, \text{N}}{2 \, \text{kg}} = 5 \, \text{m/s²}
+$$
 
+This means the cube’s velocity will increase by 5 m/s every second in the direction of the force, until other forces (like friction or drag) slow it down or counteract it.
 
+### When to use Force over Velocity 
 
+Let's say we are creating a **racing game**, where vehicles gradually accelerate and brake rather than instantly reaching top speed. In this case, we want the movement to feel **realistic and physics-driven**, rather than simply starting and stopping abruptly.
 
+Similarly, objects that roll or slide, like a ball down a slope or a crate pushed across the floor, respond naturally to collisions and other forces, rather than abruptly changing direction. Even characters can benefit from this approach, **feeling _“weighty”_** and obeying momentum, which gives movement a more lifelike and immersive quality. Unlike velocity-based movement, **force-based movement allows external forces** like explosions, wind, or pushes from other objects to influence motion in a consistent and believable way.
 
+Implmenting movmment with **force** has both addvatages and dissadvantages: 
+
+- ✅ Produces **natural, fluid** acceleration and deceleration.
+- ✅ **Fully integrates with Unity physics** (collisions, mass, momentum).
+- ✅ **Allows external forces** (wind, explosions, pushes) to influence movement.
+- ❌ **Less immediately responsive** than velocity-based movement.
+- ❌ **Requires careful tuning** of mass, acceleration, and drag to feel right.
+- ❌ **Slightly more complex** to implement and debug.
+
+### Applying force in Unity
+
+In Unity, the `Rigidbody` component offers multiple ways to **apply force** and influence an object's movement: 
+
+- `Rigidbody.AddForce()` - Applies a linear force in **world space**; changing the object's velocity.
+  - The ForceMode can be set to **Force**, **Acceleration**, **Impulse**, or **VelocityChange** depending on how you want the force to affect the object.
+- `Rigidbody.AddTorque()` - Applies a **rotational force (torque)**, causing it to spin around its center of mass.
+- `Rigidbody.AddExplosionForce() - **Simulates an explosion** by applying a force that **radiates outward** from a specific point, affecting nearby objects.
+- `Rigidbody.AddRelativeForce()` - Applies a linear force **relative to the Rigidbody’s local axes**.
+- `Rigidbody.AddRelativeTorque()` - Applies torque **relative to the Rigidbody’s local axes**.
+
+Each of these methods has its own specific use cases, but for the purposes of this lesson, we will keep things simple and focus only on using `Rigidbody.AddForce`.
+
+---
+
+## Extending MoveRigidbody
+
+Our class `MoveRigidbody` explicitly **indicates that we are controlling movement** with a Rigidbody, but it doesn’t specify how. Right now, we are using **velocity**, but what if we wanted to use **force** instead?
+
+Following the **Single Responsibility Principle**, we could create separate components like `VelocityMove` and `ForceMove`. This would work, but most of the class setup would be nearly identical, except for the movement calculation itself. `MoveRigidbody` has a clearer definition of its purpose, so instead, we will create a **switch** that allows the level designer to choose whether game objects move by velocity or by force.
+
+<br>
+
+> [!NOTE]
+> In larger or more complex projects, a **Strategy Pattern** can be used. This involves creating **separate movement strategies** that can be **swapped at runtime**, allowing the shared methodology to remain in one class while delegating the actual movement to the chosen strategy. This is a cleaner, more scalable solution, but it requires several additional classes and setup, which are beyond the scope of this lesson.
+
+---
+
+## Adding a Movement Mode
+
+To allow our level designers choose between **velocity-based** and **force-based movement** within the `MoveRigidbody` class, we can use an **enum** to define the movement modes.  
+
+**1. Create Movement Modes** 
+
+```csharp
+    //Enum for list of possible methods of physic movement
+    public enum MovementMode
+    {
+        Velocity,
+        Force
+    }
+```
+
+**2. Create a `[SerlizedField]`** to select the mode
+
+```csharp
+    [SerializeField]
+    [Tooltip("Choose between velocity-based and force-based movement")]
+    private MovementMode _movementMode = MovementMode.Velocity;
+```
+
+# Handling Acceleration and Deceleration
+In games, movement rarely happens instantly, objects often **accelerate** to their target speed and **decelerate** when stopping. Velocity-based movement typically doesn’t need gradual acceleration, because we can instantly set the Rigidbody’s velocity. Force-based movement, on the other hand, **relies on acceleration and deceleration** to feel smooth and realistic.
+
+While Unity’s physics system automatically calculates acceleration from applied forces, relying on it alone can make movement feel **unpredictable**, because mass, drag, collisions, and frame rate can all affect a Rigidbody’s behavior. In gameplay scenarios where precise control is important, like a racing game, we don’t want these interactions to interfere with the player’s experience. By adding **explicit acceleration and deceleration values**, we can fine-tune how quickly objects speed up and slow down, keeping movement smooth, responsive, and predictable, while still benefiting from Unity’s physics for collisions and realism.
+
+To give us precise, predictable control, we introduce explicit fields for `_acceleration` and `_brakingForce`. Acceleration determines how quickly an object speeds up, while braking force controls how quickly it slows down when stopping. These values ensure movement feels smooth, responsive, and intuitive, while still taking advantage of Unity’s physics system.
+
+**1. Add** the following fields
+
+```csharp
+[SerializeField, Tooltip("Acceleration applied per second when using force mode.")]
+private float _acceleration = 10f;
+
+[SerializeField, Tooltip("Deceleration applied per second when stopping in force mode.")]
+private float _brakingForce = 10f;
+
+```
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+### Organizing Fields in the Inspector
+When we look in the Editor, the **_GENERAL SETTINGS_** section contains several fields that apply to both velocity and force movement. However, our new fields for acceleration and braking force, are only relevant when using force mode. To make this clear and keep the Inspector organized, we update and add `[Header]` attributes to separate fields logically.
+
+```csharp
+
+   
+    [SerializeField]
+    [Tooltip("Choose between velocity-based and force-based movement")]
+    private MovementMode _movementMode = MovementMode.Velocity;
+
+    [Header("MOVEMENT SETTINGS")]
+
+    [SerializeField]
+    [Tooltip("Should the object be moving on start?")]
+    private bool _moveOnStart = true;
+
+    // Direction of movement
+    [SerializeField]
+    private Vector3 _direction = Vector3.right; 
+    
+    [SerializeField]
+    [Range(0f, MAX_SPEED)]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    private float _speed = 5f;
+
+    [Header("FORCE MODE SETTINGS")]
+
+    [SerializeField, Tooltip("Acceleration applied per second when using force mode.")]
+    private float _acceleration = 10f;
+    
+    [SerializeField, Tooltip("Deceleration applied per second when stopping in force mode.")]
+    private float _brakingForce = 10f;
+
+```
+
+The fields in the Inspector are arranged to help level designers **quickly understand and set up movement**:
+
+- **Movement mode** — choose whether the object uses velocity or force.
+- **MOVEMENT SETTINGS** - explicity indicates these setting are for movement
+  - **Move on start** — should the object begin moving immediately?
+  - **Direction** — which way the object moves.
+  - **Speed** — how fast the object moves; this naturally **connects** to the force-specific settings.
+- **FORCE MODE SETTINGS** - used only by Force
+  - **Acceleration** — determines how quickly the object reaches the target **speed**.
+  - **Braking force** — determines how quickly the object slows down from that **speed**.
+
+This order makes it easy to think step by step: first decide if the object moves, then which way and how fast, and finally, if using force, how it accelerates and brakes.
