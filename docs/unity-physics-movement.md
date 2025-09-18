@@ -713,6 +713,73 @@ This method gradually interpolates the Rigidbody’s velocity toward zero and ch
 
 ----
 
+## Testing the Braking Function
+
+Now that we’ve implemented `Brake()`, we need a way to test it in the Editor. Since we already have in-editor testing, we can extend it by:
+
+Updating the `TestActions` **enum** to include `Brake`
+
+Updating `RuneMoveTest()` to handle the `Brake` action
+
+This approach leverages our existing testing framework, allowing us to quickly verify that braking behaves as expected without needing to set up additional input handling or test code.
+
+**1. Modify TestAction enum ** 
+```csharp
+
+//Enum for list of possible actions to test 
+    private enum TestAction
+    {
+        None,   // No action selected
+        Move,   // Run Move() test
+        Stop    // Run Stop() test
+        Brake,  // Run Brake() test
+    }
+
+```
+
+**2. Modify the `RunMovementTest()` to check for `Brake`
+
+```csharp
+#if UNITY_EDITOR    
+    /// <summary>
+    /// Runs the selected movement test in the Editor based on the _testAction enum.
+    /// </summary>
+    private void RunMovementTest()
+    {
+        switch (_testAction)
+        {
+            case TestAction.Move:
+                Debug.Log("Testing Move");
+                Move();
+                _testAction = TestAction.None; // Reset after running
+                break;
+
+            case TestAction.Stop:
+                Debug.Log("Testing Stop");  
+                Stop();
+                _testAction = TestAction.None; // Reset after running
+                break;
+
+            case TestAction.Brake:
+                Debug.Log("Testing Brake");  
+                Brake();
+                _testAction = TestAction.None; // Reset after running
+                break;
+
+            case TestAction.None:
+            default:
+                // Do nothing
+                break;
+
+        }//end switch(_testAction)
+
+    }//end RunMovementTest()
+#endif
+```
+
+---
+
+
 
 
 
@@ -729,6 +796,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
