@@ -1246,6 +1246,11 @@ The flag should be a `[SerializeField]` to allow for **Inspector** modification 
 ```
 This makes testing optional and keeps the code clean and ensuring that temporary test logic only runs when explicitly enabled in the Editor.
 
+<br>
+
+> [!TIP]
+> The code inside a `#if UNITY_EDITOR` wrapper only runs in the Unity Editor. Many IDEs will render it as a comment, which can make it harder to read while typing. To avoid mistakes, write your code **first**, then wrap it with `#if UNITY_EDITOR`.
+
 ## Testing Actions with Enums
 
 When testing our `MoveTransform` component, we want to choose one action at a time, either `Move()` or `Stop()`.
