@@ -940,29 +940,138 @@ This order makes it easy to think step by step: first decide if the object moves
 Up until now, our `Move()` method handled the calcualation for moving objects with velocity. The caluations for adding force will be different, and we will also need to check which mode (velcoity or force) will be used. Putting all this logic in one method can 
 messy and make it hard to read and debug. 
 
-To make the code cleaner and easier to maintain, we can keep the shared logic in the `Move()` method and dedicated methods: 
+To make the code **cleaner and easier to maintain**, we can keep the shared logic in the `Move()` method and dedicated methods: 
 
 - `HandleMovementMode()` - handles the check for movement mode, calls apporate `MoveWith..()` method
 - `MoveWithVelocity()` — handles instant, precise movement by setting the Rigidbody’s velocity.
 - `MoveWithForce()` — handles physics-driven movement by applying forces, taking acceleration and braking into account.
 
+  
+
+### Modifiy the `Move()` Method
+
+We need to update the `Move()` method so it no longer contains the velocity calculations directly. Instead, `Move()` now sets the shared direction and speed valuse, and then calls `HandleMovementMode()`.
+
+```csharp
+    /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    private void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
+
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
+
+        //Record the current direciton and speed
+        _currentDirection = Direction;
+        _currentSpeed = Speed;
+
+        // Handle movement based on the selected mode
+        HandleMovementMode();
+        
+    }//end Move()
+    
+``` 
+
+### Handle Movement based on Mode 
+The `HandleMovementMode()` method checks the current movement mode and calls the appropriate method to move the Rigidbody.
+
+```cshaprp
+/// <summary>
+/// Determines which movement mode is currently selected and 
+/// calls the corresponding method to move the object.
+/// </summary>
+private void HandleMovementMode()
+{
+    switch (_movementMode)
+    {
+        case MovementMode.Velocity:
+            Debug.Log("Move with Velocity");
+            MoveWithVelocity();
+            break;
+
+        case MovementMode.Force:
+            Debug.Log("Move with Force");
+            MoveWithForce();
+            break;
+
+        default:
+            Debug.LogWarning("Unhandled movement mode: " + _movementMode);
+            break;
+
+    }//end switch(_movementMode)
+
+}//end HandleMovementMode()
+
+```
+
+### Move with Velocity 
+Previously, the velocity calculation was performed directly inside the `Move()` method. To clean up the code and separate concerns, we now place this calculation in its own dedicated method, `MoveWithVelocity()`.
+
+```csharp
+/// <summary>
+/// Applies velocity-based movement to the Rigidbody.
+/// </summary>
+private void MoveWithVelocity()
+{
+    // Directly set Rigidbody velocity for immediate, responsive movement
+    _rigidBody.velocity = Direction * Speed;
+
+}//end MoveWithVelocity()
+```
+
+The `Move()` method handles any arguments for direction and speed, assigning them to the `Direction` and `Speed` properties. By the time `MoveWithVelocity()` is called, these properties have already been updated, so no additional parameters are needed.
 
 
+### Move with Force
+
+The calculation for force-based movement is different from velocity-based movement because we **don’t directly set the Rigidbody’s velocity**. Instead, we calculate the **force needed to gradually move the object toward a target velocity**, allowing physics to handle acceleration, deceleration, and interactions with other objects.
+
+In velocity-based movement, the Rigidbody instantly reaches the target speed and direction. With force-based movement:
+
+- A **desired velocity** determines the speed and direction you want the Rigidbody to move **each frame**, based on the `Speed` and `Direction` properties.
+- **Acceleration** limits how much the Rigidbody’s velocity can change each physics update with `Time.fixedDeltaTime`.
+- The **velocityChange** is the difference between the **current velocity and desired velocity**.
+  - If it is too large, it is **clamped to** `_acceleration * Time.fixedDeltaTime`.
+  - `Vector3.ClampMagnitude` ensures that the velocity change is **limited in any direction**, not just per axis.
+  - This effectively means the Rigidbody **accelerates toward the target velocity at a controlled rate**, instead of instantly reaching it.
+- **Applied force** is the **mass** of the Rigidbody multiplied by the **clamped velocity change**, applied as an impulse.
+
+**Create the MoveWithForce() method**
+
+```csharp
+    /// <summary>
+    /// Applies force-based movement to the Rigidbody using acceleration and braking.
+    /// </summary>
+    private void MoveWithForce() 
+    {
+        // Calculate the desired velocity to move by for each frame based on Direction and Speed
+        Vector3 desiredVelocity = Direction * Speed;
+
+        // Calculate the difference between the current velocity and the target velocity
+        Vector3 velocityChange = desiredVelocity - _rigidBody.velocity;
+
+        // Limit the velocity change to the maximum acceleration allows this frame (physic step)
+        float maxChange = _acceleration * Time.fixedDeltaTime;
+
+        // Keep the velocity change within the allowed limit, for gradual acceleration
+        velocityChange = Vector3.ClampMagnitude(velocityChange, maxChange);
+
+        // Push the Rigidbody toward the target velocity by adding force
+        _rigidBody.AddForce(velocityChange * _rigidBody.mass, ForceMode.Impulse);
+
+    }//end MoveWithForce()
 
 
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
+This method gives objects a **more natural, weighty feel**, makes movement responsive to collisions or external forces, and allows for realistic acceleration and braking.
 
 
 
