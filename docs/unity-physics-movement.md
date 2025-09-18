@@ -378,9 +378,10 @@ In our current class, **calling `Move()` was the only thing happening in `Update
 ```
 
 <br>
+
 > [!Caution]
-> 
 > If your `Update()` method contains other logic besides movement, you would only remove the `Move()` call, leaving the rest of the `Update()` intact.
+> 
 <br>
 
 ---
@@ -559,6 +560,11 @@ public void Brake()
 
 To implement **gradual braking**, we first need to update `FixedUpdate()` to check if the object is currently braking by examining the `_isBraking` flag. This ensures that our physics calculations happen in sync with Unity’s physics system.
 
+<br>
+
+>[!NOTE]
+>Since we will need to do multiple calculations to implment the gradual braking placing all of this directly in `FixedUpdate()` would violate the **Single Responsibility Principle**, making the method harder to read and maintain. Instead, we can extract the braking logic into its own method `ApplyBraking()`.
+
 ```csharp
     //Called at fixed intervals (i.e. physic steps) 
     private void FixedUpdate()
@@ -572,11 +578,14 @@ To implement **gradual braking**, we first need to update `FixedUpdate()` to che
         // is the object currently braking 
         if (_isBraking)
         {
-            
+          ApplyBraking();
         }
 
     }//end FixedUpdate()
 ```
+
+### Understanding Lerp
+
 If the object is **braking**, we need to implement `Vector3.Lerp`. In doing so, it’s important to understand how Lerp is calculated:
 
 $$
@@ -599,51 +608,18 @@ In this case our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
 > When we set a Rigidbody’s velocity directly (e.g., `_rigidBody.linearVelocity = Speed * Direction`), Unity applies it in meters per second and not by varing framerate, so there’s no need to multiply by `Time.deltaTime`.
 >
 > However, `Vector3.Lerp` moves a value by a **fraction per call**, not a real-world speed. To make the deceleration consistent over time, we multiply by `Time.fixedDeltaTime`, which **represents the duration of a single physics step**. This ensures that braking behaves consistently, regardless of the physics update rate.
+
 <br>
 
-Since the velocity is multiplied by a fraction each frame, it gets closer and closer to zero but **will never reach exactly zero**. Therfore, we need to define a **threshold** to decide when the object is “effectively stopped.”  
-
-A common approach is:
-
-$$
-\text{if } |\text{velocity}| < \epsilon, \text{ then consider velocity zero.}
-$$
-
-For our use case,  **ε** (epsilon) would be something like **0.01 m/s**.
-
-This means we not only need to perform the Lerp calculation, but also determine when the velocity is close enough to zero. Since this involves multiple calculations, placing all of this directly in `FixedUpdate()` would violate the **Single Responsibility Principle**, making the method harder to read and maintain.
-
-Instead, we can extract the braking logic into its own method—e.g., `ApplyBraking()`, and call it from `FixedUpdate()`. This keeps `FixedUpdate()` clean, containing only the minimal logic of **checking the braking flag and delegating the work**.
-
-**Modify `FixedUpdate()`** to call `ApplyBraking()`
-```csharp
-    //Called at fixed intervals (i.e. physic steps) 
-    private void FixedUpdate()
-    {
-        // Only update velocity if speed or direction changed
-        if (Speed != _currentSpeed || Direction != _currentDirection)
-        {
-            Move(Direction, Speed);
-        }
-
-        // is the object currently braking 
-        if (_isBraking)
-        {
-            ApplyBraking();
-        }
-
-    }//end FixedUpdate()
-```
-
 ---
+
 ## Create Method to Apply Braking 
 The `ApplyBrake()` method will be responsible for gradually reducing the Rigidbody’s velocity toward zero while ensuring that we stop once the object is effectively at rest.
 
-### Checking Velocity with Magnitude
+### Determining When a Rigidbody is Stopped
+When gradually reducing a Rigidbody’s velocity (e.g., using Lerp), the velocity **approaches zero but never reaches exactly zero**. To decide when an object is _“effectively stopped”_ . In this instance we would use an **epsilon (ε)**, is a small value used as a **threshold**.
 
-As mentioned above, Lerp gradually reduces the Rigidbody’s velocity toward zero but never reaches exactly zero. To determine when a GameObject is **effectively stopped**, we check the **magnitude** of its velocity vector.
-
-The **magnitude** represents the length of a vector, which in this case corresponds to the object’s overall speed:
+The **magnitude** of the velocity vector represents the length of a vector i.e. the object’s overall speed:
 
 $$
 |\mathbf{v}| = \sqrt{v_x^2 + v_y^2 + v_z^2}
@@ -653,12 +629,21 @@ Where:
 
 - \(v_x, v_y, v_z\) are the components of the velocity along each axis.  
 
-By comparing this magnitude to a small threshold (e.g., 0.01 m/s) as in:
+We consider the object stopped when the magnitude is less than epsilon:
+
+$$
+\text{if } |\text{velocity}| < \epsilon, \text{ then consider velocity zero.}
+$$
+
+For our use case, ε would be something like **0.01 m/s**, which translates in code to:
 
 ```csharp
+
 _rigidBody.linearVelocity.magnitude < 0.01f
+
 ```
-We can decide when to consider the object stopped and take any necessary actions, such as setting velocity explicitly to zero or disabling braking. 
+This approach allows us to reliably detect when a Rigidbody is effectively stationary and perform any necessary actions, like explicitly setting velocity to zero or disabling braking.
+
 
 ### Create `ApplyBraking()`
 
@@ -685,15 +670,19 @@ This method gradually interpolates the Rigidbody’s velocity toward zero and ch
     }//end Brake()
 
 ```
+<br>
 
 > [!NOTE]
 >
 > The object must have zero velocity to fully stop. While we could directly set `_rigidBody.linearVelocity = Vector3.zero` here, we already handle that in the `Stop()` method. To follow the **DRY (Don't Repeat Yourself)** principle, we simply call `Stop()` instead of duplicating the code.
 
-
-
+<br>
 
 ----
+
+
+
+
 
 
 
@@ -707,6 +696,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
