@@ -1324,7 +1324,8 @@ An **enum (short for "enumeration")** is a special type in C# that lets you defi
 With the enum defined, the next step is to make **a variable of that type** and choose one of its named values to control our test. When assigning a value in code, we use **dot syntax**: `EnumType.Value`. This starts with the **enum type** (the name) followed by the **named value**.
 
 ```csharp
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
+    [Header("FOR TESTING ONLY")]
     [SerializeField] 
     private bool _enableEditorTesting = false;
 
@@ -1340,7 +1341,7 @@ With the enum defined, the next step is to make **a variable of that type** and 
     [Tooltip("Select which action to test in the Editor.")
     private TestAction _testAction = TestAction.None;
 
-    #endif
+#endif
 
 ```
 
