@@ -852,7 +852,7 @@ To allow our level designers choose between **velocity-based** and **force-based
     private MovementMode _movementMode = MovementMode.Velocity;
 ```
 
-# Handling Acceleration and Deceleration
+## Handling Acceleration and Deceleration
 In games, movement rarely happens instantly, objects often **accelerate** to their target speed and **decelerate** when stopping. Velocity-based movement typically doesn’t need gradual acceleration, because we can instantly set the Rigidbody’s velocity. Force-based movement, on the other hand, **relies on acceleration and deceleration** to feel smooth and realistic.
 
 While Unity’s physics system automatically calculates acceleration from applied forces, relying on it alone can make movement feel **unpredictable**, because mass, drag, collisions, and frame rate can all affect a Rigidbody’s behavior. In gameplay scenarios where precise control is important, like a racing game, we don’t want these interactions to interfere with the player’s experience. By adding **explicit acceleration and deceleration values**, we can fine-tune how quickly objects speed up and slow down, keeping movement smooth, responsive, and predictable, while still benefiting from Unity’s physics for collisions and realism.
@@ -924,3 +924,67 @@ The fields in the Inspector are arranged to help level designers **quickly under
   - **Braking force** — determines how quickly the object slows down from that **speed**.
 
 This order makes it easy to think step by step: first decide if the object moves, then which way and how fast, and finally, if using force, how it accelerates and brakes.
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+---
+
+## Refactoring Movement: Handling Modes Separately
+
+Up until now, our `Move()` method handled the calcualation for moving objects with velocity. The caluations for adding force will be different, and we will also need to check which mode (velcoity or force) will be used. Putting all this logic in one method can 
+messy and make it hard to read and debug. 
+
+To make the code cleaner and easier to maintain, we can keep the shared logic in the `Move()` method and dedicated methods: 
+
+- `HandleMovementMode()` - handles the check for movement mode, calls apporate `MoveWith..()` method
+- `MoveWithVelocity()` — handles instant, precise movement by setting the Rigidbody’s velocity.
+- `MoveWithForce()` — handles physics-driven movement by applying forces, taking acceleration and braking into account.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
