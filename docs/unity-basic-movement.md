@@ -143,6 +143,10 @@ private void Awake()
 
 <br>
 
+> [!CAUTION]  
+> Unless you are instantiating a new GameObject, you generally should not set its initial position in code, that is typically determined by the game designer in the scene. This line is included only to demonstrate how `transform.position` works. After testing, comment it out or delete it.
+
+
 ---
 
 ## Moving GameObjects with Transform
@@ -314,13 +318,15 @@ private Vector3 _direction = Vector3.right; // Default direction is right
 private void Awake()
 {
     //Set GameObject's initial position
-    transform.position = Vector3.zero;
+    //transform.position = Vector3.zero;
+
 }//end Awake()
 
 private void Update()
 {
    //Move GameObject
-   transform.position += _speed * Time.deltaTime * _direction ; 
+   transform.position += _speed * Time.deltaTime * _direction ;
+
 }//end Update()
 
 ```
@@ -348,7 +354,8 @@ Right now, all of the functionality for moving the GameObject happens directly i
 private void Update()
 {
     //Move GameObject
-    transform.position += _speed * Time.deltaTime * _direction;  
+    transform.position += _speed * Time.deltaTime * _direction;
+
 }//end Update()
 
 ```
@@ -379,6 +386,7 @@ To address the issues with placing all logic in `Update()`, we can move the move
 private void Update()
 {
     Move();
+
 }//end Update()
 
 ///<summary>
@@ -506,13 +514,15 @@ public class MoveTransform : MonoBehaviour
      private void Awake()
      {
          //Set GameObject's initial position
-         transform.position = Vector3.zero;
+         //transform.position = Vector3.zero;
+
      }//end Awake()
 
      // Update is called once per frame
      private void Update()
      {
          Move();
+
      }//end Update()
      
      ///<summary>
@@ -752,8 +762,6 @@ private void Awake()
     Speed = _speed;
     Direction = _direction;
 
-    // Set the GameObject's initial position
-    transform.position = Vector3.zero;
 } // end Awake()
 ```
 
@@ -991,9 +999,6 @@ Now that we have added our flags, we can use them to control when the object is 
         Speed = _speed;
         Direction = _direction;
         
-        //Set GameObject's initial position
-        transform.position = Vector3.zero;
-
         // Determine if the object should start moving
        _isMoving = _moveOnAwake;
       
