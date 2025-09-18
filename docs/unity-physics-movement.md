@@ -1074,13 +1074,75 @@ In velocity-based movement, the Rigidbody instantly reaches the target speed and
 This method gives objects a **more natural, weighty feel**, makes movement responsive to collisions or external forces, and allows for realistic acceleration and braking.
 
 
+## Defining Movement Actions
+
+Currently the `Move()` method delegates to `HandleMovementMode()`, to decide whether to use velocity-based or force-based calculations. The `Stop()` logic will also depend on the object’s current movement mode. To avoid duplicating code, we’ll extend `HandleMovementMode()` so it can check both the movement mode and the type of action (move or stop).
+
+In order to do this we will need an additional **enum** for **movement actions**, similar to how we defined the **movement modes**. With this in place, `HandleMovementMode()` can branch on both the mode and the action, keeping all decision-making in a single, reusable method.
+
+**Create MoveAction Enum** 
+
+```csharp
+
+    /// <summary>
+    /// Defines the type of movement action to perform.
+    /// </summary>
+    private enum MovementAction
+    {
+        Move,
+        Stop
+    }
+```
+
+### Refactor `HandleMovementMode()` method
+The `HandleMovementMode()` method currently decides which movement calculation to use based on the object’s movement mode. To extend it so that it can also handle stopping, we need to know **whether the action is a Move or a Stop**. We can do this by adding a MoveAction parameter. When either `Move()` or `Stop()` calls `HandleMovementMode()`, this parameter will let the method not only check the movement mode, but also choose the correct action for each case.
 
 
+```csharp
+/// <summary>
+    /// Determines which movement mode is currently selected and 
+    /// calls the correct method for either moving or stopping.
+    /// </summary>
+    ///     /// <param name="action">The type of MovementAction to preform (e.g., Move/Stop) </param>
+    private void HandleMovementMode(MovementAction action)
+    {
+        switch (_movementMode)
+        {
+            case MovementMode.Velocity:
+                if (action == MovementAction.Move)
+                {
+                    Debug.Log("Move with Velocity");
+                    MoveWithVelocity();
+                }
+                else if (action == MovementAction.Stop)
+                {
+                    Debug.Log("Stop with Velocity");
+                    StopWithVelocity();
+                }
+                break;
 
+            case MovementMode.Force:
+                if (action == MovementAction.Move)
+                {
+                    Debug.Log("Move with Force");
+                    MoveWithForce();
+                }
+                else if (action == MovementAction.Stop)
+                {
+                    Debug.Log("Stop with Force");
+                    StopWithForce();
+                }
+                break;
 
+            default:
+                Debug.LogWarning("Unhandled movement mode: " + _movementMode);
+                break;
+        }//end switch
+    }//end HandleMovementMode()
+```
+### Update calls to `HandleMovementMode()`
 
-
-
+Now that `HandleMovementMode()` rewuir
 
 
 
