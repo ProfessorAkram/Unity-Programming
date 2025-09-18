@@ -83,7 +83,7 @@ Once you store the reference in a variable, you can use it to **access public pr
 
 If `GetComponent<T>()` doesn’t find the requested component on the GameObject, it returns **null**.
 
-This means any logic that tries to access the component (e.g., `_rigidBody.velocity = ...`) will throw a `NullReferenceException`.
+This means any logic that tries to access the component (e.g., `_rigidBody.linearVelocity = ...`) will throw a `NullReferenceException`.
 
 To prevent this, it’s good practice to **check for null** before using the reference:
 
@@ -94,7 +94,7 @@ if (_rigidBody == null)
 }
 else
 {
-    _rigidBody.velocity = Speed * Direction;
+    _rigidBody..linearVelocity = Speed * Direction;
 } 
 ```
 
@@ -249,17 +249,26 @@ $$
 v = \frac{5 \, \text{m}}{2 \, \text{s}} = 2.5 \, \text{m/s (to the right)}
 $$
 
+<br>
+
 > [!NOTE]
-> 
 > In physics, **speed** is just **how fast an object moves**, while **velocity** includes both **speed and direction**.
-> Unity’s `Rigidbody.velocity` follows this definition, as it is a `Vector3`. Storing both **how fast and which way the object is moving**.
+> Unity’s `Rigidbody.linearVelocity` follows this definition, as it is a `Vector3`. Storing both **how fast and which way the object is moving**.
+
+<br>
+
+<br>
+
+>[!IMPORTANT]
+>Starting with Unity 6.0, the `Rigidbody.velocity` property has been renamed to **`Rigidbody.linearVelocity`**. This rename is meant to clarifies that it measures **linear motion** only, distinguishing it from **angularVelocity** and making the API more intuitive.
+
 
 ### When to Use Velocity Over Tranform
 Let's say that you are creating a **racing game**, whcih the players move at a **constant speed** along a track, smoothly responding to input.
 
 If we were to use the standard `transform.position` , the object would move but it would **ignores collisions and physics**, so the vehcial could clip through walls or other racers.  
 
-Using `Rigibody.velocity` allows us to: 
+Using `Rigidbody.linearVelocity` allows us to: 
 - Direct and consistent control of speed and direction.  
 - Automatic physics interactions (collisions, slopes, friction).  
 - Continuous motion without needing to update the position every frame manually.
@@ -268,7 +277,7 @@ Using `Rigibody.velocity` allows us to:
 > [!WARNING]
 >
 > The example above uses `Rigidbody.velocity` to demonstrate the syntax for accessing the property. However, in practice, you s**hould never use the class name directly**. You always access the velocity through a **reference to the component**.
-> In our case, that reference is `_rigidBody.velocity`. The reference name could vary, some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
+> In our case, that reference is `_rigidBody.linearVelocity`. The reference name could vary, some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
 <br>
 
 This mirrors real-world physics: the veheical keeps moving at a set velocity until another force (collision, player input, braking) changes it.
@@ -295,13 +304,13 @@ private void Move(Vector3? direction = null, float? speed = null)
     Speed = moveSpeed;
     
     // Move the GameObject using Rigidbody velocity
-    _rigidBody.velocity = Speed * Direction;
+    _rigidBody.linearVelocity = Speed * Direction;
 }
 ```
 #### Key Changes
 **1. Remove the `_isMoving` flag** 
   - If the game object's velocity is greater than zero it will be moving, we do not need a flag to check this.
-  - Instead we would check the velocity value :  `if (!_rigidbody.velocity == Vector3.zero)`
+  - Instead we would check the velocity value :  `if (!_rigidBody.linearVelocity == Vector3.zero)`
   - This check in nullfied here since we do not need to check the update for this condition any longer.
 
 <br>
@@ -456,7 +465,7 @@ In short, `Awake()` ensures the properties are correct, and `Start()` records th
         currentSpeed = Speed;
         
         // Move the GameObject using Rigidbody velocity
-        _rigidBody.velocity = Speed * Direction;
+        _rigidBody.linearVelocity = Speed * Direction;
 
     }//end Move()
 
@@ -474,7 +483,7 @@ To stop our game objects all we need to do is update our `Stop()` method to set 
 /// </summary>
 public void Stop()
 {
-    _rigidBody.velocity = Vector3.zero;  // Immediately halts motion
+    _rigidBody.linearVelocity = Vector3.zero;  // Immediately halts motion
 }
 ```
 
@@ -587,7 +596,7 @@ In this case our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
 
 > [!NOTE]
 >
-> When we set a Rigidbody’s velocity directly (e.g., `_rigidBody.velocity = Speed * Direction`), Unity applies it in meters per second and not by varing framerate, so there’s no need to multiply by `Time.deltaTime`.
+> When we set a Rigidbody’s velocity directly (e.g., `_rigidBody.linearVelocity = Speed * Direction`), Unity applies it in meters per second and not by varing framerate, so there’s no need to multiply by `Time.deltaTime`.
 >
 > However, `Vector3.Lerp` moves a value by a **fraction per call**, not a real-world speed. To make the deceleration consistent over time, we multiply by `Time.fixedDeltaTime`, which **represents the duration of a single physics step**. This ensures that braking behaves consistently, regardless of the physics update rate.
 <br>
@@ -647,7 +656,7 @@ Where:
 By comparing this magnitude to a small threshold (e.g., 0.01 m/s) as in:
 
 ```csharp
-_rigidBody.velocity.magnitude < 0.01f
+_rigidBody.linearVelocity.magnitude < 0.01f
 ```
 We can decide when to consider the object stopped and take any necessary actions, such as setting velocity explicitly to zero or disabling braking. 
 
@@ -664,10 +673,10 @@ This method gradually interpolates the Rigidbody’s velocity toward zero and ch
     private void ApplyBrake()
     {
         // Gradually reduce velocity
-        _rigidBody.velocity = Vector3.Lerp(_rigidBody.velocity, Vector3.zero, _deceleration * Time.fixedDeltaTime);
+        _rigidBody.linearVelocity = Vector3.Lerp(_rigidBody.linearVelocity, Vector3.zero, _deceleration * Time.fixedDeltaTime);
 
         // Stop braking once velocity is close enough to zero
-        if (_rigidBody.velocity.magnitude < 0.01f)
+        if (_rigidBody.linearVelocity.magnitude < 0.01f)
         {
             Stop();
             _isBraking = false;
@@ -679,7 +688,7 @@ This method gradually interpolates the Rigidbody’s velocity toward zero and ch
 
 > [!NOTE]
 >
-> The object must have zero velocity to fully stop. While we could directly set `_rigidBody.velocity = Vector3.zero` here, we already handle that in the `Stop()` method. To follow the **DRY (Don't Repeat Yourself)** principle, we simply call `Stop()` instead of duplicating the code.
+> The object must have zero velocity to fully stop. While we could directly set `_rigidBody.linearVelocity = Vector3.zero` here, we already handle that in the `Stop()` method. To follow the **DRY (Don't Repeat Yourself)** principle, we simply call `Stop()` instead of duplicating the code.
 
 
 
@@ -698,6 +707,7 @@ Feels more “realistic.”
 Acceleration, momentum, drag apply naturally.
 
 Good for cars, projectiles, floating objects.
+
 
 
 
