@@ -809,13 +809,14 @@ To make valid speed options clearer and enforce tighter constraints, we can conv
 
 **Update** the following fields: 
 ```csharp
+// Maximum speed allowed
+private const float MAX_SPEED = 10f;
+
 [SerializeField]
 [Range(0f, MAX_SPEED)]
 [Tooltip("Speed of the object’s movement. Cannot exceed maximum speed.")]
 private float _speed = 5f;
 
-// Maximum speed allowed
-private const float MAX_SPEED = 10f;
 ```
 
 > [!CAUTION]
@@ -1109,16 +1110,15 @@ public class MoveTransform : MonoBehaviour
 {
     // Serialized fields for initial values
 
+    // Maximum speed allowed
+    private const float MAX_SPEED = 10f;
+
     [SerializeField]
     [Range(0f, MAX_SPEED)]
     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
     private float _speed = 5f;
 
-
-    // Maximum speed allowed
-    private const float MAX_SPEED = 10f;
-
-    
+   
     // Direction of movement
     [SerializeField]
     private Vector3 _direction = Vector3.right; 
