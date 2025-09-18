@@ -1296,7 +1296,8 @@ An **enum (short for "enumeration")** is a special type in C# that lets you defi
 **Define the enum** for testing different actions in our `MoveTransform`
 
 ```csharp
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
+    [Header("FOR TESTING ONLY")]
     [SerializeField] 
     private bool _enableEditorTesting = false;
 
