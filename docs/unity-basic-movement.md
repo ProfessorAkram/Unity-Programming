@@ -1465,28 +1465,13 @@ using UnityEngine;
 
 public class MoveTransform : MonoBehaviour
 {
-    // Serialized fields for initial values
-    
-#if UNITY_EDITOR
-    [SerializeField] 
-    private bool _enableEditorTesting = false;
 
-   //Enum for list of possible actions to test 
-    private enum TestAction
-    {
-        None,   // No action selected
-        Move,   // Run Move() test
-        Stop    // Run Stop() test
-    }
-
-    [SerializeField]
-    [Tooltip("Select which action to test in the Editor.")]
-    private TestAction _testAction = TestAction.None;
-
-#endif
-    
     // Maximum speed allowed
     private const float MAX_SPEED = 10f;
+
+    // Serialized fields for initial values
+
+    [Header("GENERAL SETTINGS")]
 
     [SerializeField]
     [Range(0f, MAX_SPEED)]
@@ -1504,7 +1489,25 @@ public class MoveTransform : MonoBehaviour
 
     // Runtime movement flag
     private bool _isMoving;
-    
+
+#if UNITY_EDITOR
+    [Header("FOR TESTING ONLY")]
+    [SerializeField] 
+    private bool _enableEditorTesting = false;
+
+   //Enum for list of possible actions to test 
+    private enum TestAction
+    {
+        None,   // No action selected
+        Move,   // Run Move() test
+        Stop    // Run Stop() test
+    }
+
+    [SerializeField]
+    [Tooltip("Select which action to test in the Editor.")]
+    private TestAction _testAction = TestAction.None;
+
+#endif    
     
     // Public properties with encapsulation
     
