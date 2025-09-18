@@ -264,27 +264,39 @@ $$
 >[!IMPORTANT]
 >Starting with Unity 6.0, the `Rigidbody.velocity` property has been renamed to **`Rigidbody.linearVelocity`**. This rename is meant to clarify that it measures **linear motion** only, distinguishing it from **angularVelocity** and making the API more intuitive.
 
-
-### When to Use Velocity Over Transform
-Let's say that you are creating a **racing game**, in which the players move at a **constant speed** along a track, smoothly responding to input.
-
-If we were to use the standard `transform.position`, the object would move, but it would **ignore collisions and physics**, so the vehicle could clip through walls or other racers.  
-
-Using `Rigidbody.linearVelocity` allows us to: 
-- Direct and consistent control of speed and direction.  
-- Automatic physics interactions (collisions, slopes, friction).  
-- Continuous motion without needing to update the position every frame manually.
-
+<br>
 <br>
 
 > [!WARNING]
 >
-> The example above uses `Rigidbody.velocity` to demonstrate the syntax for accessing the property. However, in practice, you **should never use the class name directly**. You always access the velocity through a **reference to the component**.
+> The example above uses `Rigidbody.linearVelocity` to demonstrate the syntax for accessing the property. However, in practice, you **should never use the class name directly**. You always access the velocity through a **reference to the component**.
 > In our case, that reference is `_rigidBody.linearVelocity`. The reference name could vary; some developers use `_rb`, but it’s **best practice to be explicit** in your variable names. For clarity, `_rigidBody` is preferred here.
 > 
 <br>
 
-This mirrors real-world physics: the vehicle keeps moving at a set velocity until another force (collision, player input, braking) changes it.
+
+### When to Use Velocity Over Transform
+Let's say that you are creating a **arcade-style spaceship game**, , where players move at a **constant speed** and respond **instantly to input**.
+
+If we were to use the standard `transform.position`, the object would move exactly as commanded, but it would **ignore collisions and physics**, allowing the object to clip through walls, obstacles, or other players.
+
+<br>
+
+> [!Note]
+> **Gravity should be disabled** in this scenario. Otherwise, the object might accelerate downward or behave unpredictably due to other physics forces.
+
+<br>
+
+Using `Rigidbody.velocity` in this manner has both advantages and disadvantages:
+- ✅ Directly control speed and direction in a **predictable, immediate** way.
+- ✅ **Maintain automatic physics interactions**, like collisions and slope handling.
+- ✅ Move objects **continuously** without manually updating the position every frame.
+- ❌ **Ignored physics behaviors** (e.g. momentum, acceleration, and mass),  unless explicitly implemented.
+- ❌ **External forces don’t automatically affect movement**, such as drag or push.
+- ❌ Movement is **slightly less realistic** compared to full physics simulation.
+  
+
+Implmenting velocity in this manner provides players with a **responsive, snappy control experience**. Ideal for fast-paced, arcade-style gameplay in which you don’t need additional physics behaviors, like momentum, drag, or complex mass interactions, which can require more processing. This approach keeps **movement predictable, efficient, and easy to control**, while still benefiting from collisions and basic physics.
 
 ---
 
@@ -362,6 +374,23 @@ To make this clearer, we’ll rename the flag to `_moveOnStart` and add a `Start
 
 Since Rigidbody velocity continues automatically once set, **we no longer need to call `Move()` in `Update()` every frame**. The Rigidbody will keep moving according to the assigned velocity, and Unity handles all the physics calculations during FixedUpdate steps.
 
+However, the velocity is still subject to all other physics forces (e.g., gravity, drag, collisions, physics materials, joints). These can alter or cancel the motion over time.
+
+<br> 
+
+> [!IMPORTANT]
+> Before continuing, try playing the scene in the Unity editor, with gravity enabled and disabled:
+> - With gravity on, the object will be pulled downward, which may make it appear to “stop” in the original direction.
+> - With gravity off, the object will continue moving indefinitely in the assigned direction, unless another force interferes.
+>
+> **KEEP GRAVITY OFF**
+> 
+> While this isn’t physically accurate, disabling gravity ensures that once we apply velocity, the object will continue moving without additional code. This makes testing and prototyping easier. Later, when we introduce a controller, it will take responsibility for applying input to adjust or stop the object’s velocity.
+
+<br>
+
+### Modify the `Update()`
+
 If the call to `Move()` were the only thing happening in `Update()`, we could remove the method entirely. However, since `Update()` also performs the `_enableEditorTesting` check, we’ll keep it and simply remove the condition that calls `Move()`.
 
 **2. Modify** the `Update()` method: 
@@ -389,6 +418,8 @@ If the call to `Move()` were the only thing happening in `Update()`, we could re
 > Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
 
 <br>
+---
+## Updating Speed or Direction
 
 ---
 
@@ -519,76 +550,134 @@ This is an **immediate stop** and in some cases could be a bit jarring, especial
 <br>
 
 ---
+# 🎉 New Achievement: Rigidbody Movement
 
-## Gradual Stop with “Brake”
-In Unity, we can make a GameObject slow down smoothly by **interpolating** its velocity toward zero. One common method is `Vector3.Lerp`.
-
-**What Lerp does:**
-
-- Short for **Linear Interpolation**, Lerp takes a **start value**, a **target value**, and a **factor** (usually between 0 and 1).
-
-- It returns a value somewhere between the start and target, based on the factor.
-
-- Repeatedly calling Lerp each physics step gradually moves a value toward the target.
-
-### Adding Controls for Braking 
-Now that we understand how Lerp works, we need a way to **control how quickly the object decelerates**. To do this, we declare a **`_deceleration` field**, which acts as the **“factor”** in our Lerp calculation. This value determines how fast the object slows down each physics step, and by exposing it in the Inspector, it’s easy to tweak for different gameplay behaviors.
+We’ve now created a MoveRigidbody component that moves our GameObject with velocity.
 
 ```csharp
+using UnityEngine;
 
+[RequireComponent(typeof(Rigidbody))] 
+public class MoveRigidbody : MonoBehaviour
+{
+    
+    // Reference to the object's Rigidbody component
+    private Rigidbody _rigidBody;
+    
+    // Maximum speed allowed
+    private const float MAX_SPEED = 10f;
+    
+    // Store the last applied values for optimization
+    private float _currentSpeed;
+    private Vector3 _currentDirection;
+
+    
+    // Serialized fields for initial values
+    
+    [Header("GENERAL SETTINGS")]
+    
+    [SerializeField]
+    [Range(0f, MAX_SPEED)]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    private float _speed = 5f;
+    
     [SerializeField]
     [Tooltip("How quickly the object slows down when braking.")]
     private float _deceleration = 5f;
+   
+    // Direction of movement
+    [SerializeField]
+    private Vector3 _direction = Vector3.right; 
+    
+    [SerializeField]
+    [Tooltip("Should the object be moving on start?")]
+    private bool _moveOnStart = true;
+    
+    
+   
+    
+#if UNITY_EDITOR
+    [Header("FOR TESTING ONLY")]
+    [SerializeField] 
+    private bool _enableEditorTesting = false;
 
-```
-Next, we need a **flag to indicate when braking is active**. This is a simple **boolean variable** that we set to true whenever we want the GameObject to begin decelerating:
+    //Enum for list of possible actions to test 
+    private enum TestAction
+    {
+        None,   // No action selected
+        Move,   // Run Move() test
+        Stop    // Run Stop() test
 
-```csharp
-  //Is the object currently braking 
-  private bool _isBraking = false;
+    }
 
-```
+    [SerializeField]
+    [Tooltip("Select which action to test in the Editor.")]
+    private TestAction _testAction = TestAction.None;
 
-Finally, we provide a method to **trigger braking**. Unlike `Stop()`, which immediately sets the Rigidbody’s velocity to zero, the `Brake()` method does not **directly modify velocity**. Its sole responsibility is to **set a flag** that tells the physics system to start gradually decelerating the object.
+#endif
+    
+    
+    // Public properties with encapsulation
+    
+    public float Speed
+    {
+        get => _speed; 
+        set => _speed = Mathf.Clamp(value, 0f, MAX_SPEED);
+    }
+    
+    public Vector3 Direction
+    {
+        get => _direction;
+        set => _direction = value.normalized;
+    }
+    
+    
 
-While _we could integrate_ this behavior into the `Stop()` method, keeping a separate `Brake()` method has a few advantages: it allows for **immediate stops when necessary**, provides **clearer, more explicit control**, and makes it easier to reason about the object’s behavior in different gameplay situations. 
+    // Awake is called once on initialization         
+    private void Awake()
+    {
+        // Validate initial speed and direction via properties
+        Speed = _speed;
+        Direction = _direction;
+        
+        //Set reference to the Rigidbody component
+        _rigidBody = GetComponent<Rigidbody>(); 
+        
+        //Ensure that Rigidbody is dynamic
+        _rigidBody.isKinematic = false; 
 
-<br>
+    }//end Awake()
+    
+    // Start is called once before the first Update
+    private void Start()
+    {
+        //Store current speed and direction
+        _currentSpeed = Speed;
+        _currentDirection = Direction;
+        
+        //Check if object moves on start
+        if (_moveOnStart)
+        {
+            Move();
 
-> [!NOTE]
->
-> Because the **gradual deceleration** using Lerp occurs over multiple physics steps, it must be handled in `FixedUpdate()`. The `Brake()` method’s role is simply to set the flag that signals when to start applying the Lerp-based slowdown.
-> 
-<br>
+        }//end if(_moveOnStart)
+        
+    }//end Start()
+    
 
-```csharp
+    // Update is called once per frame
+    private void Update()
+    {
+        
+#if UNITY_EDITOR
+        if (_enableEditorTesting)
+        {
+            RunMovementTest();
 
-/// <summary>
-/// Triggers gradual deceleration of the object.
-/// </summary>
-public void Brake()
-{
-    // Enable braking; FixedUpdate will handle slowing the Rigidbody
-    _isBraking = true;
-
-}//end Brake()
-```
-
-
----
-
-## Modifiying FixedUpdate() for Braking
-
-To implement **gradual braking**, we first need to update `FixedUpdate()` to check if the object is currently braking by examining the `_isBraking` flag. This ensures that our physics calculations happen in sync with Unity’s physics system.
-
-<br>
-
->[!NOTE]
->Since we will need to do multiple calculations to implement the gradual braking, placing all of this directly in `FixedUpdate()` would violate the **Single Responsibility Principle**, making the method harder to read and maintain. Instead, we can extract the braking logic into its own method `ApplyBraking()`.
-
-<br>
-
-```csharp
+        } //end if(_enableEditorTesting)
+#endif
+    }//end Update()
+    
     //Called at fixed intervals (i.e. physic steps) 
     private void FixedUpdate()
     {
@@ -598,148 +687,48 @@ To implement **gradual braking**, we first need to update `FixedUpdate()` to che
             Move(Direction, Speed);
         }
 
-        // is the object currently braking 
-        if (_isBraking)
-        {
-          ApplyBraking();
-        }
 
     }//end FixedUpdate()
-```
-
-
-### Understanding Lerp
-
-If the object is **braking**, we need to implement `Vector3.Lerp`. In doing so, it’s important to understand how Lerp is calculated:
-
-$$
-\text{newValue} = \text{currentValue} + (\text{targetValue} - \text{currentValue}) \times t
-$$
-
-Where:
-
-- **newValue** = the updated value  
-- **currentValue** = the current value  
-- **targetValue** = the value you want to approach  
-- **t** = interpolation factor (usually between 0 and 1)
-
-In this case, our **\( t \)** is (decleartion value * Time.FixedDeltaTime).
-
-<br>
-
-> [!NOTE]
->
-> When we set a Rigidbody’s velocity directly (e.g., `_rigidBody.linearVelocity = Speed * Direction`), Unity applies it in meters per second and not by varing framerate, so there’s no need to multiply by `Time.deltaTime`.
->
-> However, `Vector3.Lerp` moves a value by a **fraction per call**, not a real-world speed. To make the deceleration consistent over time, we multiply by `Time.fixedDeltaTime`, which **represents the duration of a single physics step**. This ensures that braking behaves consistently, regardless of the physics update rate.
-
-<br>
-
----
-
-## Create Method to Apply Braking 
-The `ApplyBrake()` method will be responsible for gradually reducing the Rigidbody’s velocity toward zero while ensuring that we stop once the object is effectively at rest.
-
-### Determining When a Rigidbody is Stopped
-When gradually reducing a Rigidbody’s velocity (e.g., using Lerp), the velocity **approaches zero but never reaches exactly zero**. To decide when an object is _“effectively stopped”_ . In this instance, we would use an **epsilon (ε)**, which is a small value used as a **threshold**.
-
-The **magnitude** of the velocity vector represents the length of a vector, i.e., the object’s overall speed:
-
-$$
-|\mathbf{v}| = \sqrt{v_x^2 + v_y^2 + v_z^2}
-$$
-
-Where:
-
-- \(v_x, v_y, v_z\) are the components of the velocity along each axis.  
-
-We consider the object stopped when the magnitude is less than epsilon:
-
-$$
-\text{if } |\text{velocity}| < \epsilon, \text{ then consider velocity zero.}
-$$
-
-For our use case, ε would be something like **0.01 m/s**, which translates in code to:
-
-```csharp
-
-_rigidBody.linearVelocity.magnitude < 0.01f
-
-```
-This approach allows us to reliably detect when a Rigidbody is effectively stationary and perform any necessary actions, like explicitly setting velocity to zero or disabling braking.
-
-
-### Create `ApplyBraking()`
-
-Our `ApplyBraking()` method is called internally by `FixedUpdate()` and triggered via the public `Brake()` method. Since it is used only within the class, it can remain **private**.
-
-This method gradually interpolates the Rigidbody’s velocity toward zero and checks when it is close enough to stop. Once the object is effectively at rest, it calls `Stop()` and clears the `_isBraking` flag.
-
-```csharp
+    
+    
+     
     /// <summary>
-    /// Gradually reduces the Rigidbody's velocity toward zero using linear interpolation (Lerp).
+    /// Moves the object in a specified direction at a specified speed.
     /// </summary>
-    private void ApplyBrake()
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    private void Move(Vector3? direction = null, float? speed = null)
     {
-        // Gradually reduce velocity
-        _rigidBody.linearVelocity = Vector3.Lerp(_rigidBody.linearVelocity, Vector3.zero, _deceleration * Time.fixedDeltaTime);
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
 
-        // Stop braking once velocity is close enough to zero
-        if (_rigidBody.linearVelocity.magnitude < 0.01f)
-        {
-            Stop();
-            _isBraking = false;
-        }
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
 
-    }//end Brake()
+        //Record the current direciton and speed
+        _currentDirection = Direction;
+        _currentSpeed = Speed;
 
-```
+        // Move the GameObject using Rigidbody velocity
+        _rigidBody.linearVelocity = Speed * Direction;
 
-<br>
-
-> [!NOTE]
->
-> The object must have zero velocity to fully stop. While we could directly set `_rigidBody.linearVelocity = Vector3.zero` here, we already handle that in the `Stop()` method. To follow the **DRY (Don't Repeat Yourself)** principle, we simply call `Stop()` instead of duplicating the code.
-
-<br>
-
-<br>
-
-> **✔️ CHECK POINT**
-> 
-> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
-
-<br>
-
-----
-
-## Testing the Braking Function
-
-Now that we’ve implemented `Brake()`, we need a way to test it in the Editor. Since we already have in-editor testing, we can extend it by:
-
-Updating the `TestActions` **enum** to include `Brake`
-
-Updating `RuneMoveTest()` to handle the `Brake` action
-
-This approach leverages our existing testing framework, allowing us to quickly verify that braking behaves as expected without needing to set up additional input handling or test code.
-
-**1. Modify TestAction enum ** 
-```csharp
-
-//Enum for list of possible actions to test 
-    private enum TestAction
+    }//end Move()
+    
+    /// <summary>
+    /// Stops the object's movement immediately by zeroing its Rigidbody velocity.
+    /// </summary>
+    public void Stop()
     {
-        None,   // No action selected
-        Move,   // Run Move() test
-        Stop    // Run Stop() test
-        Brake,  // Run Brake() test
-    }
+        // Immediately halts motion
+        _rigidBody.linearVelocity = Vector3.zero;  
+        
+    }//end Stop()
+    
 
-```
-
-**2. Modify the `RunMovementTest()` to check for `Brake`**
-
-```csharp
+    
+    
 #if UNITY_EDITOR    
     /// <summary>
     /// Runs the selected movement test in the Editor based on the _testAction enum.
@@ -760,11 +749,6 @@ This approach leverages our existing testing framework, allowing us to quickly v
                 _testAction = TestAction.None; // Reset after running
                 break;
 
-            case TestAction.Brake:
-                Debug.Log("Testing Brake");  
-                Brake();
-                _testAction = TestAction.None; // Reset after running
-                break;
 
             case TestAction.None:
             default:
@@ -775,37 +759,14 @@ This approach leverages our existing testing framework, allowing us to quickly v
 
     }//end RunMovementTest()
 #endif
+    
+}//end MoveRigidbody
+
 ```
 
-<br>
-
-> **✔️ CHECK POINT**
-> 
-> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
-
-<br>
+While `Rigidbody.linearVelocity` gives us **snappy, arcade-style controls**, using **forces** (`Rigidbody.AddForce`) becomes useful when we want **gradual acceleration and deceleration, momentum**, or more **realistic interactions** with collisions and slopes. Velocity works well for **fast, predictable movement**, while **force-based movement** allows for **emergent, physics-driven behavior**.
 
 ---
-
-
-
-
-
-
-
-
-Force-based movement
-
-rb.AddForce(direction * forceAmount);
-
-
-Feels more “realistic.”
-
-Acceleration, momentum, drag apply naturally.
-
-Good for cars, projectiles, floating objects.
-
-
 
 
 
