@@ -228,6 +228,9 @@ However, if you want **more control over how your GameObjects move**, Unity prov
 
 ---
 
+# Velocity-Base Movement
+Before we dive into implementing movement, it's important to understand what **velocity** actually means. Velocity tells us both **how fast an object is moving** and **in which direction**, making it a fundamental concept for controlling movement in games. By grasping this idea, we can see why simply setting a Rigidbody’s velocity can instantly move an object in the desired direction.
+
 ## Understanding Velocity
 
 **Velocity** describes how fast and in which direction an object moves; essentially displacement over time, measured in meters per second **(m/s)**.
@@ -296,7 +299,7 @@ Using `Rigidbody.velocity` in this manner has both advantages and disadvantages:
 - ❌ Movement is **slightly less realistic** compared to full physics simulation.
   
 
-Implmenting velocity in this manner provides players with a **responsive, snappy control experience**. Ideal for fast-paced, arcade-style gameplay in which you don’t need additional physics behaviors, like momentum, drag, or complex mass interactions, which can require more processing. This approach keeps **movement predictable, efficient, and easy to control**, while still benefiting from collisions and basic physics.
+Implementing velocity in this manner provides players with a **responsive, snappy control experience**. Ideal for fast-paced, arcade-style gameplay in which you don’t need additional physics behaviors, like momentum, drag, or complex mass interactions, which can require more processing. This approach keeps **movement predictable, efficient, and easy to control**, while still benefiting from collisions and basic physics.
 
 ---
 
@@ -764,7 +767,19 @@ While `Rigidbody.linearVelocity` gives us **snappy, arcade-style controls**, usi
 
 ---
 
-## Understanding Force-Based Movement
+# Force-Based Movement
+
+While velocity-based movement is simple and effective, it has a drawback: directly setting the Rigidbody's velocity **overrides parts of Unity’s built-in physics system**. This can make objects feel less natural because collisions, momentum, and acceleration are bypassed.
+
+When you want to simulate more **realistic physics-driven movement**, it’s recommended to use **forces** instead. Moving an object with force means Unity’s physics engine handles the **acceleration, deceleration, and interactions** with other objects. This gives objects a sense of **weight and inertia**, making gameplay feel more immersive.
+
+Force-based movement is especially useful when:
+- Objects accelerate or brake gradually.
+- Collisions and impacts should realistically influence motion.
+- Simulating vehicles, projectiles, or other physics-heavy interactions.
+
+
+## Understanding Force
 
 Force-based movement uses **forces applied to a Rigidbody** to move objects, rather than directly setting velocity. In physics, force causes acceleration according to Newton’s second law:
 
@@ -797,7 +812,6 @@ Implementing movement with **force** has both advantages and disadvantages:
 - ✅ Produces **natural, fluid** acceleration and deceleration.
 - ✅ **Fully integrates with Unity physics** (collisions, mass, momentum).
 - ✅ **Allows external forces** (wind, explosions, pushes) to influence movement.
-- ❌ **Less immediately responsive** than velocity-based movement.
 - ❌ **Requires careful tuning** of mass, acceleration, and drag to feel right.
 - ❌ **Slightly more complex** to implement and debug.
 
@@ -812,11 +826,19 @@ In Unity, the `Rigidbody` component offers multiple ways to **apply force** and 
 - `Rigidbody.AddRelativeForce()` - Applies a linear force **relative to the Rigidbody’s local axes**.
 - `Rigidbody.AddRelativeTorque()` - Applies torque **relative to the Rigidbody’s local axes**.
 
-Each of these methods has its own specific use cases, but for the purposes of this lesson, we will keep things simple and focus only on using `Rigidbody.AddForce`.
+#### Force Modes
+Each of the Rigidbody force methods allows you to influence an object's movement, but the exact effect depends on how the force is applied. Unity provides four distinct `ForceMode` parameters to control this behavior. 
+- `ForceMode.Force` – **Continuous force over time**, mass affects acceleration; good for gradual, realistic motion (e.g., car accelerating).
+- `ForceMode.Acceleration` – **Continuous acceleration ignoring mass**; good for uniform forces like wind or gravity.
+- `ForceMode.Impulse` – **Instant force affected by mass**; good for sudden bursts like jumps or explosions.
+- `ForceMode.VelocityChange` – **Instant force ignoring mass**; good for responsive or arcade-style movement.
+
+> [!IMPORTANT]
+> Using `ForceMode.VelocityChange` will give a **very similar result** to directly setting `Rigidbody.velocity`. The advantage is that you’re still working through Unity’s physics system, which keeps your class flexible and allows you to later switch to other ForceMode types without rewriting your movement logic.
 
 ---
 
-## Extending MoveRigidbody
+## Refactoring MoveRigidbody with Force
 
 Our class `MoveRigidbody` explicitly **indicates that we are controlling movement** with a Rigidbody, but it doesn’t specify how. Right now, we are using **velocity**, but what if we wanted to use **force** instead?
 
@@ -942,7 +964,7 @@ messy and makes it hard to read and debug.
 
 To make the code **cleaner and easier to maintain**, we can keep the shared logic in the `Move()` method and dedicated methods: 
 
-- `HandleMovementMode()` - handles the check for movement mode, callsthe  appropriate `MoveWith..()` method
+- `HandleMovementMode()` - handles the check for movement mode, calls the  appropriate `MoveWith..()` method
 - `MoveWithVelocity()` — handles instant, precise movement by setting the Rigidbody’s velocity.
 - `MoveWithForce()` — handles physics-driven movement by applying forces, taking acceleration and braking into account.
 
@@ -972,7 +994,7 @@ We need to update the `Move()` method so it no longer contains the velocity calc
         _currentDirection = Direction;
         _currentSpeed = Speed;
 
-        // Handle movement based on the selected mode
+        // Handle movement based on movement mode
         HandleMovementMode();
         
     }//end Move()
@@ -1142,16 +1164,88 @@ The `HandleMovementMode()` method currently decides which movement calculation t
 ```
 ### Update calls to `HandleMovementMode()`
 
-Now that `HandleMovementMode()` rewuir
+Now that `HandleMovementMode()` requires the move action argument, we will need to update the `Move()` that calls this method. 
+
+```csharp
+    /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    private void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
+
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
+
+        //Record the current direction and speed
+        _currentDirection = Direction;
+        _currentSpeed = Speed;
+
+        // Handle MOVE action, based on movement mode
+        HandleMovementMode(MovementAction.Move));
+        
+    }//end Move()
+```
+
+Additionally, we will need to **update the `Stop()`** method
+
+```csharp
+    /// <summary>
+    /// Stops the object's movement by updating the movement flag.
+    /// </summary>
+    public void Stop()
+    {
+        // Handle STOP action, based on movement mode
+        HandleMovementMode(MovementAction.Stop));
+
+    }//end Stop()
+```
+
+---
+
+## Creating Stop Methods for Velocity and Force
+
+Now that we've updated our `Stop()` method to delegate movement mode selection to `HandleMovementMode()`, we need to create the specific stop methods for velocity and force movement. These methods define exactly how an object should stop depending on its movement type.
+
+### Velocity-Based Stop
+
+Stopping a velocity-based object is straightforward. Since velocity movement instantly sets the Rigidbody's velocity, stopping is simply a matter of **zeroing out the velocity**. 
+
+```csharp
+
+    /// <summary>
+    /// Instantly stops the Rigidbody by setting its velocity to zero.
+    /// Used for velocity-based movement.
+    /// </summary>
+    private void StopwithVelocity()
+    {
+        // Instantly stop the Rigidbody by setting velocity to zero
+        _rigidBody.linearVelocity = Vector3.zero;
+
+    }//end StopWithVelocity
+
+```
+## Force-Based Stop
+
+Instead of instantly halting the object, force-based movement gradually decelerates it using physics-based forces.
 
 
+To calculate the gradual slowdown of the object using force, we first need to check if the object is still moving. One way to do this is by looking at the magnitude of the Rigidbody’s current velocity. The magnitude tells us how fast the object is moving.
 
+However, calculating the magnitude requires taking a square root, which is slightly more expensive for the computer to compute. Since we don’t actually need the exact speed, just whether the object is effectively moving, we can use sqrMagnitude instead. This gives the squared length of the velocity vector, avoiding the square root calculation and making the check a little faster.
 
+For example:
 
+Suppose the object’s velocity vector is (0.1, 0, 0):
 
+Magnitude: √(0.1² + 0² + 0²) = 0.1
 
-
-
+Squared magnitude: 0.1² + 0² + 0² = 0.01
 
 
 
