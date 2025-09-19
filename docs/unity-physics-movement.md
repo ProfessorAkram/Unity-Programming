@@ -276,7 +276,7 @@ $$
 
 
 ### When to Use Velocity Over Transform
-Let's say that you are creating a **arcade-style spaceship game**, , where players move at a **constant speed** and respond **instantly to input**.
+Let's say that you are creating an **arcade-style spaceship game**, where players move at a **constant speed** and respond **instantly to input**.
 
 If we were to use the standard `transform.position`, the object would move exactly as commanded, but it would **ignore collisions and physics**, allowing the object to clip through walls, obstacles, or other players.
 
@@ -291,7 +291,7 @@ Using `Rigidbody.velocity` in this manner has both advantages and disadvantages:
 - ✅ Directly control speed and direction in a **predictable, immediate** way.
 - ✅ **Maintain automatic physics interactions**, like collisions and slope handling.
 - ✅ Move objects **continuously** without manually updating the position every frame.
-- ❌ **Ignored physics behaviors** (e.g. momentum, acceleration, and mass),  unless explicitly implemented.
+- ❌ **Ignored physics behaviors** (e.g., momentum, acceleration, and mass),  unless explicitly implemented.
 - ❌ **External forces don’t automatically affect movement**, such as drag or push.
 - ❌ Movement is **slightly less realistic** compared to full physics simulation.
   
@@ -651,7 +651,7 @@ public class MoveRigidbody : MonoBehaviour
         _currentSpeed = Speed;
         _currentDirection = Direction;
         
-        //Check if object moves on start
+        //Check if the object moves on start
         if (_moveOnStart)
         {
             Move();
@@ -674,7 +674,7 @@ public class MoveRigidbody : MonoBehaviour
 #endif
     }//end Update()
     
-    //Called at fixed intervals (i.e. physic steps) 
+    //Called at fixed intervals (i.e., physic steps) 
     private void FixedUpdate()
     {
         // Only update velocity if speed or direction changed
@@ -703,7 +703,7 @@ public class MoveRigidbody : MonoBehaviour
         Direction = moveDirection;
         Speed = moveSpeed;
 
-        //Record the current direciton and speed
+        //Record the current direction and speed
         _currentDirection = Direction;
         _currentSpeed = Speed;
 
@@ -792,7 +792,7 @@ Let's say we are creating a **racing game**, where vehicles gradually accelerate
 
 Similarly, objects that roll or slide, like a ball down a slope or a crate pushed across the floor, respond naturally to collisions and other forces, rather than abruptly changing direction. Even characters can benefit from this approach, **feeling _“weighty”_** and obeying momentum, which gives movement a more lifelike and immersive quality. Unlike velocity-based movement, **force-based movement allows external forces** like explosions, wind, or pushes from other objects to influence motion in a consistent and believable way.
 
-Implmenting movmment with **force** has both addvatages and dissadvantages: 
+Implementing movement with **force** has both advantages and disadvantages: 
 
 - ✅ Produces **natural, fluid** acceleration and deceleration.
 - ✅ **Fully integrates with Unity physics** (collisions, mass, momentum).
@@ -831,12 +831,12 @@ Following the **Single Responsibility Principle**, we could create separate comp
 
 ## Adding a Movement Mode
 
-To allow our level designers choose between **velocity-based** and **force-based movement** within the `MoveRigidbody` class, we can use an **enum** to define the movement modes.  
+To allow our level designers to choose between **velocity-based** and **force-based movement** within the `MoveRigidbody` class, we can use an **enum** to define the movement modes.  
 
 **1. Create Movement Modes** 
 
 ```csharp
-    //Enum for list of possible methods of physic movement
+    //Enum for a list of possible methods of physics-based movement
     public enum MovementMode
     {
         Velocity,
@@ -853,7 +853,7 @@ To allow our level designers choose between **velocity-based** and **force-based
 ```
 
 ## Handling Acceleration and Deceleration
-In games, movement rarely happens instantly, objects often **accelerate** to their target speed and **decelerate** when stopping. Velocity-based movement typically doesn’t need gradual acceleration, because we can instantly set the Rigidbody’s velocity. Force-based movement, on the other hand, **relies on acceleration and deceleration** to feel smooth and realistic.
+In games, movement rarely happens instantly; objects often **accelerate** to their target speed and **decelerate** when stopping. Velocity-based movement typically doesn’t need gradual acceleration, because we can instantly set the Rigidbody’s velocity. Force-based movement, on the other hand, **relies on acceleration and deceleration** to feel smooth and realistic.
 
 While Unity’s physics system automatically calculates acceleration from applied forces, relying on it alone can make movement feel **unpredictable**, because mass, drag, collisions, and frame rate can all affect a Rigidbody’s behavior. In gameplay scenarios where precise control is important, like a racing game, we don’t want these interactions to interfere with the player’s experience. By adding **explicit acceleration and deceleration values**, we can fine-tune how quickly objects speed up and slow down, keeping movement smooth, responsive, and predictable, while still benefiting from Unity’s physics for collisions and realism.
 
@@ -878,7 +878,7 @@ private float _brakingForce = 10f;
 <br>
 
 ### Organizing Fields in the Inspector
-When we look in the Editor, the **_GENERAL SETTINGS_** section contains several fields that apply to both velocity and force movement. However, our new fields for acceleration and braking force, are only relevant when using force mode. To make this clear and keep the Inspector organized, we update and add `[Header]` attributes to separate fields logically.
+When we look in the Editor, the **_GENERAL SETTINGS_** section contains several fields that apply to both velocity and force movement. However, our new fields for acceleration and braking force are only relevant when using force mode. To make this clear and keep the Inspector organized, we update and add `[Header]` attributes to separate fields logically.
 
 ```csharp
 
@@ -915,8 +915,8 @@ When we look in the Editor, the **_GENERAL SETTINGS_** section contains several 
 The fields in the Inspector are arranged to help level designers **quickly understand and set up movement**:
 
 - **Movement mode** — choose whether the object uses velocity or force.
-- **MOVEMENT SETTINGS** - explicity indicates these setting are for movement
-  - **Move on start** — should the object begin moving immediately?
+- **MOVEMENT SETTINGS** - explicitly indicates these settings are for movement
+  - **Move on start** — Should the object begin moving immediately?
   - **Direction** — which way the object moves.
   - **Speed** — how fast the object moves; this naturally **connects** to the force-specific settings.
 - **FORCE MODE SETTINGS** - used only by Force
@@ -937,12 +937,12 @@ This order makes it easy to think step by step: first decide if the object moves
 
 ## Refactoring Movement: Handling Modes Separately
 
-Up until now, our `Move()` method handled the calcualation for moving objects with velocity. The caluations for adding force will be different, and we will also need to check which mode (velcoity or force) will be used. Putting all this logic in one method can 
-messy and make it hard to read and debug. 
+Up until now, our `Move()` method handled the calculation for moving objects with velocity. The calculations for adding force will be different, and we will also need to check which mode (velocity or force) will be used. Putting all this logic in one method can 
+messy and makes it hard to read and debug. 
 
 To make the code **cleaner and easier to maintain**, we can keep the shared logic in the `Move()` method and dedicated methods: 
 
-- `HandleMovementMode()` - handles the check for movement mode, calls apporate `MoveWith..()` method
+- `HandleMovementMode()` - handles the check for movement mode, callsthe  appropriate `MoveWith..()` method
 - `MoveWithVelocity()` — handles instant, precise movement by setting the Rigidbody’s velocity.
 - `MoveWithForce()` — handles physics-driven movement by applying forces, taking acceleration and braking into account.
 
@@ -950,7 +950,7 @@ To make the code **cleaner and easier to maintain**, we can keep the shared logi
 
 ### Modifiy the `Move()` Method
 
-We need to update the `Move()` method so it no longer contains the velocity calculations directly. Instead, `Move()` now sets the shared direction and speed valuse, and then calls `HandleMovementMode()`.
+We need to update the `Move()` method so it no longer contains the velocity calculations directly. Instead, `Move()` now sets the shared direction and speed values, and then calls `HandleMovementMode()`.
 
 ```csharp
     /// <summary>
@@ -968,7 +968,7 @@ We need to update the `Move()` method so it no longer contains the velocity calc
         Direction = moveDirection;
         Speed = moveSpeed;
 
-        //Record the current direciton and speed
+        //Record the current direction and speed
         _currentDirection = Direction;
         _currentSpeed = Speed;
 
@@ -1057,7 +1057,7 @@ In velocity-based movement, the Rigidbody instantly reaches the target speed and
         // Calculate the difference between the current velocity and the target velocity
         Vector3 velocityChange = desiredVelocity - _rigidBody.velocity;
 
-        // Limit the velocity change to the maximum acceleration allows this frame (physic step)
+        // Limit the velocity change to the maximum acceleration allowed this frame (physics step)
         float maxChange = _acceleration * Time.fixedDeltaTime;
 
         // Keep the velocity change within the allowed limit, for gradual acceleration
@@ -1076,9 +1076,9 @@ This method gives objects a **more natural, weighty feel**, makes movement respo
 
 ## Defining Movement Actions
 
-Currently the `Move()` method delegates to `HandleMovementMode()`, to decide whether to use velocity-based or force-based calculations. The `Stop()` logic will also depend on the object’s current movement mode. To avoid duplicating code, we’ll extend `HandleMovementMode()` so it can check both the movement mode and the type of action (move or stop).
+Currently, the `Move()` method delegates to `HandleMovementMode()`, to decide whether to use velocity-based or force-based calculations. The `Stop()` logic will also depend on the object’s current movement mode. To avoid duplicating code, we’ll extend `HandleMovementMode()` so it can check both the movement mode and the type of action (move or stop).
 
-In order to do this we will need an additional **enum** for **movement actions**, similar to how we defined the **movement modes**. With this in place, `HandleMovementMode()` can branch on both the mode and the action, keeping all decision-making in a single, reusable method.
+In order to do this, we will need an additional **enum** for **movement actions**, similar to how we defined the **movement modes**. With this in place, `HandleMovementMode()` can branch on both the mode and the action, keeping all decision-making in a single, reusable method.
 
 **Create MoveAction Enum** 
 
@@ -1103,7 +1103,7 @@ The `HandleMovementMode()` method currently decides which movement calculation t
     /// Determines which movement mode is currently selected and 
     /// calls the correct method for either moving or stopping.
     /// </summary>
-    ///     /// <param name="action">The type of MovementAction to preform (e.g., Move/Stop) </param>
+    ///     /// <param name="action">The type of MovementAction to perform (e.g., Move/Stop) </param>
     private void HandleMovementMode(MovementAction action)
     {
         switch (_movementMode)
@@ -1143,6 +1143,7 @@ The `HandleMovementMode()` method currently decides which movement calculation t
 ### Update calls to `HandleMovementMode()`
 
 Now that `HandleMovementMode()` rewuir
+
 
 
 
