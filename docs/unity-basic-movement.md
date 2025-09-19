@@ -144,7 +144,7 @@ private void Awake()
 <br>
 
 > [!CAUTION]  
-> Unless you are instantiating a new GameObject, you generally should not set its initial position in code, that is typically determined by the game designer in the scene. This line is included only to demonstrate how `transform.position` works. After testing, comment it out or delete it.
+> Unless you are instantiating a new GameObject, you generally should not set its initial position in code; that is typically determined by the game designer in the scene. This line is included only to demonstrate how `transform.position` works. After testing, comment it out or delete it.
 
 
 ---
@@ -279,9 +279,9 @@ In Unity, **public fields** are automatically displayed in the Inspector, which 
 public float _speed = 5f; // Automatically shown in Inspector, but breaks encapsulation
 
 ```
-The problem is that making a variable public just for Inspector access breaks **encapsulation**, other scripts can now freely change it.
+The problem is that making a variable public just for Inspector access breaks **encapsulation**, and other scripts can now freely change it.
 
-To solve this, Unity provides **attributes** special markers, in square brackets `[]` that are placed above variables to change how they behave in the Inspector. One of the most useful is `[SerializeField]`. This attribute lets you keep a field private in code while still exposing it in the Inspector for easy editing:
+To solve this, Unity provides **attributes**, special markers, in square brackets `[]` that are placed above variables to change how they behave in the Inspector. One of the most useful is `[SerializeField]`. This attribute lets you keep a field private in code while still exposing it in the Inspector for easy editing:
 
 ```csharp
 [SerializeField]
@@ -555,7 +555,7 @@ These questions highlight ways we can extend the capabilities of our Move compon
 # Refactoring `MoveTransform`
 Almost **all code benefits from refactoring** at some point, whether to improve readability, maintainability, or flexibility. By revisiting our MoveTransform component, we can make it **cleaner**, **more modular**, and capable of handling a wider range of scenarios without changing its core behavior.
 
-In the case of our `MoveTransform` component we address the features mentioned above. 
+In the case of our `MoveTransform` component, we address the features mentioned above. 
 
 ## Create Properties for Speed and Direction
 Currently, our MoveTransform component stores data (variables) directly. In programming, this is known as a **field**.
@@ -782,12 +782,12 @@ One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in 
 
 ```csharp
      [SerializeField]
-     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
-     private float _speed = 5f;
-
-     [SerializeField]
      [Tooltip("Direction of movement. Will be normalized automatically to ensure consistent movement.")]
      private Vector3 _direction = Vector3.right;
+
+     [SerializeField]
+     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+     private float _speed = 5f;
      
 ```
 
@@ -1096,7 +1096,7 @@ public void Stop()
 ---
 # 🎉 New Achievement: Refactored Movement
 
-Congratulations! You've **refactored** the `MoveTransform` component and with these improvements, the object now:
+Congratulations! You've **refactored** the `MoveTransform` component, and with these improvements, the object now:
 
 - Implements properties with validation for `Speed` and `Direction`.
 
@@ -1216,7 +1216,7 @@ public class MoveTransform : MonoBehaviour
 ```
 ### ⚠️ But wait! 
 
-While our `MoveTransform` is complete we don’t actually have a way to test the `Stop()` functionality. 
+While our `MoveTransform` is complete, we don’t actually have a way to test the `Stop()` functionality. 
 
 The `MoveTransform` component is only responsible for movement behavior, not controlling the object. A controller class (like PlayerController or EnemyAI) would normally handle when to call `Move()` or `Stop()`.
 
@@ -1394,6 +1394,15 @@ The `RunMovementTest()` method checks the value of `_testAction` and executes th
 
 This method keeps our **`Update()` loop clean** by separating the decision-making logic from frame updates.
 
+### Implementing a Switch Statement 
+A switch statement is a control structure that evaluates a single value and executes code based on which case matches that value. It is especially useful when you have multiple discrete options to check, since it avoids long chains of `if/else if` statements and makes the logic easier to read.
+
+In our example, we want to handle different actions (`Move`, `Stop`, `None`). Using a switch here makes the intent very clear; each possible action has its own dedicated case block. This also makes the code easier to extend: if we later add new actions such as Reverse or Reset, we simply add new case blocks without touching the existing logic.
+
+**Best Practices with Switch Statements:**
+- **Handle every possible case:** Even if an action doesn’t need to do anything, include an empty case. This makes the code explicit and avoids ambiguity for future readers.
+- **Always include a default case:** This acts as a safety net. If the condition value (such as an enum) is updated but no new case is added to the switch, the default ensures that unexpected values are caught—typically by logging an error or throwing an exception.
+
 ```cshar
 
 #if UNITY_EDITOR    
@@ -1407,18 +1416,20 @@ This method keeps our **`Update()` loop clean** by separating the decision-makin
             case TestAction.Move:
                 Debug.Log("Testing Move");
                 Move();
-                _testAction = TestAction.None; // Reset after running
                 break;
 
             case TestAction.Stop:
                 Debug.Log("Testing Stop");  
                 Stop();
-                _testAction = TestAction.None; // Reset after running
                 break;
 
             case TestAction.None:
+                Debug.Log("Testing None");
+                //Do nothing
+                break;
+                
             default:
-                // Do nothing
+                Debug.Log("Unhandled TestAction: " + _testAction); 
                 break;
 
         }//end switch(_testAction)
@@ -1428,14 +1439,6 @@ This method keeps our **`Update()` loop clean** by separating the decision-makin
 
 
 ```
-
-
-<br> 
-
-> [!NOTE]
-> When checking multiple discrete options (`Move`, `Stop`, `None`), a **switch** is clearer than using multiple `if` statements, making the code more readable and easier to extend. Adding future actions like `Brake` or `Reverse` only requires adding new case blocks.
-
-<br>
 
 <br>
 
@@ -1474,6 +1477,14 @@ public class MoveTransform : MonoBehaviour
     // Serialized fields for initial values
 
     [Header("GENERAL SETTINGS")]
+    
+    [SerializeField]
+    [Tooltip("Should the object be moving on initialization?")]
+    private bool _moveOnAwake = true;
+    
+    // Direction of movement
+    [SerializeField]
+    private Vector3 _direction = Vector3.right; 
 
     [SerializeField]
     [Range(0f, MAX_SPEED)]
@@ -1481,16 +1492,10 @@ public class MoveTransform : MonoBehaviour
     private float _speed = 5f;
 
    
-    // Direction of movement
-    [SerializeField]
-    private Vector3 _direction = Vector3.right; 
-    
-    [SerializeField]
-    [Tooltip("Should the object be moving on initialization?")]
-    private bool _moveOnAwake = true;
 
     // Runtime movement flag
     private bool _isMoving;
+    
 
 #if UNITY_EDITOR
     [Header("FOR TESTING ONLY")]
@@ -1526,7 +1531,6 @@ public class MoveTransform : MonoBehaviour
     }
     
     
-
     // Awake is called once on initialization         
     private void Awake()
     {
@@ -1558,7 +1562,9 @@ public class MoveTransform : MonoBehaviour
             Move();
 
         }//end if(_isMoving)
+        
     }//end Update()
+    
      
     /// <summary>
     /// Moves the object in a specified direction at a specified speed.
@@ -1607,18 +1613,20 @@ public class MoveTransform : MonoBehaviour
             case TestAction.Move:
                 Debug.Log("Testing Move");
                 Move();
-                _testAction = TestAction.None; // Reset after running
                 break;
 
             case TestAction.Stop:
                 Debug.Log("Testing Stop");  
                 Stop();
-                _testAction = TestAction.None; // Reset after running
                 break;
 
             case TestAction.None:
+                Debug.Log("Testing None");
+                //Do nothing
+                break;
+                
             default:
-                // Do nothing
+                Debug.Log("Unhandled TestAction: " + _testAction); 
                 break;
 
         }//end switch(_testAction)
