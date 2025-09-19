@@ -1259,7 +1259,7 @@ In Unity, you can use the `[Header("Header Text")]` attribute to add a clear lab
 ```csharp
   // Serialized fields for initial values
     
-    [Header("GENERAL SETTINGS")]
+    [Header("MOVEMENT SETTINGS")]
     
     [SerializeField]
     [Range(0f, MAX_SPEED)]
@@ -1475,7 +1475,7 @@ public class MoveTransform : MonoBehaviour
 
     // Serialized fields for initial values
 
-    [Header("GENERAL SETTINGS")]
+    [Header("MOVEMENT SETTINGS")]
     
     [SerializeField]
     [Tooltip("Should the object be moving on initialization?")]
