@@ -1123,10 +1123,9 @@ public class MoveTransform : MonoBehaviour
     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
     private float _speed = 5f;
 
-   
-    // Direction of movement
     [SerializeField]
-    private Vector3 _direction = Vector3.right; 
+    [Tooltip("Direction of movement. Will be normalized automatically to ensure consistent movement.")]
+    private Vector3 _direction = Vector3.right;
     
     [SerializeField]
     [Tooltip("Should the object be moving on initialization?")]
@@ -1482,9 +1481,9 @@ public class MoveTransform : MonoBehaviour
     [Tooltip("Should the object be moving on initialization?")]
     private bool _moveOnAwake = true;
     
-    // Direction of movement
     [SerializeField]
-    private Vector3 _direction = Vector3.right; 
+    [Tooltip("Direction of movement. Will be normalized automatically to ensure consistent movement.")]
+    private Vector3 _direction = Vector3.right;
 
     [SerializeField]
     [Range(0f, MAX_SPEED)]
