@@ -59,7 +59,7 @@ This name makes the purpose of the class explicit:
 
 By choosing clear and descriptive names, we make our code easier to understand, maintain, and extend.
 
-### GameObject Componets
+### GameObject Components
 For a class to run in Unity, it must either be **attached to a GameObject** or be called from another class that is attached to a GameObject present in the scene at runtime.
 
 When a class is attached to a GameObject, it is referred to as a **component**. Components allow GameObjects to have specific behaviors, such as movement, rendering, or collision detection.
@@ -1227,7 +1227,7 @@ So what if you’re working with a team, and the controller isn’t built yet? H
 
 Sometimes you need a quick way to **test your component** before the rest of the game systems are ready. But you don’t want that temporary code sneaking into the final build! This is where **Editor-only Debugging Tools** come in handy.
 
-Earlier we mentioned [`#if UNITY_EDITOR`](#using-if-unity_editor-for-editor-only-debugging), a special compiler directive in Unity. This directive allows lets us wrap test code so it only runs inside the Unity Editor. Anything inside these blocks will never make it into a build, keeping your gameplay code clean while still giving you powerful testing options during development.
+Earlier, we mentioned [`#if UNITY_EDITOR`](#using-if-unity_editor-for-editor-only-debugging), a special compiler directive in Unity. This directive enables us to enclose test code, allowing it to run only within the Unity Editor. Anything inside these blocks will never be included in a build, keeping your gameplay code clean while still providing powerful testing options during development.
 
 ---
 
@@ -1244,7 +1244,7 @@ The flag should be a `[SerializeField]` to allow for **Inspector** modification 
 #endif
 
 ```
-This makes testing optional and keeps the code clean and ensuring that temporary test logic only runs when explicitly enabled in the Editor.
+This makes testing optional and keeps the code clean, ensuring that temporary test logic only runs when explicitly enabled in the Editor.
 
 <br>
 
@@ -1253,7 +1253,7 @@ This makes testing optional and keeps the code clean and ensuring that temporary
 
 ### Organizing Fields in the Inspector with Headers
 
-When working with multiple `[SerializeField]` fields, it’s helpful to visually organize them in the Inspector. This makes it easier for designers or team members to understand which collection of fields do what, in our case we have general behavior and ones meant only for testing.
+When working with multiple `[SerializeField]` fields, it’s helpful to visually organize them in the Inspector. This makes it easier for designers or team members to understand which collection of fields does what. In our case, we have general behavior and ones meant only for testing.
 
 In Unity, you can use the `[Header("Header Text")]` attribute to add a clear label above related fields:
 
@@ -1285,7 +1285,7 @@ Using two separate booleans (`_testMove` and `_testStop`) could work, but it has
 
 - Both could accidentally be true at the same time.
 - It’s harder to scale if we add more test actions later.
-- Inspector would get messy with multiple toggles.
+- The inspector would get messy with multiple toggles.
 
 What we need is an easy way to select between multiple options. Instead of asking a simple yes/no question like _“Should I move?”_ or _“Should I stop?”_ we ask, _“Which one of these actions should I run?"_ An **enum** is the solution. 
 
@@ -1433,7 +1433,7 @@ This method keeps our **`Update()` loop clean** by separating the decision-makin
 <br> 
 
 > [!NOTE]
-> When checking multiple discrete options (`Move`, `Stop`, `None`), a **switch** is clearer than using multiple `if` statements, making the code more readable and easy to extend. Adding future actions like `Brake` or `Reverse` only requires adding new case blocks.
+> When checking multiple discrete options (`Move`, `Stop`, `None`), a **switch** is clearer than using multiple `if` statements, making the code more readable and easier to extend. Adding future actions like `Brake` or `Reverse` only requires adding new case blocks.
 
 <br>
 
