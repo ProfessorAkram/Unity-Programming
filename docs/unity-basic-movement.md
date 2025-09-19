@@ -786,7 +786,7 @@ One way to improve clarity is to use Unity's `[Tooltip]` attribute on fields in 
      private Vector3 _direction = Vector3.right;
 
      [SerializeField]
-     [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+     [Tooltip("Speed of the object’s movement. Cannot exceed maximum speed.")]
      private float _speed = 5f;
      
 ```
@@ -1120,7 +1120,7 @@ public class MoveTransform : MonoBehaviour
 
     [SerializeField]
     [Range(0f, MAX_SPEED)]
-    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maximum speed.")]
     private float _speed = 5f;
 
     [SerializeField]
@@ -1263,7 +1263,7 @@ In Unity, you can use the `[Header("Header Text")]` attribute to add a clear lab
     
     [SerializeField]
     [Range(0f, MAX_SPEED)]
-    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maximum speed.")]
     private float _speed = 5f;
 
 .....
@@ -1487,7 +1487,7 @@ public class MoveTransform : MonoBehaviour
 
     [SerializeField]
     [Range(0f, MAX_SPEED)]
-    [Tooltip("Speed of the object’s movement. Cannot exceed maxiumum speed.")]
+    [Tooltip("Speed of the object’s movement. Cannot exceed maximum speed.")]
     private float _speed = 5f;
 
    
