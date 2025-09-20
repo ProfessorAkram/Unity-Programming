@@ -1,4 +1,4 @@
-# Creating a Character Controller 
+# CHARACTER CONTROLLER CHALLENGE
 
 Previously, we created a `MoveTransform` Class, which handles moving an object in a given `Direction` at a set 'Speed`. This component was designed to be **modular** as many objects could use the same behaviors. For example, we could attach it to enemies, moving platforms, projectiles, or other objects that need consistent motion. Each object can move independently without knowing why it’s moving—its movement is handled entirely by the component.
 
@@ -89,4 +89,5 @@ Using the skills we've already learned, create your own `CharacterController` cl
 Think about how to add jumping along the Y-axis? 
 
 Without using gravity, how can we get the object to jump up and then return to its original Y position? 
+
 
