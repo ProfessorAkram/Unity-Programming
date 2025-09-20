@@ -826,6 +826,18 @@ In Unity, the `Rigidbody` component offers multiple ways to **apply force** and 
 - `Rigidbody.AddRelativeForce()` - Applies a linear force **relative to the Rigidbody’s local axes**.
 - `Rigidbody.AddRelativeTorque()` - Applies torque **relative to the Rigidbody’s local axes**.
 
+Each of these methods has its own specific use cases, but for this lesson, we will keep things simple and focus only on using `Rigidbody.AddForce`.
+
+#### `AddForce()` Method
+
+The `Rigidbody.AddForce()` method applies a force to a Rigidbody, causing it to accelerate in the direction of that force. Unlike directly setting the velocity, this allows Unity’s physics system to determine how the object actually moves, taking into account its mass, drag, and any other forces acting on it (like gravity or collisions).
+
+The method takes two parameters:
+- **Vector3 force** – a vector that specifies the direction and strength of the push.
+- **ForceMode mode** – determines how the force is applied, such as gradually over time, instantly, or ignoring mass.
+
+Using these parameters, you can make objects move more realistically, respond to collisions naturally, and create different types of movement behaviors depending on the chosen `ForceMode`.
+
 #### Force Modes
 Each of the Rigidbody force methods allows you to influence an object's movement, but the exact effect depends on how the force is applied. Unity provides four distinct `ForceMode` parameters to control this behavior. 
 - `ForceMode.Force` – **Continuous force over time**, mass affects acceleration; good for gradual, realistic motion (e.g., car accelerating).
@@ -838,41 +850,67 @@ Each of the Rigidbody force methods allows you to influence an object's movement
 
 ---
 
-## Refactoring MoveRigidbody with Force
+## Refactoring `MoveRigidbody` with Force
+Now that we understand how different `ForceMode` options affect movement, it makes sense to refactor our `MoveRigidbody` class to take advantage of them. Instead of directly setting `rigidbody.velocity` (which bypasses physics), we’ll shift to force-based movement. This lets Unity’s physics system handle acceleration, drag, and collisions while still giving us the flexibility to choose between instant, gradual, or mass-independent motion through the selected `ForceMode`.
 
-Our class `MoveRigidbody` explicitly **indicates that we are controlling movement** with a Rigidbody, but it doesn’t specify how. Right now, we are using **velocity**, but what if we wanted to use **force** instead?
-
-Following the **Single Responsibility Principle**, we could create separate components like `VelocityMove` and `ForceMove`. This would work, but most of the class setup would be nearly identical, except for the movement calculation itself. `MoveRigidbody` has a clearer definition of its purpose, so instead, we will create a **switch** that allows the level designer to choose whether game objects move by velocity or by force.
-
-<br>
-
-> [!NOTE]
-> In larger or more complex projects, a **Strategy Pattern** can be used. This involves creating **separate movement strategies** that can be **swapped at runtime**, allowing the shared methodology to remain in one class while delegating the actual movement to the chosen strategy. This is a cleaner, more scalable solution, but it requires several additional classes and setup, which are beyond the scope of this lesson.
-
----
-
-## Adding a Movement Mode
-
-To allow our level designers to choose between **velocity-based** and **force-based movement** within the `MoveRigidbody` class, we can use an **enum** to define the movement modes.  
-
-**1. Create Movement Modes** 
-
-```csharp
-    //Enum for a list of possible methods of physics-based movement
-    public enum MovementMode
-    {
-        Velocity,
-        Force
-    }
-```
-
-**2. Create a `[SerlizedField]`** to select the mode
+### Updating Fields 
+To leverage the different ways motion can be applied with force, we will need to be able to set what `ForceMode` we want applied. To do this, we will create a new `[SerlizedField]`:
 
 ```csharp
     [SerializeField]
-    [Tooltip("Choose between velocity-based and force-based movement")]
-    private MovementMode _movementMode = MovementMode.Velocity;
+    [Tooltip("Controls how movement forces are applied:\n" +
+             "• Force – Gradual, realistic acceleration (affected by mass).\n" +
+             "• Acceleration – Gradual but ignores mass (like wind).\n" +
+             "• Impulse – Instant burst, affected by mass (like a jump or explosion).\n" +
+             "• VelocityChange – Instant burst, ignores mass (arcade-style movement).")]
+    private ForceMode _forceMode = ForceMode.Force;
+
 ```
+
+
+> [!NOTE]
+> While we could keep the tooltip short (e.g., _“Controls how movement forces are applied”_), level designers may not be familiar with all the available ForceMode options. Expanding the tooltip into multiple lines gives them helpful context and reduces ambiguity.
+
+## Refactoring the Movement
+Currently, the `Move()` takes care of all the calculations for speed and direction, then applies the values to the `_rigidBody.linearVelocity` to simulate motion. The calculations for setting speed and direction are still valid, but we no longer want to directly change the linear velocity of the Rigidboy component. Instead, we want to apply different 
+
+We need to update the `Move()` method so it no longer contains the velocity calculations directly. Instead, `Move()` now sets the shared direction and speed values, and then calls `HandleMovementMode()`.
+
+```csharp
+    /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    private void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
+
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
+
+        //Record the current direction and speed
+        _currentDirection = Direction;
+        _currentSpeed = Speed;
+
+        // Handle movement based on movement mode
+        HandleMovementMode();
+        
+    }//end Move()
+
+
+
+
+
+
+
+
+
+
+
 
 ## Handling Acceleration and Deceleration
 In games, movement rarely happens instantly; objects often **accelerate** to their target speed and **decelerate** when stopping. Velocity-based movement typically doesn’t need gradual acceleration, because we can instantly set the Rigidbody’s velocity. Force-based movement, on the other hand, **relies on acceleration and deceleration** to feel smooth and realistic.
@@ -970,34 +1008,7 @@ To make the code **cleaner and easier to maintain**, we can keep the shared logi
 
   
 
-### Modifiy the `Move()` Method
 
-We need to update the `Move()` method so it no longer contains the velocity calculations directly. Instead, `Move()` now sets the shared direction and speed values, and then calls `HandleMovementMode()`.
-
-```csharp
-    /// <summary>
-    /// Moves the object in a specified direction at a specified speed.
-    /// </summary>
-    /// <param name="direction">The direction to move the object (optional).</param>
-    /// <param name="speed">The speed at which the object should move (optional).</param>
-    private void Move(Vector3? direction = null, float? speed = null)
-    {
-        // Resolve the effective values for this frame
-        Vector3 moveDirection = direction ?? Direction;
-        float moveSpeed = speed ?? Speed;
-
-        // Update properties to ensure validation and internal consistency
-        Direction = moveDirection;
-        Speed = moveSpeed;
-
-        //Record the current direction and speed
-        _currentDirection = Direction;
-        _currentSpeed = Speed;
-
-        // Handle movement based on movement mode
-        HandleMovementMode();
-        
-    }//end Move()
     
 ``` 
 
@@ -1246,6 +1257,7 @@ Suppose the object’s velocity vector is (0.1, 0, 0):
 Magnitude: √(0.1² + 0² + 0²) = 0.1
 
 Squared magnitude: 0.1² + 0² + 0² = 0.01
+
 
 
 
