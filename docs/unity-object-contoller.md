@@ -87,4 +87,6 @@ Using the skills we've already learned, create your own `CharacterController` cl
 ## Bonus Challenge
 
 Think about how to add jumping along the Y-axis? 
+
 Without using gravity, how can we get the object to jump up and then return to its original Y position? 
+
