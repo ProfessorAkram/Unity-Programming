@@ -321,13 +321,16 @@ private void Move(Vector3? direction = null, float? speed = null)
     // Update properties to ensure validation and internal consistency
     Direction = moveDirection;
     Speed = moveSpeed;
+
+    // Flags the object as moving
+    //_isMoving = true;
     
     // Move the GameObject using Rigidbody velocity
     _rigidBody.linearVelocity = Speed * Direction;
 }
 ```
 #### Key Changes
-**1. Remove the `_isMoving` flag** 
+**1. Comment out the `_isMoving` flag** 
   - If the game object's velocity is greater than zero, it will be moving; we do not need a flag to check this.
   - Instead, we would check the velocity value:  `if (!_rigidBody.linearVelocity == Vector3.zero)`
   - This check was nullified here since we do not need to check the update for this condition any longer.
@@ -1410,6 +1413,7 @@ Suppose the object’s velocity vector is (0.1, 0, 0):
 Magnitude: √(0.1² + 0² + 0²) = 0.1
 
 Squared magnitude: 0.1² + 0² + 0² = 0.01
+
 
 
 
