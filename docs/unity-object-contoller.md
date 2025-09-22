@@ -31,6 +31,13 @@ In Unity, to check for keyboard input, we can use the `Input.GetKey(KeyCode.KEY)
     }
 ```
 
+> [!IMPORTANT]
+> Checking for input directly with `KeyCode (e.g., Input.GetKey(KeyCode.W))` is part of **Unity's old Input System**. While it is recommended to use **Unity's new Input System** for modern projects, we'll cover that later. For now, we will allow for both the old and new systems in the same project:
+> 1. Go to `Edit` > `Project Settings` > `Player` > `Other Settings`.
+> 2. Find **Active Input Handling**.
+> 3. Change it from Input System Package (New) → **Both**.
+> 4. Press the `Okay` button in the pop-up dialog, Unity will then reload the project.> . 
+
 ---
 
 ## Get the `MoveTransform` Component
@@ -89,5 +96,6 @@ Using the skills we've already learned, create your own `CharacterController` cl
 Think about how to add jumping along the Y-axis? 
 
 Without using gravity, how can we get the object to jump up and then return to its original Y position? 
+
 
 
