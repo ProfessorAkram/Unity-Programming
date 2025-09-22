@@ -382,6 +382,9 @@ To address the issues with placing all logic in `Update()`, we can move the move
 - Trigger movement from other events or scripts without duplicating code.  
 - Maintain a single responsibility for each method.
 
+> [!NOTE]
+> The `Move()` method will be **public** as it most likely will not only be called on this component, but also triggered by other events, like player input from a `CharacterController` class. 
+
 ```csharp
 private void Update()
 {
@@ -392,7 +395,7 @@ private void Update()
 ///<summary>
 /// Move the object by the transform position
 ///</summary>
-private void Move()
+public void Move()
 {
     //Move GameObject
     transform.position += _speed * Time.deltaTime * _direction;
@@ -420,7 +423,7 @@ However, as projects get more complex, it’s often not enough to just watch obj
 
 For example, you can log the object’s position every frame:
 ```csharp
-private void Move()
+public void Move()
 {
     // Move GameObject
     transform.position += _speed * Time.deltaTime * _direction;
@@ -528,7 +531,7 @@ public class MoveTransform : MonoBehaviour
      ///<summary>
      /// Move the object by the transform position
      ///</summary>
-     private void Move()
+     public void Move()
      {
          //Move GameObject
          transform.position += _speed * Time.deltaTime * _direction;
@@ -859,7 +862,7 @@ To support this, we can modify the original private `Move()` method to accept `d
 /// </summary>
 /// <param name="direction">The direction to move the object.</param>
 /// <param name="speed">The speed at which the object should move.</param>
-private void Move(Vector3 direction, float speed)
+public void Move(Vector3 direction, float speed)
 {
     // Assign parameters to properties
     Direction = direction;
@@ -909,7 +912,7 @@ To make the method more flexible, we can use nullable parameters (`Vector3?` and
 /// </summary>
 /// <param name="direction">The direction to move the object (optional).</param>
 /// <param name="speed">The speed at which the object should move (optional).</param>
-private void Move(Vector3? direction = null, float? speed = null)
+public void Move(Vector3? direction = null, float? speed = null)
 {
     // Resolve the effective values for this frame
     Vector3 moveDirection = direction ?? Direction;
@@ -1036,7 +1039,7 @@ But what if we want the object to remain still at the start and have an external
     /// </summary>
     /// <param name="direction">The direction to move the object (optional).</param>
     /// <param name="speed">The speed at which the object should move (optional).</param>
-    private void Move(Vector3? direction = null, float? speed = null)
+    public void Move(Vector3? direction = null, float? speed = null)
     {
         // Resolve the effective values for this frame
         Vector3 moveDirection = direction ?? Direction;
@@ -1180,7 +1183,7 @@ public class MoveTransform : MonoBehaviour
     /// </summary>
     /// <param name="direction">The direction to move the object (optional).</param>
     /// <param name="speed">The speed at which the object should move (optional).</param>
-    private void Move(Vector3? direction = null, float? speed = null)
+    public void Move(Vector3? direction = null, float? speed = null)
     {
         // Resolve the effective values for this frame
         Vector3 moveDirection = direction ?? Direction;
@@ -1570,7 +1573,7 @@ public class MoveTransform : MonoBehaviour
     /// </summary>
     /// <param name="direction">The direction to move the object (optional).</param>
     /// <param name="speed">The speed at which the object should move (optional).</param>
-    private void Move(Vector3? direction = null, float? speed = null)
+    public void Move(Vector3? direction = null, float? speed = null)
     {
         // Resolve the effective values for this frame
         Vector3 moveDirection = direction ?? Direction;
