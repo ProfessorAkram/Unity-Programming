@@ -666,7 +666,7 @@ The object would move **5 times farther in that frame than intended**, because t
 
 This inconsistency can be avoided by **normalizing the direction vector** when it’s assigned. Normalization converts any vector to a **unit vector** (magnitude = 1) while preserving its direction.
 
-**Update** the `Direction` property to **normilize** the set value: 
+**Update** the `Direction` property to **normalize** the set value: 
 
 ```csharp
 public Vector3 Direction
