@@ -58,7 +58,7 @@ Because `FixedDeltaTime` is much smaller than 1 second, velocity and distance in
 
 Let's say we are creating a **racing game**, where vehicles gradually accelerate and brake rather than instantly reaching top speed. In this case, we want the movement to feel **realistic and physics-driven**, rather than simply starting and stopping abruptly.
 
-Similarly, objects that roll or slide, like a ball down a slope or a crate pushed across the floor, respond naturally to collisions and other forces, rather than abruptly changing direction. Even characters can benefit from this approach, **feeling _“weighty”_** and obeying momentum, which gives movement a more lifelike and immersive quality. Unlike velocity-based movement, **force-based movement allows external forces** like explosions, wind, or pushes from other objects to influence motion in a consistent and believable way.
+Similarly, objects that roll or slide, like a ball down a slope or a crate pushed across the floor, respond naturally to collisions and other forces, rather than abruptly changing direction. Even characters can benefit from this approach, **feeling _“weighty”_** and obeying momentum, which gives movement a more lifelike and immersive quality. Unlike velocity-based movement, **force-based movement allows external forces**, such as explosions, wind, or pushes from other objects, to influence motion in a consistent and believable way.
 
 Implementing movement with **force** has both advantages and disadvantages: 
 
@@ -219,7 +219,7 @@ $$
 v = \frac{\Delta x}{\Delta t} = \frac{5 \, \{m}}{1 \, \{s}} = 5 \, \{m/s}
 $$
 
-In this instance, the `Speed` value is just calculating the object's speed. 
+In this instance, the `Speed` value calculates the object's speed. 
 
 ### Momentum (Impulse)
 
@@ -243,12 +243,77 @@ $$
 {a} = \frac{{F} \}{{m}\}
 $$
 
-In both these instances, force is measured in Newtons, but we need to convert this to kg * meters/seconds squared, which, if you recall, is the mass in kg multiplied by meters/second, which is our momentum, then squared. In addition, since we are using the phsycis time, we are not actually using seconds here but Unity's physics step. This step is uses FixedDeltaTime at a rate of Default Time.fixedDeltaTime = 0.02 s (50 physics steps per second). 
+In both these instances, force is measured in Newtons, but we need to convert this to kg * meters/seconds squared, which, if you recall, is the mass in kg multiplied by meters/second, which is our momentum, then squared. In addition, since we are using the physics time, we are not actually using seconds here but Unity's physics step. This step uses `FixedDeltaTime`, whose default value is **0.02 s** (50 physics steps per second). 
 
-Therefore, our velocity becomes v = a*t , so our acceleration multiplied by time, this is linear, but while our velocity (think of it as speed) increases over time, the distance we move is not immediate. Instead, distance is d= 1/2 a * t squared. Remember that in unity we are not measuring time in seconds with physics by the physics step. 
-So if our `Speed` is 5f and we use that as the calculation of our velocity and time is one second, velocity is 5f. Distance is 1/2 of 5f, making it 2.5f, time is physical step of 0.02 squared which is 0.0004 multiplied by 2.5f, which is 0.001. This acceleration increases over time, starting out very small in this instance. Still, there are other forces acting on this object, gravity, drag and friction can all play a factor in how fast an object moves. 
+Since the velocity becomes:
+
+$${v} = {a}*{t}$$
+
+Our acceleration is multiplied by time (physics step), which is linear. However, while our velocity (think of it as speed) increases over time, the distance we move is not immediate. 
+
+![Velocity over time is linear; Distance over time is quadratic](../imgs/velocity-distance-graph.png)
+
+Instead, distance over time is calculated as:
+
+$${d} = \frac{1}{2} {a} * {t}^2$$
+
+Therefore, let's say that our speed is **5f** and time is a physics step, which equates to **0.02**. Our resulting equation would be: 
+
+$${0.001} = \frac{1}{2} {5} * {0.02}^2$$
+
+This acceleration increases over time, starting very small in this instance. Still, other forces are acting on this object; gravity, drag, and friction can all play a factor in how fast an object moves. 
 
 ----
+## Variables and Naming Conventions
+
+Before we move forward, let’s clarify the terms we’ll be using in our codebase. These terms are grounded in physics, but we’re choosing names that are both accurate and approachable for anyone reading or using the system.
+
+### Speed
+In physics, _velocity_ means speed with a direction. Since our direction is always normalized (length of 1), multiplying it by our Speed value directly gives us velocity as a `Vector3`.
+
+To keep things simple, we’ll keep calling this **Speed**, even though under the hood it’s really velocity.
+
+### Acceleration
+Normally in physics, _acceleration_ is the **rate of change of velocity over time**.
+In our code, we will think of this as a **force multiplier** that determines how strongly we push an object toward its Speed.
+
+Why? Because the word _acceleration_ is easier to understand than “force multiplier.” So even though it’s not a perfect physics definition, we will need to create an `_acceleration` field as this force multiplier.
+
+### Acceleration Time
+Acceleration time is the duration it takes to reach the target Speed, controlling the smoothness of motion. If we want to allow for gradual acceleration, we will need a field named `_accelerationTime`. This naming matches the real-world context, for example, if a car goes from 0 to 60 in 5 seconds, that “5 seconds” is the _acceleration time_.
+
+#### Acceleration Time Flag
+The method by which we calculate force using acceleration vs acceleration time will differ, and in efforts to simplify our code, we will use a **flag** to check which to calculate. This will be a simple **bool** field to check if we want to  `_useAccelarationTime`. By default, we will assume this is false for a more instantaneous force application.
+
+**Create** the following fields: 
+
+```csharp
+    [SerializeField]
+    [Tooltip("Acceleration of speed; force multiplier.\n" +
+             "• The larger the multiplier, the quicker the object will move.")]
+    private float _acceleration = 100f;
+
+    [SerializeField]
+    [Tooltip("Use acceleration time for controlled acceleration")]
+    private bool _useAccelerationTime = false;
+
+    [SerializeField] [Tooltip("Time it takes to go from a stop to a desired speed \n" +
+             "• The smaller the number, the faster the object will get up to speed")]
+    private float _accelerationTime = 0.5f;
+```
+
+
+---
+
+## Update `Move()` Calculations
+
+
+
+
+
+
+
+
 
 
 If spped is too fast include Continuous collision detection 
@@ -257,6 +322,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
