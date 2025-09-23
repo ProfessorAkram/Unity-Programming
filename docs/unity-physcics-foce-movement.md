@@ -11,28 +11,74 @@ Force-based movement is especially useful when:
 
 
 ## Understanding Force
+In Unity, when we move objects using **forces**, we aren’t simply telling them “move at this speed.” Instead, we **push or pull** them, just like in the real world. This is more realistic and allows objects to respond naturally to collisions, mass, and other forces in the environment.
 
-In Unity, **force-based movement** moves objects by applying forces to a Rigidbody instead of directly setting velocity. The physics behind this comes from **Newton’s second law**:
+The physics behind this comes from **Newton’s second law of motion**, which states:
 
 $$
-F = m \cdot a
+\vec{F} = m \cdot \vec{a}
 $$
 
 Where:
-- **$$F$$** = force applied (in Newtons)  
-- **$$m$$** = mass of the object (kg)  
-- **$$a$$** = acceleration (m/s²)
 
-> [!NOTE]
-> In Unity, mass is set on the Rigidbody in kilograms (kg), velocity is measured in meters per second (m/s), and acceleration is measured in meters per second squared (m/s²).
+- $$\(\vec{F}\)$$ = force applied (how hard we push or pull, in Newtons)  
+- $$\(m\)$$ = mass of the object (how heavy it is, in kilograms)  
+- $$\(\vec{a}\)$$ = acceleration (how fast the object speeds up, in meters per second squared)
 
-Let's say, for example, our object has a mass of 2kg and has a force of 10 N applied to the right:
+Consequently, acceleration can be calculated as: 
 
 $$
-a = \frac{F}{m} = \frac{10 \, \text{N}}{2 \, \text{kg}} = 5 \, \text{m/s²}
+\vec{a} = \frac{\vec{F}}{m}
 $$
 
-This means the object’s **velocity** increases by **5 meters per second** each second in the direction of the force; assuming **no other forces act on it**.
+- If the object is **heavier**, it accelerates more slowly.  
+- If the **force is bigger**, it accelerates faster.
+
+### Instant Push 
+
+When using **force-based movement** in Unity, we provide a **force vector**, and Unity calculates the resulting acceleration automatically based on the Rigidbody’s mass. You could apply a “make-believe” force factor to simulate full pushes or collisions.
+
+Sometimes, for quick or arcade-style movement, we use a “force multiplier” to simulate an instant push. For example:
+
+```csharp
+Vector3 targetVelocity = Speed * Direction;
+float acceleration = 2f; //Force multiplier for instant push (could be mass of object)
+Vector3 appliedForce = targetVelocity * acceleration
+```
+- `Speed` is our target velocity, let's say 25f.
+- `acceleration` scales the force vector so the object reaches the target speed quickly (instant push)
+- `appliedForce` is the force vector we give to the Rigidbody. 
+
+In this case, our `appliedForce` would be $$25 * 2 = 50$$, but this is a **gameplay value**, **not a real-world force** in Newtons.
+
+### Target Speed
+
+**However, in most gameplay situations**, we don't care about the raw force. Instead, we usually know **the speed we want the object to reach**. In these cases, we reverse-engineer the force: we calculate the **required acceleration** to reach the target speed and then multiply by mass to get the force to apply. This gives us precise, predictable movement while still using Unity’s physics engine.
+
+If we have a **target `Speed`** (i.e., target velocity), the acceleration required to reach that velocity in a single physics step can be calculated as the **rate of change of velocity**:
+
+$$
+\vec{a}_{\text{required}} = \frac{\Delta \vec{v}}{\Delta t}
+$$
+
+Where:
+
+$$
+\Delta \vec{v} = \vec{v}_{\text{target}} - \vec{v}_{\text{current}}
+$$
+
+- $$\Delta \vec{v}$$ is the **change in velocity needed to reach the target**.
+- $$\Delta t$$  is the physics timestep, which in Unity is `Time.fixedDeltaTime`.
+
+>[!NOTE]
+>`Time.fixedDeltaTime` is the fixed interval at which Unity updates the physics system. By default, it’s **0.02 seconds**, meaning Unity performs **50 physics steps per second**. Using this value ensures that acceleration and force are applied consistently, regardless of the frame rate.
+
+
+This approach allows us to compute the required acceleration first, and then use it to determine the force to apply with Unity’s physics system, even if we don’t know the raw force beforehand.
+
+
+
+
 
 ### Unity Physics Steps
 
@@ -116,6 +162,12 @@ While the descriptions above give a conceptual overview, it’s helpful to see *
 Below, we’ll break down the equations for each ForceMode and show how to calculate **velocity and distance per physics step** in Unity using `FixedDeltaTime`.
 
 #### 1. ForceMode.Force
+- In Unity’s ForceMode.Force, we’re applying a **force that produces acceleration** over the physics step.
+- (targetVelocity - _rigidbody.velocity) / Time.fixedDeltaTime → correct for ForceMode.Force because it produces the acceleration needed to reach the target velocity over the physics step.
+
+The 0.5 * a dt^2 term is implicitly handled by Unity’s physics engine when it integrates acceleration into displacement.
+
+You don’t need to manually include that term unless you want to predict exact displacement before applying the force.
 - **Continuous force over time**, mass affects acceleration.  
 - Good for gradual, realistic motion (e.g., car accelerating).  
 
@@ -150,38 +202,68 @@ d = v_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} a \cdot \text{F
 $$
 
 ---
-
-#### 3. ForceMode.Impulse
-- **Instant force**, mass affects resulting velocity.  
-- Good for sudden bursts like jumps or explosions.  
-
-$$
-\Delta p = F
-$$
+#### 1. ForceMode.VelocityChange
+- Unity expects $$\Delta \vec{v}$$, the **change in velocity** applied each physics step.
+- **Mass is ignored**; it simply adds this $$Δv$$ to whatever the Rigidbody is currently doing.
+- Calculating for $$Δv$$ ensures the Rigidbody ends up **exactly at the target velocity**, even if it was **already moving**.
 
 $$
-\Delta v = \frac{\Delta p}{m} = \frac{F}{m}
+\Delta \vec{v} = \vec{v}_{\text{target}} - \vec{v}_{\text{current}}
 $$
 
-> [!NOTE]
->  The object’s velocity changes immediately, but distance is accumulated over subsequent physics steps.
+- $\Delta \vec{v}$ → change in velocity  
+- $\vec{v}_{\text{target}}$ → target velocity  
+- $\vec{v}_{\text{current}}$ → current velocity
+
+When we set `_rigidbody.linearVelocity`, we are essentially telling the object, “move at this exact speed.” However, with `ForceMode.VelocityChange`, we are saying “Add this much speed to your current velocity to reach the desired target.” 
+
+```csharp
+// ❌ Directly set Rigidbody velocity
+_rigidbody.linearVelocity = Speed * Direction;
+
+// ✅ Calculate the delta velocity
+Vector3 targetVelocity = Speed * Direction;
+Vector3 currentVelocity = _rigidbody.velocity; 
+Vector3 deltaVelocity = targetVelocity - currentVelocity;
+
+// Apply using VelocityChange
+_rigidbody.AddForce(deltaVelocity, ForceMode.VelocityChange);
+```
 
 ---
 
-#### 4. ForceMode.VelocityChange
-- **Instant force**, ignores mass.  
-- Good for responsive or arcade-style movement.  
+#### 2. ForceMode.Impulse
+- Unity expects an **instantaneous force** applied as a **one-time push**.  
+- Mass **affects the resulting velocity**: heavier objects accelerate less for the same impulse.  
+- Good for sudden bursts like jumps, explosions, or collisions.
 
 $$
-\Delta v = F_{\text{applied}}
+\Delta \vec{v} = \frac{\text{appliedImpulse}}{m}
 $$
 
-$$
-d = v_{\text{new}} \cdot \text{FixedDeltaTime}
-$$
+- $\Delta \vec{v}$ → change in velocity  
+- $m$ → mass of the Rigidbody  
+- `appliedImpulse` → vector passed to `AddForce`  
+
+Since we already have a target speed and direction, we can calculate the impulse directly from them:
+
+```csharp
+// Target velocity we want this push to produce
+Vector3 targetVelocity = _direction * _speed;
+
+// Impulse required to achieve this velocity change
+Vector3 appliedImpulse = targetVelocity * _rigidbody.mass;
+
+// Apply the impulse as a one-time push
+_rigidbody.AddForce(appliedImpulse, ForceMode.Impulse);
+```
 
 > [!NOTE]
->  Mass does not reduce the velocity change; it is applied immediately.
+> This will **instantly change the Rigidbody's velocity** by the target amount. No _delta_ calculation is needed unless you want to reach a specific velocity regardless of current motion.
+
+---
+
+
 
 ---
 
@@ -269,9 +351,7 @@ This acceleration increases over time, starting very small in this instance. Sti
 Before we move forward, let’s clarify the terms we’ll be using in our codebase. These terms are grounded in physics, but we’re choosing names that are both accurate and approachable for anyone reading or using the system.
 
 ### Speed
-In physics, _velocity_ means speed with a direction. Since our direction is always normalized (length of 1), multiplying it by our Speed value directly gives us velocity as a `Vector3`.
-
-To keep things simple, we’ll keep calling this **Speed**, even though under the hood it’s really velocity.
+`Speed` defines the target magnitude of velocity. Essentially, the rate of movement over units per second, or in this case, physics steps. It's not the current velocity/speed of the object, but our goal.
 
 ### Acceleration
 Normally in physics, _acceleration_ is the **rate of change of velocity over time**.
@@ -285,9 +365,15 @@ Acceleration time is the duration it takes to reach the target Speed, controllin
 #### Acceleration Time Flag
 The method by which we calculate force using acceleration vs acceleration time will differ, and in efforts to simplify our code, we will use a **flag** to check which to calculate. This will be a simple **bool** field to check if we want to  `_useAccelarationTime`. By default, we will assume this is false for a more instantaneous force application.
 
+### Reference to Mass
+To properly calculate _Impulse_ and to ensure the gradual acceleration has enough force to move an object, we need to reference the object's **mass**. This can easily be done using the `_rigidBody.mass` property. While this is pretty easy to write, we can simplify it by creating a field for `_mass` and then in `Awake()` set it to the Rigidbody's mass value. It might only be a few characters shorter, but even little things like this can speed up the process. 
+
 **Create** the following fields: 
 
 ```csharp
+    //Reference to the object's Mass
+    private float _mass;
+
     [SerializeField]
     [Tooltip("Acceleration of speed; force multiplier.\n" +
              "• The larger the multiplier, the quicker the object will move.")]
@@ -301,12 +387,92 @@ The method by which we calculate force using acceleration vs acceleration time w
              "• The smaller the number, the faster the object will get up to speed")]
     private float _accelerationTime = 0.5f;
 ```
+**Set** the reference for `_mass` in the `Awake()` method
 
+```csharp
+ private void Awake()
+    {
+        // Validate initial speed and direction via properties
+        Speed = _speed;
+        Direction = _direction;
+        
+        //Set reference to the Rigidbody component
+        _rigidBody = GetComponent<Rigidbody>(); 
+        
+        //Ensure that Rigidbody is dynamic
+        _rigidBody.isKinematic = false; 
+        
+        //Set reference to the object's mass
+        _mass = _rigidBody.mass;
+
+    }//end Awake()
+```
 
 ---
 
 ## Update `Move()` Calculations
 
+Previously, our `Move()` method was directly changing the `linearVelocity` of the object's Rigidbody. However, we now want to update this to calculate the different forces we may want to apply, depending on our force mode. Since we need to perform calculations and check for the force mode, we will refactor the `Move()` method to only run the calculations and then call the `ApplyForce()` method to apply the correct force calculation depending on the force mode. 
+
+**Update** the `Move()` method
+
+```chsharp
+ /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    public void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
+
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
+
+        //Record the current direction and speed
+        _currentDirection = Direction;
+        _currentSpeed = Speed;
+
+        // Move the GameObject using Rigidbody velocity
+        //_rigidBody.linearVelocity = Speed * Direction;
+        
+        Vector3 appliedVelocity = Speed * Direction;
+        Vector3 appliedImpluse = appliedVelocity * _mass;
+        Vector3 appliedForce = appliedVelocity * _acceleration;
+        
+        //If using accelerated time for more control
+        if (_useAccelerationTime)
+        {
+            float appliedAcceleration = Speed / _accelerationTime;
+            Vector3 appliedAcceleratedForce = appliedAcceleration * _mass * Direction;
+            
+            appliedForce = appliedAcceleratedForce;
+            
+        }//end if (_useAccelerationTime)
+        
+        // Flags the object as moving
+        //_isMoving = true;
+        
+       //Call ApplyForce method
+
+    }//end Move()
+
+```
+### How it works 
+ 1.  Removed the direct setting of the Rigibody's `linear velocity`.
+ 2.  An `appliedVelocity` calculation replaces the calculation for linear velocity and will be used when using `ForceMode.VelocityChange`.
+ 3.  `appliedImpulse` is the `appliedVelocity` multiplied by mass and will be the calculation for using `ForceMode.Impulse`
+ 4.  When using `ForceMode.Force` or `ForceMode.Acceleration`, we calculate the `appliedForce`, which is the `appliedVelocity` multiplied by our `_acceleration` multiplier.
+ 5.  However, if `_useAccelerationTime` is true, we need to calculate:
+     - The `appliedAcceleration`, which is the rate of `Speed` over the `_accelerationTime`
+     - Determine the `appliedAccelerationForce`, which is the `appliedAcceleration` multiplied by both the object's `_mass` and `Direction`
+     - Set `appliedForce` equal to the new `appliedAcceleratedForce` value
+   
+> [!NOTE]  
+> In the `if(_useAccelerationTime)` condition, we assign the resulting value back to `appliedForce`. This allows us to pass the `appliedForce` to our next method (i.e., `ApplyForce`) without having to check a second time. 
 
 
 
@@ -322,6 +488,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
