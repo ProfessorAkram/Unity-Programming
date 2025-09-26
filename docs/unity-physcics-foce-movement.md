@@ -167,6 +167,7 @@ Each of the Rigidbody force methods allows you to influence an object's movement
 
 Mathematically, these modes determine **how the force contributes to velocity and displacement each physics step**. Continuous forces accumulate gradually through multiple `FixedUpdate` steps, while instantaneous forces change the Rigidbody’s velocity immediately. Choosing the correct ForceMode is essential for achieving the **desired feel of movement** in your game.
 
+---
 
 ### 1. ForceMode.VelocityChange
 Previously, when we implemented `_rigidbody.velocity = Speed * Direction;` we were **ignoring Unity’s physics system**, effectively telling the Rigidbody, _“Your velocity is exactly this,”_ without considering mass, gravity, drag, or collisions. While this may seem simple, it often produces **unnatural movement** in dynamic scenes.
@@ -208,14 +209,19 @@ $$
 \vec{a} = \frac{\vec{F}_{\text{net}}}{m}
 $$
 
-In many tutorials, you’ll see ForceMode.Force implemented with **arbitrary acceleration values**, such as: 
+In many tutorials, `ForceMode.Force` is implemented with an **arbitrary acceleration magnitude** multiplied by a **direction vector**. That acceleration is then **scaled by the Rigidbody's mass** to produce the **applied force**:
+
 ```csharp
 Vector3 acceleration = 5f * direction;
 Vector3 appliedForce = acceleration * _rigidbody.mass;
 _rigidbody.AddForce(appliedForce, ForceMode.Force);
 
 ```
-While arbitrary values work, a more predictable approach uses physics to compute the exact force needed based on a **target change in velocity** (i.e., $${\Delta \vec{v}}$$) and a desired **acceleration time** (i.e., $${t_{\text{acceleration}}}$$):
+
+> [!WARNING]
+> Many tutorials don't even take this extra step;  they simply plug in a large, arbitrary _“magic number”_ as the applied force. While this can work in practice, it often requires trial and error to _“feel right”_ and doesn’t reflect a physics-based approach.
+
+A more predictable approach uses physics to compute the exact force needed based on a **target change in velocity** (i.e., $${\Delta \vec{v}}$$) and a desired **acceleration time** (i.e., $${t_{\text{acceleration}}}$$):
 
 $$
 \vec{a} = \frac{\Delta \vec{v}}{t_{\text{acceleration}}}
@@ -249,9 +255,8 @@ The **acceleration time** ( $$\(t_{\text{acceleration}}\)$$ )is the **total real
 - Smaller acceleration time → faster acceleration, more abrupt movement
 
 > [!IMPORTANT]
-Unity automatically distributes the required acceleration across the number of physics steps that occur during the acceleration time.**
+> We **do not need to calculate the per-step displacement**. Once you determine the acceleration from $${\Delta \vec{v}}/{t_{\text{acceleration}}}$$ , Unity automatically applies it incrementally each physics step (based on `FixedDeltaTime`). In other words, Unity _“spaces out”_ the acceleration over the chosen time, ensuring the Rigidbody reaches the target velocity smoothly and predictably, while still respecting forces like gravity, drag, and collisions.
 
-This calculation ensures the `Rigidbody` accelerates toward the target velocity **predictably and consistently**, while still respecting Unity’s physics system, including gravity, drag, and collisions. Using this approach, you can achieve smooth, gradual acceleration for physics-driven objects like vehicles, sliding crates, or characters, without relying on arbitrary _“magic numbers.”_
 
 ---
 
@@ -309,9 +314,10 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
     private float _targetSpeed = 5f;
     
     [SerializeField]
-    [Tooltip("Acceleration multiplier applied to the target speed. \n" +
-             "• Determines how quickly the object reaches the target speed when using ForceMode: Force or Acceleration.\n" +
-             "• Larger values result in faster acceleration.")]
+[Tooltip("Acceleration magnitude applied toward the target velocity.\n" +
+         "• Controls how strong the applied force/acceleration is when using ForceMode Force Acceleration.\n" +
+         "• Larger values = stronger acceleration (reaches target speed faster).\n" +
+         "• Smaller values = weaker acceleration (reaches target speed more gradually).")]
     private float _accelerationMultiplier = 100f;
     
     [SerializeField]
@@ -320,10 +326,12 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
     private bool _useAccelerationTime = false;
     
     [SerializeField]
-    [Tooltip("Time in seconds to reach the target speed when using acceleration time.\n" +
-             "• Smaller values make the object reach the target speed faster.\n" +
-             "• Larger values create slower, smoother acceleration.")]
-    private float _accelerationTime = 0.5f;
+[Tooltip("Duration (in seconds) over which the object accelerates to its target speed.\n" +
+         "• Unity spreads the acceleration across physics steps automatically.\n" +
+         "• Smaller values = quicker, more abrupt acceleration.\n" +
+         "• Larger values = slower, smoother acceleration.")]
+private float _accelerationTime = 0.5f;
+
 ```
 
 #### Reference to Mass
@@ -395,6 +403,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
