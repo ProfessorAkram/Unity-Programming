@@ -1,122 +1,131 @@
 # Force-Based Movement
+In Unity, a **force** is a push or pull applied to an object that makes it accelerate, just like in the real world. Using force-based movement allows Unity's **physics engine** to handle **acceleration**, **deceleration**, **collisions**, and **interactions** with other objects naturally. This creates a sense of weight and momentum, making the movement feel more realistic and immersive.
 
-While velocity-based movement is simple and effective, it has a drawback: directly setting the Rigidbody's velocity **overrides parts of Unity’s built-in physics system**. This can make objects feel less natural because collisions, momentum, and acceleration are bypassed.
+## Why Not Just Use Velocity?
 
-When you want to simulate more **realistic physics-driven movement**, it’s recommended to use **forces** instead. Moving an object with force means Unity’s physics engine handles the **acceleration, deceleration, and interactions** with other objects. This gives objects a sense of **weight and inertia**, making gameplay feel more immersive.
+Velocity-based movement is simple and often effective, but it comes with a limitation: directly setting a Rigidbody’s velocity overrides parts of Unity’s physics system. This can make objects feel unnatural because collisions, momentum, and external forces are ignored.
 
-Force-based movement is especially useful when:
-- Objects accelerate or brake gradually.
-- Collisions and impacts should realistically influence motion.
-- Simulating vehicles, projectiles, or other physics-heavy interactions.
+By using forces instead, your objects respond to the environment in a believable way. They can be pushed, pulled, slowed down, or influenced by explosions, wind, or collisions—all without extra code.
 
+### Force vs. Velocity in Action
+
+Here are a few examples where force-based movement shines:
+
+- **Vehicles:** Cars in a racing game gradually accelerate and brake rather than instantly reaching top speed.
+- **Rolling or sliding objects:** Balls or crates respond naturally to collisions and slopes.
+- **Characters:** A player-controlled character can feel “weighty,” obeying momentum and gravity.
+- **External forces:** Explosions, gusts of wind, or pushes from other objects affect motion realistically.
+
+#### Pros and Cons of Force-Based Movement
+
+- ✅ Produces natural, fluid acceleration and deceleration
+- ✅ Fully integrates with Unity physics (collisions, mass, momentum)
+- ✅ Allows external forces to influence movement
+
+- ❌ Requires careful tuning of mass, acceleration, and drag
+- ❌ Slightly more complex to implement and debug
+
+Force-based movement is particularly useful when objects accelerate gradually, collisions matter, or you want to simulate vehicles, projectiles, or other physics-heavy interactions.
+
+---
 
 ## Understanding Force
-In Unity, when we move objects using **forces**, we aren’t simply telling them “move at this speed.” Instead, we **push or pull** them, just like in the real world. This is more realistic and allows objects to respond naturally to collisions, mass, and other forces in the environment.
-
-The physics behind this comes from **Newton’s second law of motion**, which states:
+The foundation of force-based movement comes from **Newton’s Second Law of Motion**, which states:
 
 $$
 \vec{F} = m \cdot \vec{a}
 $$
 
-Where:
+Here:
 
-- $$\(\vec{F}\)$$ = force applied (how hard we push or pull, in Newtons)  
-- $$\(m\)$$ = mass of the object (how heavy it is, in kilograms)  
-- $$\(\vec{a}\)$$ = acceleration (how fast the object speeds up, in meters per second squared)
+- $$\(\vec{F}\)$$ is the force applied (the push or pull)  
+- $$\(m\)$$ is the object’s mass  
+- $$\(\vec{a}\)$$ is the resulting acceleration  
 
-Consequently, acceleration can be calculated as: 
+This tells us that the same force applied to two different objects will produce different results:  
+- A **light ball** accelerates quickly  
+- A **heavy crate** barely budges  
+
+Likewise, if we want the same object to accelerate faster, we must apply more force.
+
+Another way to see this relationship is to solve for acceleration:
 
 $$
 \vec{a} = \frac{\vec{F}}{m}
 $$
 
-- If the object is **heavier**, it accelerates more slowly.  
-- If the **force is bigger**, it accelerates faster.
+This is important in games: when you push a car, swing a bat, or roll a ball, the object doesn’t instantly reach its final speed. Using forces, Unity simulates this **gradual change in velocity**, giving movement a lifelike feel.
 
-### Instant Push 
-
-When using **force-based movement** in Unity, we provide a **force vector**, and Unity calculates the resulting acceleration automatically based on the Rigidbody’s mass. You could apply a “make-believe” force factor to simulate full pushes or collisions.
-
-Sometimes, for quick or arcade-style movement, we use a “force multiplier” to simulate an instant push. For example:
-
-```csharp
-Vector3 targetVelocity = Speed * Direction;
-float acceleration = 2f; //Force multiplier for instant push (could be mass of object)
-Vector3 appliedForce = targetVelocity * acceleration
-```
-- `Speed` is our target velocity, let's say 25f.
-- `acceleration` scales the force vector so the object reaches the target speed quickly (instant push)
-- `appliedForce` is the force vector we give to the Rigidbody. 
-
-In this case, our `appliedForce` would be $$25 * 2 = 50$$, but this is a **gameplay value**, **not a real-world force** in Newtons.
-
-### Target Speed
-
-**However, in most gameplay situations**, we don't care about the raw force. Instead, we usually know **the speed we want the object to reach**. In these cases, we reverse-engineer the force: we calculate the **required acceleration** to reach the target speed and then multiply by mass to get the force to apply. This gives us precise, predictable movement while still using Unity’s physics engine.
-
-If we have a **target `Speed`** (i.e., target velocity), the acceleration required to reach that velocity in a single physics step can be calculated as the **rate of change of velocity**:
+### Units of Force
+Force is measured in **Newtons (N)**, which are defined as **kilograms·meters per second squared (kg·m/s²)**. This tells us how much force is required to accelerate a certain mass at a certain rate. In simpler terms, the Newton also represents the **magnitude** of the push or pull (i.e, how strong the force is). To fully describe a force, we also need to know its **direction**, because forces are **vectors**.
 
 $$
-\vec{a}_{\text{required}} = \frac{\Delta \vec{v}}{\Delta t}
+\vec{F} = \text{magnitude} \times \text{direction}
 $$
 
-Where:
+
+When working with forces in Unity, it’s important to understand the units being used. 
+- Mass in kilograms (kg)
+- Distance in meters (m)
+- Time in seconds (s)
+- Force in Newtons (N)
+
+For example, applying 10 N of force to a 2 kg Rigidbody produces an acceleration of 5 m/s².
+
+### Physics Steps
+
+Understanding the units of **mass**, **distance**, and **force** is only part of the picture. In Unity, physics is simulated in **discrete time steps**, not continuously every frame. This means the timing of updates determines how forces change an object’s velocity and position over time, which in turn affects how movement feels in your game.
+
+Unity calculates `Rigidbody` physics inside the `FixedUpdate()` method, rather than the usual `Update()`. This ensures consistent physics behavior regardless of frame rate. The interval between physics updates is defined by `Time.fixedDeltaTime`, which defaults to **0.02 seconds** (50 physics steps per second).
+
+Because physics updates occur in steps, Unity computes the object’s motion incrementally. At each step:
+
+- **Velocity** is updated according to acceleration (from all applied forces, including gravity, drag, or user input):
 
 $$
-\Delta \vec{v} = \vec{v}_{\text{target}} - \vec{v}_{\text{current}}
+\vec{v}_{\text{new}} = \vec{v}_{\text{current}} + \vec{a} \cdot \text{FixedDeltaTime}
 $$
 
-- $$\Delta \vec{v}$$ is the **change in velocity needed to reach the target**.
-- $$\Delta t$$  is the physics timestep, which in Unity is `Time.fixedDeltaTime`.
-
->[!NOTE]
->`Time.fixedDeltaTime` is the fixed interval at which Unity updates the physics system. By default, it’s **0.02 seconds**, meaning Unity performs **50 physics steps per second**. Using this value ensures that acceleration and force are applied consistently, regardless of the frame rate.
-
-
-This approach allows us to compute the required acceleration first, and then use it to determine the force to apply with Unity’s physics system, even if we don’t know the raw force beforehand.
-
-
-
-
-
-### Unity Physics Steps
-
-Unity updates Rigidbody physics in `FixedUpdate`, not every frame. The physics time step is controlled by `FixedDeltaTime` (default: 0.02 s, or 50 physics steps per second).
-
-Velocity is updated per physics step:
+- **Position** is updated based on the current velocity and acceleration:
 
 $$
-v_{\text{new}} = v_{\text{current}} + a \cdot \text{FixedDeltaTime}
+\vec{d} = \vec{v}_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} \vec{a} \cdot (\text{FixedDeltaTime})^2
 $$
 
-Distance moved per step:
+Because `FixedDeltaTime` is small, velocity and position change gradually rather than instantly. This is why objects **accelerate smoothly**, giving movement a natural, lifelike feel.
+
+### Other Forces Acting on Objects
+
+Additionally, Unity automatically accounts for other forces such as **gravity**, **drag**, and **friction** at each physics step. Multiple forces combine to produce a **net force**, which determines acceleration and resulting motion. This makes force-based movement **predictable and physically consistent**, while still allowing for interactions like collisions, pushes, or environmental effects.
+
+To determine how an object moves with multiple forces at work, we calculate the **net force**, which is simply the sum of all individual forces:
 
 $$
-d = v_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} a \cdot \text{FixedDeltaTime}^2
+\vec{F}_{\text{net}} = \vec{F}_1 + \vec{F}_2 + \dots
 $$
 
-Because `FixedDeltaTime` is much smaller than 1 second, velocity and distance increase gradually, not instantly. Other forces like **gravity**, **drag**, and **friction** also affect the object’s motion.
+Once we know the net force, the resulting acceleration is:
 
+$$
+\vec{a} = \frac{\vec{F}_{\text{net}}}{m}
+$$
 
+A common and important example is **gravity**. When enabled on a `Rigidbody`, Unity automatically applies gravitational force:
 
-### When to use Force over Velocity 
+$$
+F_g = m \cdot g
+$$
 
-Let's say we are creating a **racing game**, where vehicles gradually accelerate and brake rather than instantly reaching top speed. In this case, we want the movement to feel **realistic and physics-driven**, rather than simply starting and stopping abruptly.
+Other forces can also influence objects:
+- **Drag** (linear and angular damping) slows motion over time, simulating air resistance or rotational friction.
+- **Physics Materials** can be applied to objects to control friction and bounciness, affecting how objects slide, roll, or bounce off surfaces.
 
-Similarly, objects that roll or slide, like a ball down a slope or a crate pushed across the floor, respond naturally to collisions and other forces, rather than abruptly changing direction. Even characters can benefit from this approach, **feeling _“weighty”_** and obeying momentum, which gives movement a more lifelike and immersive quality. Unlike velocity-based movement, **force-based movement allows external forces**, such as explosions, wind, or pushes from other objects, to influence motion in a consistent and believable way.
+By combining these forces—gravity, drag, user-applied pushes, and collisions—Unity calculates the net effect on each Rigidbody at every physics step. This allows movement to feel both dynamic and physically realistic, without manually adjusting positions or velocities.
 
-Implementing movement with **force** has both advantages and disadvantages: 
-
-- ✅ Produces **natural, fluid** acceleration and deceleration.
-- ✅ **Fully integrates with Unity physics** (collisions, mass, momentum).
-- ✅ **Allows external forces** (wind, explosions, pushes) to influence movement.
-- ❌ **Requires careful tuning** of mass, acceleration, and drag to feel right.
-- ❌ **Slightly more complex** to implement and debug.
+---
 
 ## Applying force in Unity
-
-In Unity, the `Rigidbody` component offers multiple ways to **apply force** and influence an object's movement: 
+Now that we understand **forces, vectors, mass, acceleration, and Unity’s physics steps**, it’s time to see how we can actually **apply forces** to objects in a Unity scene. The `Rigidbody` component provides several methods for influencing an object’s movement:
 
 - `Rigidbody.AddForce()` - Applies a linear force in **world space**; changing the object's velocity.
   - The ForceMode can be set to **Force**, **Acceleration**, **Impulse**, or **VelocityChange** depending on how you want the force to affect the object.
@@ -125,11 +134,16 @@ In Unity, the `Rigidbody` component offers multiple ways to **apply force** and 
 - `Rigidbody.AddRelativeForce()` - Applies a linear force **relative to the Rigidbody’s local axes**.
 - `Rigidbody.AddRelativeTorque()` - Applies torque **relative to the Rigidbody’s local axes**.
 
-Each of these methods has its own specific use cases, but for this lesson, we will keep things simple and focus only on using `Rigidbody.AddForce`.
+Each of these methods has its own specific use cases, but for this lesson, we will keep things simple and focus on the most common method: `Rigidbody.AddForce`.
 
 ### `AddForce()` Method
 
-The `Rigidbody.AddForce()` method applies a force to a Rigidbody, causing it to accelerate in the direction of that force. Unlike directly setting the velocity, this allows Unity’s physics system to determine how the object actually moves, taking into account its mass, drag, and any other forces acting on it (like gravity or collisions).
+The `Rigidbody.AddForce()` method applies a force to a Rigidbody, causing it to accelerate in the direction of that force. Unlike setting the Rigidbody’s velocity directly, this method allows Unity’s physics engine to calculate the resulting motion, taking into account:
+
+- The object’s **mass**
+- **Drag** and other damping effects
+- Other forces such as **gravity** or **collisions**
+
 
 The method takes two parameters:
 - **Vector3 force** – a vector that specifies the direction and strength of the push.
@@ -137,133 +151,133 @@ The method takes two parameters:
 
 Using these parameters, you can make objects move more realistically, respond to collisions naturally, and create different types of movement behaviors depending on the chosen `ForceMode`.
 
-### Force Modes
+## Force Modes
 Each of the Rigidbody force methods allows you to influence an object's movement, but the exact effect depends on how the force is applied. Unity provides four distinct `ForceMode` parameters to control this behavior. 
 - `ForceMode.Force` – **Continuous force over time**, mass affects acceleration; good for gradual, realistic motion (e.g., car accelerating).
 - `ForceMode.Acceleration` – **Continuous acceleration ignoring mass**; good for uniform forces like wind or gravity.
 - `ForceMode.Impulse` – **Instant force affected by mass**; good for sudden bursts like jumps or explosions.
 - `ForceMode.VelocityChange` – **Instant force ignoring mass**; good for responsive or arcade-style movement.
 
-It’s helpful to see how each ForceMode actually affects velocity and distance mathematically. The behavior of each mode depends on whether the force is applied continuously or instantly, and whether the object’s mass influences the resulting motion.
+Mathematically, these modes determine **how the force contributes to velocity and displacement each physics step**. Continuous forces accumulate gradually through multiple `FixedUpdate` steps, while instantaneous forces change the Rigidbody’s velocity immediately. Choosing the correct ForceMode is essential for achieving the **desired feel of movement** in your game.
 
-Below, we’ll break down the equations for each ForceMode and show how to calculate velocity and distance per physics step in Unity using FixedDeltaTime.
 
-### Force Modes
+### 1. ForceMode.VelocityChange
+Previously, when we implemented `_rigidbody.velocity = Speed * Direction;` we were **ignoring Unity’s physics system**, effectively telling the Rigidbody, _“Your velocity is exactly this,”_ without considering mass, gravity, drag, or collisions. While this may seem simple, it often produces **unnatural movement** in dynamic scenes.
 
-Each of the Rigidbody force methods allows you to influence an object's movement, but the exact effect depends on how the force is applied. Unity provides four distinct `ForceMode` parameters to control this behavior:
-
-- `ForceMode.Force` – **Continuous force over time**, mass affects acceleration; good for gradual, realistic motion (e.g., car accelerating).  
-- `ForceMode.Acceleration` – **Continuous acceleration ignoring mass**; good for uniform forces like wind or gravity.  
-- `ForceMode.Impulse` – **Instant force affected by mass**; good for sudden bursts like jumps or explosions.  
-- `ForceMode.VelocityChange` – **Instant force ignoring mass**; good for responsive or arcade-style movement.
-
-While the descriptions above give a conceptual overview, it’s helpful to see **how each ForceMode actually affects velocity and distance mathematically**. The behavior of each mode depends on whether the force is applied continuously or instantly, and whether the object’s mass influences the resulting motion.  
-
-Below, we’ll break down the equations for each ForceMode and show how to calculate **velocity and distance per physics step** in Unity using `FixedDeltaTime`.
-
-#### 1. ForceMode.Force
-- In Unity’s ForceMode.Force, we’re applying a **force that produces acceleration** over the physics step.
-- (targetVelocity - _rigidbody.velocity) / Time.fixedDeltaTime → correct for ForceMode.Force because it produces the acceleration needed to reach the target velocity over the physics step.
-
-The 0.5 * a dt^2 term is implicitly handled by Unity’s physics engine when it integrates acceleration into displacement.
-
-You don’t need to manually include that term unless you want to predict exact displacement before applying the force.
-- **Continuous force over time**, mass affects acceleration.  
-- Good for gradual, realistic motion (e.g., car accelerating).  
-
-$$
-a = \frac{F}{m}
-$$
-
-$$
-v_{\text{new}} = v_{\text{current}} + a \cdot \text{FixedDeltaTime}
-$$
-
-$$
-d = v_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} a \cdot \text{FixedDeltaTime}^2
-$$
-
----
-
-#### 2. ForceMode.Acceleration
-- **Continuous acceleration ignoring mass**.  
-- Useful for uniform forces like wind or gravity.  
-
-$$
-a = F_{\text{effective}}
-$$
-
-$$
-v_{\text{new}} = v_{\text{current}} + a \cdot \text{FixedDeltaTime}
-$$
-
-$$
-d = v_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} a \cdot \text{FixedDeltaTime}^2
-$$
-
----
-#### 1. ForceMode.VelocityChange
-- Unity expects $$\Delta \vec{v}$$, the **change in velocity** applied each physics step.
-- **Mass is ignored**; it simply adds this $$Δv$$ to whatever the Rigidbody is currently doing.
-- Calculating for $$Δv$$ ensures the Rigidbody ends up **exactly at the target velocity**, even if it was **already moving**.
+Using `AddForce()` with `ForceMode.VelocityChange` works differently. Instead of directly setting the Rigidbody’s velocity, we **apply a change in velocity**, calculated as the **delta velocity** ($$\Delta \vec{v}$$) , to the Rigidbody:
 
 $$
 \Delta \vec{v} = \vec{v}_{\text{target}} - \vec{v}_{\text{current}}
 $$
 
-- $\Delta \vec{v}$ → change in velocity  
-- $\vec{v}_{\text{target}}$ → target velocity  
-- $\vec{v}_{\text{current}}$ → current velocity
+- $$\Delta \vec{v}$$ → change in velocity  
+- $$\vec{v}_{\text{target}}$$ → target velocity  
+- $$\vec{v}_{\text{current}}$$ → current velocity
 
-When we set `_rigidbody.linearVelocity`, we are essentially telling the object, “move at this exact speed.” However, with `ForceMode.VelocityChange`, we are saying “Add this much speed to your current velocity to reach the desired target.” 
-
-```csharp
-// ❌ Directly set Rigidbody velocity
-_rigidbody.linearVelocity = Speed * Direction;
-
-// ✅ Calculate the delta velocity
-Vector3 targetVelocity = Speed * Direction;
-Vector3 currentVelocity = _rigidbody.velocity; 
-Vector3 deltaVelocity = targetVelocity - currentVelocity;
-
-// Apply using VelocityChange
-_rigidbody.AddForce(deltaVelocity, ForceMode.VelocityChange);
-```
+This mode **ignores mass**, meaning the Rigidbody will reach the target velocity immediately, while still respecting other forces like gravity and collisions.
 
 ---
 
-#### 2. ForceMode.Impulse
-- Unity expects an **instantaneous force** applied as a **one-time push**.  
-- Mass **affects the resulting velocity**: heavier objects accelerate less for the same impulse.  
-- Good for sudden bursts like jumps, explosions, or collisions.
+### 2. ForceMode.Impulse
+`ForceMode.Impulse` is conceptually very similar to `ForceMode.VelocityChange`, but with one key difference: **it accounts for the Rigidbody's mass**. An impulse applies a sudden force that produces an immediate change in velocity proportional to the object’s mass:
 
 $$
-\Delta \vec{v} = \frac{\text{appliedImpulse}}{m}
+\text{appliedImpulse} = \Delta \vec{v} * {m}
 $$
 
-- $\Delta \vec{v}$ → change in velocity  
-- $m$ → mass of the Rigidbody  
 - `appliedImpulse` → vector passed to `AddForce`  
+- $$\Delta \vec{v}$$ → change in velocity  
+- $$m$$ → mass of the Rigidbody  
 
-Since we already have a target speed and direction, we can calculate the impulse directly from them:
-
-```csharp
-// Target velocity we want this push to produce
-Vector3 targetVelocity = _direction * _speed;
-
-// Impulse required to achieve this velocity change
-Vector3 appliedImpulse = targetVelocity * _rigidbody.mass;
-
-// Apply the impulse as a one-time push
-_rigidbody.AddForce(appliedImpulse, ForceMode.Impulse);
-```
-
-> [!NOTE]
-> This will **instantly change the Rigidbody's velocity** by the target amount. No _delta_ calculation is needed unless you want to reach a specific velocity regardless of current motion.
+By scaling the delta velocity by mass, Impulse produces an **instantaneous, realistic response** that interacts naturally with Unity’s physics, including collisions and drag. Think of it as giving a heavier object a proportionally stronger push to achieve the same change in motion as a lighter object.
 
 ---
 
+### 3. ForceMode.Force
 
+`ForceMode.Force` applies a continuous force to the Rigidbody. Unlike `ForceMode.VelocityChange` or `ForceMode.Impulse`, this force is applied gradually over time, and the Rigidbody’s mass directly influences the resulting acceleration:
+
+$$
+\vec{a} = \frac{\vec{F}_{\text{net}}}{m}
+$$
+
+In many tutorials, you’ll see ForceMode.Force implemented with arbitrary acceleration values, such as: 
+```csharp
+Vector3 acceleration = 5f * direction;
+Vector3 appliedForce = acceleration * _rigidbody.mass;
+_rigidbody.AddForce(appliedForce, ForceMode.Force);
+
+```
+While arbitrary values work, a more predictable approach uses physics to compute the exact force needed based on a **target change in velocity** (i.e., $${\Delta \vec{v}}$$) and a desired **acceleration time** (i.e., $${t_{\text{acceleration}}}$$):
+
+$$
+\vec{a} = \frac{\Delta \vec{v}}{t_{\text{acceleration}}}
+$$
+
+Where:
+
+- $$\(\Delta \vec{v}\)$$ → change in velocity you want  
+- $$\(t_{\text{acceleration}}\)$$ → duration in **seconds** over which the object should reach the target velocity  
+
+Then the force is calculated as:
+
+$$
+\vec{F} = m \cdot \vec{a}
+$$
+
+#### Incremental Acceleration Over Time
+When applying a continuous force or acceleration in Unity (`ForceMode.Force` or `ForceMode.Acceleration`), the object’s **velocity does not change instantly**. Physics updates occur in discrete steps (`FixedUpdate`), and each step applies only a fraction of the total acceleration needed to reach the target velocity.
+
+Unity then applies this acceleration incrementally each physics step. **Velocity increases linearly**:
+
+$$
+\vec{v}_{\text{new}} = \vec{v}_{\text{current}} + \vec{a}_{\text{applied}} \cdot \text{FixedDeltaTime}
+$$
+
+…but **displacement grows quadratically**:
+
+$$
+\vec{d} = \vec{v}_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} \vec{a}_{\text{applied}} \cdot (\text{FixedDeltaTime})^2
+$$
+
+![Velocity over time is linear; Distance over time is quadratic](../imgs/velocity-distance-graph.png)
+
+Unity applies acceleration **incrementally each physics step**, and the per-step displacement depends on `FixedDeltaTime`. For example, if acceleration is $$\(5 \ \text{m/s}^2\)$$ and `FixedDeltaTime = 0.02` s:
+
+$$
+\vec{d} = \frac{1}{2} \cdot 5 \cdot 0.02^2 = 0.001 \ \text{m}
+$$
+
+At the first physics step, the displacement is very small. Over multiple steps, **velocity accumulates**, and the object moves farther. Other forces, such as **gravity**, **drag**, and **friction**, also influence the motion.
+
+#### Choosing Acceleration Time
+
+The acceleration time ( $$\(t_{\text{acceleration}}\)$$ )is the **total real-world time** you want the object to take to reach the target velocity.
+- Larger acceleration time → slower acceleration, more gradual movement
+- Smaller acceleration time → faster acceleration, more abrupt movement
+
+> [!IMPORTANT]
+> **Unity automatically spreads the required acceleration across however many physics steps occur during acceleration time.**
+
+This calculation ensures the `Rigidbody` accelerates toward the target velocity **predictably and consistently**, while still respecting Unity’s physics system, including gravity, drag, and collisions. Using this approach, you can achieve smooth, gradual acceleration for physics-driven objects like vehicles, sliding crates, or characters, without relying on arbitrary _“magic numbers.”_
+
+---
+
+#### 4. ForceMode.Acceleration
+`ForceMode.Acceleration` applies a continuous acceleration to the Rigidbody, ignoring the object’s mass. Unlike `ForceMode.Force`, where heavier objects require proportionally more force to achieve the same acceleration, `ForceMode.Acceleration` lets you directly set the acceleration:
+
+$$
+\vec{a} = \frac{\Delta \vec{v}}{t_{\text{acceleration}}}
+$$
+
+**No calculation for force is needed**; simply specify the desired acceleration, and Unity updates the Rigidbody’s velocity each physics step.
+
+This mode is particularly useful when you want **uniform effects**, such as:
+- Gravity-like forces applied manually
+- Wind or current affecting objects regardless of mass
+- Environmental effects like conveyor belts or moving platforms
+
+Because mass is ignored, the same acceleration is applied to all objects, whether they are light or heavy.
 
 ---
 
@@ -284,88 +298,43 @@ To leverage the different ways motion can be applied with force, we will need to
 
 ```
 
-
 > [!NOTE]
 > While we could keep the tooltip short (e.g., _“Controls how movement forces are applied”_), level designers may not be familiar with all the available ForceMode options. Expanding the tooltip into multiple lines gives them helpful context and reduces ambiguity.
 
+#### Speed and Acceleration 
+To implement **force-based movement**, we first need to define how **speed** and **acceleration** will work. Unlike directly setting the Rigidbody's velocity, we now treat `Speed` as the **target speed** we want the object to reach.
 
-## Speed vs Momentum vs Acceleration 
-Before we continue, we need to discuss how each mode calculates the movement of an object. Currently, our code is set up with a `MAX_SPEED`, `Speed ', and `Direction`. 
+When using `ForceMode.Force` or `ForceMode.Acceleration`, there are two ways to control acceleration:
+- Acceleration multiplier (`_accelerationMultiplier`) – a user-defined value applied each physics step to scale the force or acceleration. This is simple to implement and tweak, but it is an arbitrary _"magic number"_ and must be tuned carefully for smooth motion.
+- Acceleration time (`_accelerationTime`) – calculate the force needed to reach the target speed over a desired duration, producing smoother, more predictable motion.
 
-### Speed
+We use a flag (`_useAccelerationTime`) to determine which method to apply, giving us flexibility to choose between a simple multiplier or time-based acceleration for different gameplay situations.
 
-**`ForceMode.VelocityChange`**
-This mode works just as `Rigidbody. Velocity`, in which `Speed` is calculated in meters per second in a given `Direction`, checking that our `Speed` can never go above `MAX_SPEED`. 
+```csharp
+    [SerializeField]
+    [Range(0f, MAX_SPEED)]
+    [Tooltip("Target speed for the object’s movement. This is the speed we want the Rigidbody to reach, not the current velocity.")]
+    private float _targetSpeed = 5f;
+    
+    [SerializeField]
+    [Tooltip("Acceleration multiplier applied to the target speed. \n" +
+             "• Determines how quickly the object reaches the target speed when using ForceMode.Force or ForceMode.Acceleration.\n" +
+             "• Larger values result in faster acceleration.")]
+    private float _accelerationMultiplier = 100f;
+    
+    [SerializeField]
+    [Tooltip("Enable to calculate force based on acceleration time instead of using a fixed acceleration multiplier. \n" +
+             "• Produces smoother, time-based ramp-up to the target speed.")]
+    private bool _useAccelerationTime = false;
+    
+    [SerializeField]
+    [Tooltip("Time in seconds to reach the target speed when using acceleration time.\n" +
+             "• Smaller values make the object reach the target speed faster.\n" +
+             "• Larger values create slower, smoother acceleration.")]
+    private float _accelerationTime = 0.5f;
+```
 
-$$
-v = \frac{\Delta x}{\Delta t} = \frac{5 \, \{m}}{1 \, \{s}} = 5 \, \{m/s}
-$$
-
-In this instance, the `Speed` value calculates the object's speed. 
-
-### Momentum (Impulse)
-
-**`ForceMode.Impulse`**
-This mode works just like `ForceMode.VelocityChange`, using momentum ($${p}$$), which is an object's velocity ($${v}$$) (i.e., `Speed` * `Direction`) multiplied by the object's mass ($${m}$$) measured in killograms (kg). 
-
-$${p} = {v}*{m}$$
-
-If we use the same example above and assume that our `Speed` is 5f, and our object's mass (set in the `Rigidbody` component) is 1kg, then our momentum is also 5f. The movement will be identical to **`ForceMode.VelocityChange`**. However, if our mass is 2kg, our momentum is now 10f. While the momentum is doubled, the velocity (meters/second) has not changed; the object will still move at the same rate of 5 meters per second. We just needed twice as much force to get the object moving due to its mass. 
-
-## Acceleration 
-We've already discussed how Force is calculated by Newton's second law
-
-$$
-F = m \cdot a
-$$
-
-Conversely, we can calculate acceleration as 
-
-$$
-{a} = \frac{{F} \}{{m}\}
-$$
-
-In both these instances, force is measured in Newtons, but we need to convert this to kg * meters/seconds squared, which, if you recall, is the mass in kg multiplied by meters/second, which is our momentum, then squared. In addition, since we are using the physics time, we are not actually using seconds here but Unity's physics step. This step uses `FixedDeltaTime`, whose default value is **0.02 s** (50 physics steps per second). 
-
-Since the velocity becomes:
-
-$${v} = {a}*{t}$$
-
-Our acceleration is multiplied by time (physics step), which is linear. However, while our velocity (think of it as speed) increases over time, the distance we move is not immediate. 
-
-![Velocity over time is linear; Distance over time is quadratic](../imgs/velocity-distance-graph.png)
-
-Instead, distance over time is calculated as:
-
-$${d} = \frac{1}{2} {a} * {t}^2$$
-
-Therefore, let's say that our speed is **5f** and time is a physics step, which equates to **0.02**. Our resulting equation would be: 
-
-$${0.001} = \frac{1}{2} {5} * {0.02}^2$$
-
-This acceleration increases over time, starting very small in this instance. Still, other forces are acting on this object; gravity, drag, and friction can all play a factor in how fast an object moves. 
-
-----
-## Variables and Naming Conventions
-
-Before we move forward, let’s clarify the terms we’ll be using in our codebase. These terms are grounded in physics, but we’re choosing names that are both accurate and approachable for anyone reading or using the system.
-
-### Speed
-`Speed` defines the target magnitude of velocity. Essentially, the rate of movement over units per second, or in this case, physics steps. It's not the current velocity/speed of the object, but our goal.
-
-### Acceleration
-Normally in physics, _acceleration_ is the **rate of change of velocity over time**.
-In our code, we will think of this as a **force multiplier** that determines how strongly we push an object toward its Speed.
-
-Why? Because the word _acceleration_ is easier to understand than “force multiplier.” So even though it’s not a perfect physics definition, we will need to create an `_acceleration` field as this force multiplier.
-
-### Acceleration Time
-Acceleration time is the duration it takes to reach the target Speed, controlling the smoothness of motion. If we want to allow for gradual acceleration, we will need a field named `_accelerationTime`. This naming matches the real-world context, for example, if a car goes from 0 to 60 in 5 seconds, that “5 seconds” is the _acceleration time_.
-
-#### Acceleration Time Flag
-The method by which we calculate force using acceleration vs acceleration time will differ, and in efforts to simplify our code, we will use a **flag** to check which to calculate. This will be a simple **bool** field to check if we want to  `_useAccelarationTime`. By default, we will assume this is false for a more instantaneous force application.
-
-### Reference to Mass
+#### Reference to Mass
 To properly calculate _Impulse_ and to ensure the gradual acceleration has enough force to move an object, we need to reference the object's **mass**. This can easily be done using the `_rigidBody.mass` property. While this is pretty easy to write, we can simplify it by creating a field for `_mass` and then in `Awake()` set it to the Rigidbody's mass value. It might only be a few characters shorter, but even little things like this can speed up the process. 
 
 **Create** the following fields: 
@@ -417,48 +386,7 @@ Previously, our `Move()` method was directly changing the `linearVelocity` of th
 **Update** the `Move()` method
 
 ```chsharp
- /// <summary>
-    /// Moves the object in a specified direction at a specified speed.
-    /// </summary>
-    /// <param name="direction">The direction to move the object (optional).</param>
-    /// <param name="speed">The speed at which the object should move (optional).</param>
-    public void Move(Vector3? direction = null, float? speed = null)
-    {
-        // Resolve the effective values for this frame
-        Vector3 moveDirection = direction ?? Direction;
-        float moveSpeed = speed ?? Speed;
 
-        // Update properties to ensure validation and internal consistency
-        Direction = moveDirection;
-        Speed = moveSpeed;
-
-        //Record the current direction and speed
-        _currentDirection = Direction;
-        _currentSpeed = Speed;
-
-        // Move the GameObject using Rigidbody velocity
-        //_rigidBody.linearVelocity = Speed * Direction;
-        
-        Vector3 appliedVelocity = Speed * Direction;
-        Vector3 appliedImpluse = appliedVelocity * _mass;
-        Vector3 appliedForce = appliedVelocity * _acceleration;
-        
-        //If using accelerated time for more control
-        if (_useAccelerationTime)
-        {
-            float appliedAcceleration = Speed / _accelerationTime;
-            Vector3 appliedAcceleratedForce = appliedAcceleration * _mass * Direction;
-            
-            appliedForce = appliedAcceleratedForce;
-            
-        }//end if (_useAccelerationTime)
-        
-        // Flags the object as moving
-        //_isMoving = true;
-        
-       //Call ApplyForce method
-
-    }//end Move()
 
 ```
 ### How it works 
@@ -488,6 +416,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
