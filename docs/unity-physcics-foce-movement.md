@@ -80,17 +80,19 @@ Unity calculates `Rigidbody` physics inside the `FixedUpdate()` method, rather t
 
 Because physics updates occur in steps, Unity computes the object’s motion incrementally. At each step:
 
-- **Velocity** is updated according to acceleration (from all applied forces, including gravity, drag, or user input):
+- **Velocity increases linearly** and is updated according to acceleration (from all applied forces, including gravity, drag, or user input) incrementally each physics step:
 
 $$
 \vec{v}_{\text{new}} = \vec{v}_{\text{current}} + \vec{a} \cdot \text{FixedDeltaTime}
 $$
 
-- **Position** is updated based on the current velocity and acceleration:
+- **Position** is updated based on the current velocity and acceleration. This **displacement grows quadratically**:
 
 $$
 \vec{d} = \vec{v}_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} \vec{a} \cdot (\text{FixedDeltaTime})^2
 $$
+
+![Velocity over time is linear; Distance over time is quadratic](../imgs/velocity-distance-graph.png)
 
 Because `FixedDeltaTime` is small, velocity and position change gradually rather than instantly. This is why objects **accelerate smoothly**, giving movement a natural, lifelike feel.
 
@@ -121,6 +123,11 @@ Other forces can also influence objects:
 - **Physics Materials** can be applied to objects to control friction and bounciness, affecting how objects slide, roll, or bounce off surfaces.
 
 By combining these forces—gravity, drag, user-applied pushes, and collisions—Unity calculates the net effect on each Rigidbody at every physics step. This allows movement to feel both dynamic and physically realistic, without manually adjusting positions or velocities.
+
+> [!NOTE]
+> In Unity, the default **gravity is set to -9.81 m/s²** on the **Y-axis**, matching Earth’s gravity.
+> 
+> This value can be changed under **`Edit` > `Project Settings` > `Physics`** if you want to simulate different environments (e.g., the Moon’s gravity).
 
 ---
 
@@ -225,24 +232,11 @@ $$
 \vec{F} = m \cdot \vec{a}
 $$
 
-#### Incremental Acceleration Over Time
-When applying a continuous force or acceleration in Unity (`ForceMode.Force` or `ForceMode.Acceleration`), the object’s **velocity does not change instantly**. Physics updates occur in discrete steps (`FixedUpdate`), and each step applies only a fraction of the total acceleration needed to reach the target velocity.
+#### Acceleration Over Time
 
-Unity then applies this acceleration incrementally each physics step. **Velocity increases linearly**:
+As explained in the [Physics Steps](/#physics-steps) section, Unity processes physics in **discrete steps** (`FixedUpdate`) rather than continuously. This means that when you apply a continuous force or acceleration (`ForceMode.Force` or `ForceMode.Acceleration`), Unity **doesn't update velocity all at once**. Instead, each physics step applies only a fraction of the total acceleration. 
 
-$$
-\vec{v}_{\text{new}} = \vec{v}_{\text{current}} + \vec{a}_{\text{applied}} \cdot \text{FixedDeltaTime}
-$$
-
-…but **displacement grows quadratically**:
-
-$$
-\vec{d} = \vec{v}_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} \vec{a}_{\text{applied}} \cdot (\text{FixedDeltaTime})^2
-$$
-
-![Velocity over time is linear; Distance over time is quadratic](../imgs/velocity-distance-graph.png)
-
-Unity applies acceleration **incrementally each physics step**, and the per-step displacement depends on `FixedDeltaTime`. For example, if acceleration is $$\(5 \ \text{m/s}^2\)$$ and `FixedDeltaTime = 0.02` s:
+For example, if acceleration is $$\(5 \ \text{m/s}^2\)$$ and `FixedDeltaTime = 0.02` s:
 
 $$
 \vec{d} = \frac{1}{2} \cdot 5 \cdot 0.02^2 = 0.001 \ \text{m}
@@ -250,14 +244,12 @@ $$
 
 At the first physics step, the displacement is very small. Over multiple steps, **velocity accumulates**, and the object moves farther. Other forces, such as **gravity**, **drag**, and **friction**, also influence the motion.
 
-#### Choosing Acceleration Time
-
-The acceleration time ( $$\(t_{\text{acceleration}}\)$$ )is the **total real-world time** you want the object to take to reach the target velocity.
+The **acceleration time** ( $$\(t_{\text{acceleration}}\)$$ )is the **total real-world time** you want the object to take to reach the target velocity.
 - Larger acceleration time → slower acceleration, more gradual movement
 - Smaller acceleration time → faster acceleration, more abrupt movement
 
 > [!IMPORTANT]
-> **Unity automatically spreads the required acceleration across however many physics steps occur during acceleration time.**
+Unity automatically distributes the required acceleration across the number of physics steps that occur during the acceleration time.**
 
 This calculation ensures the `Rigidbody` accelerates toward the target velocity **predictably and consistently**, while still respecting Unity’s physics system, including gravity, drag, and collisions. Using this approach, you can achieve smooth, gradual acceleration for physics-driven objects like vehicles, sliding crates, or characters, without relying on arbitrary _“magic numbers.”_
 
@@ -403,6 +395,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
