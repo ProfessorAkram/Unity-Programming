@@ -130,7 +130,7 @@ Now that we understand **forces, vectors, mass, acceleration, and Unity’s phys
 - `Rigidbody.AddForce()` - Applies a linear force in **world space**; changing the object's velocity.
   - The ForceMode can be set to **Force**, **Acceleration**, **Impulse**, or **VelocityChange** depending on how you want the force to affect the object.
 - `Rigidbody.AddTorque()` - Applies a **rotational force (torque)**, causing it to spin around its center of mass.
-- `Rigidbody.AddExplosionForce() - **Simulates an explosion** by applying a force that **radiates outward** from a specific point, affecting nearby objects.
+- `Rigidbody.AddExplosionForce()` - **Simulates an explosion** by applying a force that **radiates outward** from a specific point, affecting nearby objects.
 - `Rigidbody.AddRelativeForce()` - Applies a linear force **relative to the Rigidbody’s local axes**.
 - `Rigidbody.AddRelativeTorque()` - Applies torque **relative to the Rigidbody’s local axes**.
 
@@ -403,6 +403,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
