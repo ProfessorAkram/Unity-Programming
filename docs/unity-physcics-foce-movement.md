@@ -342,19 +342,6 @@ To properly calculate _Impulse_ and to ensure the gradual acceleration has enoug
 ```csharp
     //Reference to the object's Mass
     private float _mass;
-
-    [SerializeField]
-    [Tooltip("Acceleration of speed; force multiplier.\n" +
-             "• The larger the multiplier, the quicker the object will move.")]
-    private float _acceleration = 100f;
-
-    [SerializeField]
-    [Tooltip("Use acceleration time for controlled acceleration")]
-    private bool _useAccelerationTime = false;
-
-    [SerializeField] [Tooltip("Time it takes to go from a stop to a desired speed \n" +
-             "• The smaller the number, the faster the object will get up to speed")]
-    private float _accelerationTime = 0.5f;
 ```
 **Set** the reference for `_mass` in the `Awake()` method
 
@@ -416,6 +403,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
