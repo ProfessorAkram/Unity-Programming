@@ -318,7 +318,7 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
     
     [SerializeField]
     [Tooltip("Acceleration multiplier applied to the target speed. \n" +
-             "• Determines how quickly the object reaches the target speed when using ForceMode.Force or ForceMode.Acceleration.\n" +
+             "• Determines how quickly the object reaches the target speed when using ForceMode: Force or Acceleration.\n" +
              "• Larger values result in faster acceleration.")]
     private float _accelerationMultiplier = 100f;
     
@@ -416,6 +416,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
