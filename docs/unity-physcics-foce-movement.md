@@ -165,7 +165,7 @@ Each of the Rigidbody force methods allows you to influence an object's movement
 - `ForceMode.Impulse` – **Instant force affected by mass**; good for sudden bursts like jumps or explosions.
 - `ForceMode.VelocityChange` – **Instant force ignoring mass**; good for responsive or arcade-style movement.
 
-Mathematically, these modes determine **how the force contributes to velocity and displacement each physics step**. Continuous forces accumulate gradually through multiple `FixedUpdate` steps, while instantaneous forces change the Rigidbody’s velocity immediately. Choosing the correct ForceMode is essential for achieving the **desired feel of movement** in your game.
+Mathematically, these modes determine **how the force contributes to velocity and displacement each physics step**. Continuous forces accumulate gradually through multiple `Fixed` steps, while instantaneous forces change the Rigidbody’s velocity immediately. Choosing the correct ForceMode is essential for achieving the **desired feel of movement** in your game.
 
 ---
 
@@ -221,7 +221,22 @@ _rigidbody.AddForce(appliedForce, ForceMode.Force);
 > [!WARNING]
 > Many tutorials don't even take this extra step;  they simply plug in a large, arbitrary _“magic number”_ as the applied force. While this can work in practice, it often requires trial and error to _“feel right”_ and doesn’t reflect a physics-based approach.
 
-A more predictable approach uses physics to compute the exact force needed based on a **target change in velocity** (i.e., $${\Delta \vec{v}}$$) and a desired **acceleration time** (i.e., $${t_{\text{acceleration}}}$$):
+The scalar that determines the strength of the applied acceleration can be a constant, like `5f` in the example above, or a variable commonly called `accelerationMultiplier`. It scales the direction (or delta velocity) to control the overall force applied.
+
+Using a simple direction vector works for straightforward movement, but it doesn’t account for the Rigidbody's current velocity. If the object is sliding, drifting, or partially aligned with the desired direction, blindly applying force along the input direction can result in overshoot or inconsistent acceleration. A more **physics-aware approach** uses **delta velocity** instead of the input direction:
+
+```csharp
+float accelerationMultiplier = 5f;
+Vector3 deltaVelocity = targetVelocity - _rigidbody.velocity;
+Vector3 acceleration = accelerationMultiplier * deltaVelocity;
+Vector3 appliedForce = acceleration * _rigidbody.mass;
+_rigidbody.AddForce(appliedForce, ForceMode.Force);
+
+```
+While this approach works well for intuitive movement,
+
+
+While the previous approach, scaling the direction or delta velocity by a constant acceleration multiplier, works well for **intuitive, responsive movement**, it does not guarantee precise control over how quickly the Rigidbody reaches the target velocity. A more **predictable, physics-based approach** calculates the exact force required from the **target change in velocity** (i.e., $${\Delta \vec{v}}$$) over a desired **acceleration time** (i.e., $${t_{\text{acceleration}}}$$):
 
 $$
 \vec{a} = \frac{\Delta \vec{v}}{t_{\text{acceleration}}}
@@ -282,7 +297,7 @@ Because mass is ignored, the same acceleration is applied to all objects, whethe
 Now that we understand how different `ForceMode` options affect movement, it makes sense to refactor our `MoveRigidbody` class to take advantage of them. Instead of directly setting `rigidbody.velocity` (which bypasses physics), we’ll shift to force-based movement. This allows Unity’s physics system to handle acceleration, drag, and collisions while still providing us with the flexibility to choose between instant, gradual, or mass-independent motion through the selected `ForceMode`.
 
 ### Updating Fields 
-To leverage the different ways motion can be applied with force, we will need to be able to set what `ForceMode` we want applied. To do this, we will create a new `[SerlizedField]`:
+To leverage the different ways motion can be applied with force, we will need to be able to set what `ForceMode` we want applied. To do this, we will create a new `[SerializeField]`:
 
 ```csharp
     [SerializeField]
@@ -295,7 +310,7 @@ To leverage the different ways motion can be applied with force, we will need to
 
 ```
 
-> [!NOTE]
+> [!TIP]
 > While we could keep the tooltip short (e.g., _“Controls how movement forces are applied”_), level designers may not be familiar with all the available ForceMode options. Expanding the tooltip into multiple lines gives them helpful context and reduces ambiguity.
 
 #### Speed and Acceleration 
@@ -311,10 +326,10 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
     [SerializeField]
     [Range(0f, MAX_SPEED)]
     [Tooltip("Target speed for the object’s movement. Clamped to MAX_SPEED.")]
-    private float _targetSpeed = 5f;
+    private float _speed = 5f;
     
     [SerializeField]
-[Tooltip("Acceleration magnitude applied toward the target velocity.\n" +
+    [Tooltip("Acceleration magnitude applied toward the target velocity.\n" +
          "• Controls how strong the applied force/acceleration is when using ForceMode Force Acceleration.\n" +
          "• Larger values = stronger acceleration (reaches target speed faster).\n" +
          "• Smaller values = weaker acceleration (reaches target speed more gradually).")]
@@ -326,11 +341,11 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
     private bool _useAccelerationTime = false;
     
     [SerializeField]
-[Tooltip("Duration (in seconds) over which the object accelerates to its target speed.\n" +
+    [Tooltip("Duration (in seconds) over which the object accelerates to its target speed.\n" +
          "• Unity spreads the acceleration across physics steps automatically.\n" +
          "• Smaller values = quicker, more abrupt acceleration.\n" +
          "• Larger values = slower, smoother acceleration.")]
-private float _accelerationTime = 0.5f;
+    private float _accelerationTime = 0.5f;
 
 ```
 
@@ -366,34 +381,149 @@ To properly calculate _Impulse_ and to ensure the gradual acceleration has enoug
 
 ---
 
-## Update `Move()` Calculations
+## Refactoring `Move()` Method
 
-Previously, our `Move()` method was directly changing the `linearVelocity` of the object's Rigidbody. However, we now want to update this to calculate the different forces we may want to apply, depending on our force mode. Since we need to perform calculations and check for the force mode, we will refactor the `Move()` method to only run the calculations and then call the `ApplyForce()` method to apply the correct force calculation depending on the force mode. 
+Previously, the `Move()` method directly modified the Rigidbody's linearVelocity. With **force-based movement**, the Rigidbody's velocity is no longer set directly, so that line should be removed or commented out. 
 
-**Update** the `Move()` method
+Additionally, the `_isMoving` flag should also be removed from `Move()`, because setting it there only indicates that movement was **requested**, not that the object is actually moving. For accurate movement detection, _isMoving should instead be determined by checking the Rigidbody’s velocity in `Update()` or `FixedUpdate()`.
 
 ```chsharp
+        // Move the GameObject using Rigidbody velocity
+        //_rigidBody.linearVelocity = Speed * Direction;
 
+        // Flags the object as moving
+        //_isMoving = true;
 
 ```
-### How it works 
- 1.  Removed the direct setting of the Rigibody's `linear velocity`.
- 2.  An `appliedVelocity` calculation replaces the calculation for linear velocity and will be used when using `ForceMode.VelocityChange`.
- 3.  `appliedImpulse` is the `appliedVelocity` multiplied by mass and will be the calculation for using `ForceMode.Impulse`
- 4.  When using `ForceMode.Force` or `ForceMode.Acceleration`, we calculate the `appliedForce`, which is the `appliedVelocity` multiplied by our `_acceleration` multiplier.
- 5.  However, if `_useAccelerationTime` is true, we need to calculate:
-     - The `appliedAcceleration`, which is the rate of `Speed` over the `_accelerationTime`
-     - Determine the `appliedAccelerationForce`, which is the `appliedAcceleration` multiplied by both the object's `_mass` and `Direction`
-     - Set `appliedForce` equal to the new `appliedAcceleratedForce` value
-   
-> [!NOTE]  
-> In the `if(_useAccelerationTime)` condition, we assign the resulting value back to `appliedForce`. This allows us to pass the `appliedForce` to our next method (i.e., `ApplyForce`) without having to check a second time. 
+
+### Calculating the values needed for movement
+
+To implement force-based movement using `AddForce()`, the movement logic is split into **two responsibilities**:
+
+1. Calculating the values needed for movement.
+2. Applying the calculated forces.
+
+Since `Move()` already updates and tracks the object's speed and direction, it is a natural place to perform the additional calculations required for force-based movement. These calculations include:
+- **Target velocity:** the velocity the object should aim for based on speed and direction.
+- **Delta velocity:** the difference between the current velocity and target velocity.
+- **Impulse:** instantaneous change in momentum.
+- **Acceleration:** either scaled by a multiplier or calculated over an acceleration time for gradual changes.
+
+`Move()` **does not directly apply force** to the Rigidbody. Instead, it prepares the values needed and passes them to **a new method, `ApplyForce()`**, which handles the actual application of force.
 
 
+**Update** the `Move()` method with the following: 
 
+```chsharp
+    /// <summary>
+    /// Moves the object in a specified direction at a specified speed.
+    /// </summary>
+    /// <param name="direction">The direction to move the object (optional).</param>
+    /// <param name="speed">The speed at which the object should move (optional).</param>
+    public void Move(Vector3? direction = null, float? speed = null)
+    {
+        // Resolve the effective values for this frame
+        Vector3 moveDirection = direction ?? Direction;
+        float moveSpeed = speed ?? Speed;
 
+        // Update properties to ensure validation and internal consistency
+        Direction = moveDirection;
+        Speed = moveSpeed;
 
+        //Record the current direction and speed
+        _currentDirection = Direction;
+        _currentSpeed = Speed;
+        
+        // Desired velocity based on current speed and direction
+        Vector3 targetVelocity = Speed * Direction; 
+        
+        // Velocity difference to reach target
+        Vector3 deltaVelocity = targetVelocity - _rigidBody.linearVelocity; 
+        
+        // Instant force (like a sudden push)
+        Vector3 impulse = deltaVelocity * _mass; 
 
+        Vector3 acceleration; 
+
+        //If using accelerated time for more control
+        if (_useAccelerationTime)
+        {
+            // Gradually reach target velocity over a specified acceleration time
+            acceleration = deltaVelocity / _accelerationTime;
+        }
+        else
+        {
+            // Scale delta velocity by multiplier for responsive movement
+            acceleration = deltaVelocity * _accelerationMultiplier;
+        }//end if (_useAccelerationTime)
+        
+
+        ApplyForce(deltaVelocity, impulse, acceleration);
+
+    }//end Move()
+
+```
+---
+
+##  Applying Physics Forces 
+The **new** `ApplyForce()` method **handles physics execution** by taking the pre-calculated values from `Move()` and applying them to the Rigidbody according to the selected ForceMode:
+- **ForceMode.Force:** Continuous force scaled by mass.
+- **ForceMode.Acceleration:** Continuous acceleration ignoring mass.
+- **ForceMode.Impulse:** Instantaneous force scaled by mass.
+- **ForceMode.VelocityChange:** Instantaneous change in velocity, ignoring mass.
+
+**Create** the `ApplyForce()` method: 
+```csharp
+    /// <summary>
+    /// Applies force to the Rigidbody based on the selected ForceMode.
+    /// </summary>
+    /// <param name="deltaVelocity">
+    /// The difference between the target velocity and the current Rigidbody velocity.
+    /// Used for ForceMode.VelocityChange to instantly adjust velocity.
+    /// </param>
+    /// <param name="impulse">
+    /// The instantaneous change in momentum (mass × delta velocity).
+    /// Used for ForceMode.Impulse to apply a sudden push.
+    /// </param>
+    /// <param name="acceleration">
+    /// The acceleration vector to apply, either scaled by a multiplier or calculated over an acceleration time.
+    /// Used for ForceMode.Force and ForceMode.Acceleration.
+    /// </param>
+    private void ApplyForce(Vector3 deltaVelocity,  Vector3 impulse, Vector3 acceleration)
+    {
+        switch (_forceMode)
+        {
+            case ForceMode.Force:
+                // Applies a continuous force based on acceleration and mass 
+                _rigidBody.AddForce(acceleration * _mass, ForceMode.Force);
+                break;
+
+            case ForceMode.Acceleration:
+                // Applies a continuous acceleration
+                _rigidBody.AddForce(acceleration, ForceMode.Acceleration);
+                break;
+
+            case ForceMode.Impulse:
+                // Applies an instant force (like a sudden push), mass affects velocity change
+                _rigidBody.AddForce(impulse, ForceMode.Impulse);
+                break;
+
+            case ForceMode.VelocityChange:
+                // Instantly changes velocity, ignores mass (like directly setting velocity)
+                _rigidBody.AddForce(deltaVelocity, ForceMode.VelocityChange);
+                break;
+
+            default:
+                Debug.LogWarning("Unhandled ForceMode: " + _forceMode);
+                break;
+        }//end switch(_forceMode)
+        
+
+    }//end ApplyForce()
+```
+With this separation, `Move()` focuses on calculating the necessary movement values, while `ApplyForce()` handles the actual physics execution. This **improves readability, maintainability, and flexibility**, making it easy to adjust movement behavior or add new force modes in the future.
+
+---
 
 
 
@@ -403,6 +533,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
