@@ -313,7 +313,7 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
 ```csharp
     [SerializeField]
     [Range(0f, MAX_SPEED)]
-    [Tooltip("Target speed for the object’s movement. This is the speed we want the Rigidbody to reach, not the current velocity.")]
+    [Tooltip("Target speed for the object’s movement. Clamped to MAX_SPEED.")]
     private float _targetSpeed = 5f;
     
     [SerializeField]
@@ -416,6 +416,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
