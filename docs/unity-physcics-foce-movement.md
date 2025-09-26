@@ -201,7 +201,7 @@ $$
 \vec{a} = \frac{\vec{F}_{\text{net}}}{m}
 $$
 
-In many tutorials, you’ll see ForceMode.Force implemented with arbitrary acceleration values, such as: 
+In many tutorials, you’ll see ForceMode.Force implemented with **arbitrary acceleration values**, such as: 
 ```csharp
 Vector3 acceleration = 5f * direction;
 Vector3 appliedForce = acceleration * _rigidbody.mass;
@@ -403,6 +403,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
