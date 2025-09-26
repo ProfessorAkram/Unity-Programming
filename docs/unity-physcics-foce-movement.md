@@ -122,7 +122,7 @@ Other forces can also influence objects:
 - **Drag** (linear and angular damping) slows motion over time, simulating air resistance or rotational friction.
 - **Physics Materials** can be applied to objects to control friction and bounciness, affecting how objects slide, roll, or bounce off surfaces.
 
-By combining these forces—gravity, drag, user-applied pushes, and collisions—Unity calculates the net effect on each Rigidbody at every physics step. This allows movement to feel both dynamic and physically realistic, without manually adjusting positions or velocities.
+By combining these forces—gravity, drag, user-applied pushes, and collisions—Unity calculates the net effect on each Rigidbody at every physics step. This allows movement to feel both dynamic and physically realistic, without requiring manual adjustments to positions or velocities.
 
 > [!NOTE]
 > In Unity, the default **gravity is set to -9.81 m/s²** on the **Y-axis**, matching Earth’s gravity.
@@ -234,7 +234,7 @@ $$
 
 #### Acceleration Over Time
 
-As explained in the [Physics Steps](/#physics-steps) section, Unity processes physics in **discrete steps** (`FixedUpdate`) rather than continuously. This means that when you apply a continuous force or acceleration (`ForceMode.Force` or `ForceMode.Acceleration`), Unity **doesn't update velocity all at once**. Instead, each physics step applies only a fraction of the total acceleration. 
+As explained in the [Physics Steps](#physics-steps) section, Unity processes physics in **discrete steps** (`FixedUpdate`) rather than continuously. This means that when you apply a continuous force or acceleration (`ForceMode.Force` or `ForceMode.Acceleration`), Unity **doesn't update velocity all at once**. Instead, each physics step applies only a fraction of the total acceleration. 
 
 For example, if acceleration is $$\(5 \ \text{m/s}^2\)$$ and `FixedDeltaTime = 0.02` s:
 
@@ -262,7 +262,7 @@ $$
 \vec{a} = \frac{\Delta \vec{v}}{t_{\text{acceleration}}}
 $$
 
-**No calculation for force is needed**; simply specify the desired acceleration, and Unity updates the Rigidbody’s velocity each physics step.
+**No calculation for force is needed**; just the desired acceleration, and Unity updates the Rigidbody’s velocity each physics step.
 
 This mode is particularly useful when you want **uniform effects**, such as:
 - Gravity-like forces applied manually
@@ -395,6 +395,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
