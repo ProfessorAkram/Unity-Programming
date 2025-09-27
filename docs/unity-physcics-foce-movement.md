@@ -523,8 +523,46 @@ The **new** `ApplyForce()` method **handles physics execution** by taking the pr
 ```
 With this separation, `Move()` focuses on calculating the necessary movement values, while `ApplyForce()` handles the actual physics execution. This **improves readability, maintainability, and flexibility**, making it easy to adjust movement behavior or add new force modes in the future.
 
----
+<br>
 
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+---
+## Detecting Movement
+In the previous implementation, movement was tracked using a manual `_isMoving` flag set inside `Move()`. However, with force-based physics, **requesting movement is not the same as actually moving**. An object might:
+- Receive a movement input but be blocked by friction or collision,
+- Still be sliding due to inertia even after the input stops,
+- Be pushed externally by another force.
+
+Therefore, **movement should be determined by the Rigidbody’s actual velocity**, not by manually toggling a flag. 
+With that said, we will start by **removing or commenting out** the field for `_isMoving`. 
+
+```csharp
+    // Runtime movement flag
+    //private bool _isMoving;
+```
+
+### Add a Method to Check If the Object `IsMoving`
+
+A more reliable way to detect motion is to check whether the Rigidbody’s velocity magnitude exceeds a small threshold (to account for floating-point noise and near-zero drift).
+
+**Create** a new method named `IsMoving()`
+
+```csharp
+  /// <summary>
+  /// Returns true if the Rigidbody is currently moving above a small threshold.
+  /// </summary>
+  public bool IsMoving(float threshold = 0.01f)
+  {
+      return _rigidBody.linearVelocity.sqrMagnitude > threshold * threshold;
+  }
+
+```
+---
 
 
 If spped is too fast include Continuous collision detection 
@@ -533,6 +571,7 @@ Clamp at max speed
 
 
 Stop
+
 
 
 
