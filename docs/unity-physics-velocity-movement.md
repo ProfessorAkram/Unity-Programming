@@ -742,19 +742,20 @@ public class MoveRigidbody : MonoBehaviour
             case TestAction.Move:
                 Debug.Log("Testing Move");
                 Move();
-                _testAction = TestAction.None; // Reset after running
                 break;
 
             case TestAction.Stop:
                 Debug.Log("Testing Stop");  
                 Stop();
-                _testAction = TestAction.None; // Reset after running
                 break;
 
-
             case TestAction.None:
+                Debug.Log("Testing None");
+                //Do nothing
+                break;
+                
             default:
-                // Do nothing
+                Debug.Log("Unhandled TestAction: " + _testAction); 
                 break;
 
         }//end switch(_testAction)
@@ -769,6 +770,7 @@ public class MoveRigidbody : MonoBehaviour
 While `Rigidbody.linearVelocity` gives us **snappy, arcade-style controls**, using **forces** (`Rigidbody.AddForce`) becomes useful when we want **gradual acceleration and deceleration, momentum**, or more **realistic interactions** with collisions and slopes. Velocity works well for **fast, predictable movement**, while **force-based movement** allows for **emergent, physics-driven behavior**.
 
 ---
+
 
 
 
