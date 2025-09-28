@@ -299,6 +299,8 @@ Now that we understand how different `ForceMode` options affect movement, it mak
 ### Updating Fields 
 To leverage the different ways motion can be applied with force, we will need to be able to set what `ForceMode` we want applied. To do this, we will create a new `[SerializeField]`:
 
+#### Step 1: **Create** the following field
+
 ```csharp
     [SerializeField]
     [Tooltip("Controls how movement forces are applied:\n" +
@@ -311,7 +313,7 @@ To leverage the different ways motion can be applied with force, we will need to
 ```
 
 > [!TIP]
-> While we could keep the tooltip short (e.g., _“Controls how movement forces are applied”_), level designers may not be familiar with all the available ForceMode options. Expanding the tooltip into multiple lines gives them helpful context and reduces ambiguity.
+> While we could keep the tooltip short (e.g., _“Controls how movement forces are applied”_), level designers may not be familiar with all the available ForceMode options. Expanding the tooltip into multiple lines proides helpful context and reduces ambiguity.
 
 #### Speed and Acceleration 
 To implement **force-based movement**, we first need to define how **speed** and **acceleration** will work. Unlike directly setting the Rigidbody's velocity, we now treat `Speed` as the **target speed** we want the object to reach.
@@ -321,6 +323,8 @@ When using `ForceMode.Force` or `ForceMode.Acceleration`, there are two ways to 
 - Acceleration time (`_accelerationTime`) – calculate the force needed to reach the target speed over a desired duration, producing smoother, more predictable motion.
 
 We use a flag (`_useAccelerationTime`) to determine which method to apply, giving us flexibility to choose between a simple multiplier or time-based acceleration for different gameplay situations.
+
+#### Step 2: **Creae** the additional fields
 
 ```csharp
     [SerializeField]
@@ -352,13 +356,13 @@ We use a flag (`_useAccelerationTime`) to determine which method to apply, givin
 #### Reference to Mass
 To properly calculate _Impulse_ and to ensure the gradual acceleration has enough force to move an object, we need to reference the object's **mass**. This can easily be done using the `_rigidBody.mass` property. While this is pretty easy to write, we can simplify it by creating a field for `_mass` and then in `Awake()` set it to the Rigidbody's mass value. It might only be a few characters shorter, but even little things like this can speed up the process. 
 
-**Create** the following fields: 
+#### Step 1: **Create** the following fields: 
 
 ```csharp
     //Reference to the object's Mass
     private float _mass;
 ```
-**Set** the reference for `_mass` in the `Awake()` method
+#### Step 2: **Set** the reference for `_mass` in the `Awake()` method
 
 ```csharp
  private void Awake()
@@ -387,6 +391,7 @@ Previously, the `Move()` method directly modified the Rigidbody's linearVelocity
 
 Additionally, the `_isMoving` flag should also be removed from `Move()`, because setting it there only indicates that movement was **requested**, not that the object is actually moving. For accurate movement detection, _isMoving should instead be determined by checking the Rigidbody’s velocity in `Update()` or `FixedUpdate()`.
 
+#### Step 1: **Remove or Comment out** the following fileds
 ```chsharp
         // Move the GameObject using Rigidbody velocity
         //_rigidBody.linearVelocity = Speed * Direction;
@@ -412,7 +417,7 @@ Since `Move()` already updates and tracks the object's speed and direction, it i
 `Move()` **does not directly apply force** to the Rigidbody. Instead, it prepares the values needed and passes them to **a new method, `ApplyForce()`**, which handles the actual application of force.
 
 
-**Update** the `Move()` method with the following: 
+#### Step 2: **Update** the `Move()` method with the following: 
 
 ```chsharp
     /// <summary>
@@ -472,7 +477,8 @@ The **new** `ApplyForce()` method **handles physics execution** by taking the pr
 - **ForceMode.Impulse:** Instantaneous force scaled by mass.
 - **ForceMode.VelocityChange:** Instantaneous change in velocity, ignoring mass.
 
-**Create** the `ApplyForce()` method: 
+#### Step 1: **Create** the `ApplyForce()` method: 
+
 ```csharp
     /// <summary>
     /// Applies force to the Rigidbody based on the selected ForceMode.
@@ -539,18 +545,17 @@ In the previous implementation, movement was tracked using a manual `_isMoving` 
 - Be pushed externally by another force.
 
 Therefore, **movement should be determined by the Rigidbody’s actual velocity**, not by manually toggling a flag. 
-With that said, we will start by **removing or commenting out** the field for `_isMoving`. 
+
+#### Step 1: **Remove or comment out** the field for `_isMoving`. 
 
 ```csharp
     // Runtime movement flag
     //private bool _isMoving;
 ```
 
-### Add a Method to Check If the Object `IsMoving`
-
 A more reliable way to detect motion is to check whether the Rigidbody’s velocity magnitude exceeds a small threshold (to account for floating-point noise and near-zero drift).
 
-**Create** a new method named `IsMoving()`
+#### Step 2: **Create** a new method named `IsMoving()`
 
 ```csharp
   /// <summary>
@@ -562,15 +567,170 @@ A more reliable way to detect motion is to check whether the Rigidbody’s veloc
   }
 
 ```
+
+#### When to Use IsMoving()
+
+The `isMoving()` method becomes most useful when you need to react to real movement, not just input.
+For example, a braking system could check `IsMoving()` before applying deceleration, ensuring that forces are only applied when necessary:
+
+```csharp
+if (IsMoving())
+    ApplyBraking();
+```
+
 ---
+
+
+## Gradual Stopping with Physics
+
+In our current `MoveRigidbody()` class, we already have a `Stop()` method that immediately halts movement by resetting velocity:
+
+```csharp
+/// <summary>
+/// Stops the object's movement immediately by zeroing its Rigidbody velocity.
+/// </summary>
+public void Stop()
+{
+    // Immediately halts motion
+    _rigidBody.linearVelocity = Vector3.zero;  
+} // end Stop()
+
+```
+This kind of instant stop**** is useful for:
+- Resetting an object during gameplay or respawn.
+- Snapping characters into place for cutscenes.
+- Preventing sliding when precision is required.
+
+> [!NOTE]
+> The `Stop()` method directly sets the Rigidbody’s `linearVelocity` to zero. While using `AddForce()` with `ForceMode.VelocityChange` could also stop the object, directly setting `linearVelocity` is simpler and more reliable for an **immediate, guaranteed stop**. `VelocityChange` is better suited for applying sudden velocity adjustments dynamically, but for a full, instant halt, directly modifying linearVelocity ensures the object stops exactly when and how we want.
+
+If our goal, however, is to create a more realistic **physics-based movement**, then it would benefit from a **gradual stopping instead of an immediate halt**. Just like we **accelerate smoothly** toward a target velocity, we may also want to slow down smoothly, especially in systems such as **racing games, character inertia, or heavy physics objects**.
+
+### Apply Braking
+
+Instead of setting velocity to zero instantly, we will set a **braking force** in the opposite direction of movement. Once we **apply braking**, it will reduce velocity over time. 
+
+#### Step 1: **Create** a field for the **braking force**
+
+```csharp
+    [SerializeField]
+    [Tooltip("Multiplier controlling how strongly the object slows when braking.")]
+    private float _brakingMultiplier = 10f;
+```
+
+#### Step 2: **create** the method to **`ApplyBraking()`**
+
+```csharp
+    /// <summary>
+    /// Gradually slows the object by applying a consistent braking force
+    /// regardless of mass.
+    /// </summary>
+    public void ApplyBraking()
+    {
+        // Return immediately if the object is already stopped 
+        if (!IsMoving())
+            return;
+
+        // Get the Rigidbody's current velocity
+        Vector3 currentVelocity = _rigidBody.linearVelocity;
+
+        // Apply braking force opposite to the movement direction
+        Vector3 brakeForce = -currentVelocity.normalized * _brakingMultiplier;
+    
+        // Use Acceleration for consistent braking regardless of mass
+        _rigidBody.AddForce(brakeForce, ForceMode.Acceleration);
+    }
+```
+Notice that in this implementation of `ApplyBraking()`, we specifically use `ForceMode.Acceleration`. Using `Impulse` and `VelocityChange` would be too abrupt, causing the object to stop suddenly rather than gradually. Since we want **smooth, gradual braking**, these modes are not suitable.
+
+When deciding between `ForceMode.Acceleration` and `ForceMode.Force` for braking, the difference comes down to **how mass affects deceleration**:
+
+- **Acceleration**
+  - **Pros:** Consistent braking regardless of object mass, good for characters, hovercrafts, or other objects where predictable deceleration is important.
+  - **Cons:** Ignores mass, so braking may feel less “realistic” for very heavy objects.
+
+- **Force**
+  - **Pros:** Mass affects deceleration, so heavier objects naturally slow more slowly. Suitable for physics-based vehicles or objects with mass.
+  - **Cons:** Braking is not consistent across objects of different masses, which can feel unpredictable in gameplay.
+
+Using `ForceMode.Acceleration` in this case ensures that the **braking feels consistent and predictable** for gameplay, regardless of the Rigidbody's mass. If a more realistic, mass-dependent braking behavior is desired, **Force** could be used instead.
+
+---
+
+## Updating Testing
+
+Since we do not yet have input set up for our `MoveRigidbody()` class, we previously implemented a `RunMovementTest()` method to simulate various movement scenarios in the Editor. Currently, the test runs `Move()` and `Stop()`, but we now want to include testing for `ApplyBraking()`.
+
+#### Step 1: Update the `TestAction` **enum** to include a `Brake` option:
+
+```csharp
+    //Enum for list of possible actions to test 
+    private enum TestAction
+    {
+        None,   // No action selected
+        Move,   // Run Move() test
+        Stop,   // Run Stop() test
+        Brake  //Run ApplyBraking() test
+
+    }
+```
+
+#### Step 2: **Update** `RunMovementTest()` to handle the new braking test:
+
+```csharp
+#if UNITY_EDITOR    
+    /// <summary>
+    /// Runs the selected movement test in the Editor based on the _testAction enum.
+    /// </summary>
+    private void RunMovementTest()
+    {
+        switch (_testAction)
+        {
+            case TestAction.Move:
+                Debug.Log("Testing Move");
+                Move();
+                break;
+
+            case TestAction.Stop:
+                Debug.Log("Testing Stop");  
+                Stop();
+                break;
+            
+            case TestAction.Brake:
+                Debug.Log("Testing Brakes");  
+                ApplyBraking();
+                break;
+            
+            case TestAction.None:
+                Debug.Log("Testing None");
+                //Do nothing
+                break;
+                
+            default:
+                Debug.Log("Unhandled TestAction: " + _testAction); 
+                break;
+
+        }//end switch(_testAction)
+
+    }//end RunMovementTest()
+#endif
+```
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
+
+---
+
 
 
 If spped is too fast include Continuous collision detection 
 
 Clamp at max speed 
 
-
-Stop
 
 
 
