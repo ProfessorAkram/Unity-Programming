@@ -44,10 +44,10 @@ We now have the new input system installed and turned on, but it doesn't actuall
 
 To make the new input system work, we need to create an **Input Actions Asset**. This asset can be thought as a _Input Database_ stroing all of the following information: 
 
-- **Control Schemes**: Decide which devices the player can use (keyboard, mouse, gamepad, etc.)
 - **Action Maps**: Group actions by context (Player, UI, Vehicle, etc.)
 - **Actions**: Define what the player wants to do (Jump, Fire, Move)
 - **Bindings**: Assign how those actions are triggered (Spacebar, Left Stick, Tap, etc.)
+- **Control Schemes**: Decide which devices the player can use (keyboard, mouse, gamepad, etc.)
 
 #### 1. **Create** a New Input Actions Asset
 - In the **Project window**, right-click and create a new folder named **InputAssets**
@@ -157,4 +157,58 @@ Think of a composite binding like a music keyboard, where each key (Up, Down, Le
 
 When the player presses W + D, the composite binding outputs Vector2(x=1, y=1). Your movement code can then read this vector and move the character diagonally.
 
+### Control Schemes 
+As mentioned earlier, Unity's new input system is **event-driven**, which means it only reacts when input happens instead of constantly checking for it like the older **polling-based** system. This is more efficient, but if your project has bindings for multiple devices, Unity still needs to **listen to all those bindings**, even for devices that aren’t connected. For example, if a player is using a keyboard and mouse on a PC, there’s no reason to listen for gamepad inputs.
 
+This is where **Control Schemes** come in. A Control Scheme is a group of devices that a player can use together to control the game. It tells Unity **which devices' bindings should be active**. Using Control Schemes helps optimize input handling, keeps your project organized, and makes it easier to support multiple devices or players. While Control Schemes aren’t strictly required, **they make your input setup cleaner, more flexible, and easier to scale**.
+
+Importantly, **setting up a Control Scheme doesn’t require any changes to individual bindings**. You just define the group of devices. For example, if you create a Control Scheme for Keyboard & Mouse, Unity will automatically only listen to the bindings for those devices, you don’t need to do any extra work.
+
+#### 8. **Add** a Control Scheme
+- In the **Input Actions Editor**, in the left pane at the top
+  - click the **All Control Scheme** drop down
+  - Choose **Add Control Scheme**
+
+ #### 9. **Create** a Control Scheme
+- In the **Add Conotrl Scheme** dialog
+  - Set the name to **Keyboard & Mouse**
+ 
+ #### 10. **Add** Device Type
+- Under **Device Type**, press the **`+`**
+  - Add **Keyboard**
+- Repeat and Add **Mouse**
+
+#### 11. **Create** Gamepad Scheme
+ - Repeat steps 9 and 10 creating a control scheme for **Gamepad**
+ - Set the **Device Type** to **Gamepad** 
+
+#### 12. **Save** Action Settings
+- Click **Save** or ensure that **Auto-Save** is enabled on the **Input Actions Editor**
+- Exit the **Input Actions Editor**
+
+---
+
+## Player Input Component
+Now that we have our **Input Actions Asset** and **Action Map** set up, the next step is to attach them to our Player GameObject using a **Player Input component**. This component acts as a bridge between the input system and your scripts: it listens for Actions and automatically sends the input values or triggers functions in your scene.
+
+Think of the Player Input component as a **manager**: it doesn’t handle the gameplay itself, but it tells your game **when and how input happens**, so your scripts can respond.
+
+#### 1. **Add** Player Input Component 
+- **Select** your Player GameObject in the **Hierarchy**.
+- In the **Inspector Window**, click `Add Component > Player Input`
+
+#### 2. **Apply** Player Input Settings
+- Under the **Player Input** settings in the **Inspector Window**
+  - Drag and Drop the **PlayerControls** Input Action to the **Action**
+  - Assign the **Default Scheme** to **Keyboard & Mouse** 
+  - Assign the **Defaulat Map** to **Player**
+ 
+
+
+Behavior: Choose how input should be processed:
+
+Invoke Unity Events – Calls UnityEvents when Actions are triggered (good for beginners / visual workflow).
+
+Send Messages – Calls methods on the GameObject with the same name as the Action.
+
+Broadcast Messages – Sends messages to all child objects (less common).
