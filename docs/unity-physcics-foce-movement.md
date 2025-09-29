@@ -553,33 +553,59 @@ Therefore, **movement should be determined by the Rigidbody’s actual velocity*
     //private bool _isMoving;
 ```
 
-A more reliable way to detect motion is to check whether the Rigidbody’s velocity magnitude exceeds a small threshold (to account for floating-point noise and near-zero drift).
-
-#### Step 2: **Create** a new method named `IsMoving()`
+#### Step 2: **Create** a `_stopThreshold` field 
 
 ```csharp
-  /// <summary>
-  /// Returns true if the Rigidbody is currently moving above a small threshold.
-  /// </summary>
-  public bool IsMoving(float threshold = 0.01f)
-  {
-      return _rigidBody.linearVelocity.sqrMagnitude > threshold * threshold;
-  }
+      [SerializeField]
+      [Tooltip(
+          "Velocity below which the object is considered stopped.\n\n" +
+          "Use Cases:\n" +
+          "- Tiny objects / precise movement: 0.01 – 0.05 units/sec\n" +
+          "- Player characters / standard objects: 0.05 – 0.1 units/sec\n" +
+          "- Heavy objects / vehicles: 0.1 – 0.5 units/sec"
+      )]
+      private float _stopThreshold = 0.1f;
 
 ```
+
+A more reliable way to detect motion is to check whether the Rigidbody's velocity magnitude exceeds a **small threshold**. This accounts for floating-point noise and near-zero drift, which can make the object appear to move slightly even when it should be stopped. To make this system flexible, we introduced the `_stopThreshold` field, allowing fine-tuning for different object sizes, speeds, or gameplay feel.
+
+Furthermore, because the actual motion depends on a comparison of caluations, storing a static `_isMoving` flag is inaccurate. Instead, we calculate movement on demand by checking whether the Rigidbody’s velocity exceeds the threshold. By turning this check into a method, `IsMoving()`, we gain several advantages:
+- **Dynamic evaluation:** It always reflects the current velocity, not just what the last input told us.
+- **Acts like a flag:** Even though it’s calculated each time, it still provides a simple yes/no answer, just like a boolean would.
+- **Flexible threshold:** The `_stopThreshold` field lets us fine-tune what counts as “moving” for different object types or gameplay feel.
+
+#### Step 3: **Create** a new method named `IsMoving()`
+
+```csharp
+    /// <summary>
+    /// Returns true if the Rigidbody is currently moving above the stop threshold.
+    /// </summary>
+    public bool IsMoving()
+    {
+        return _rigidBody.linearVelocity.sqrMagnitude > _stopThreshold * _stopThreshold;
+    }
+
+```
+<br>
+
+> [!NOTE]
+> Multiplying `_stopThreshold * _stopThreshold` is necessary because `sqrMagnitude` returns the velocity squared. To compare correctly, the threshold must also be squared. This avoids the costly square root calculation of `magnitude` while giving the same logical result.
+
+<br>
 
 #### When to Use IsMoving()
 
-The `isMoving()` method becomes most useful when you need to react to real movement, not just input.
-For example, a braking system could check `IsMoving()` before applying deceleration, ensuring that forces are only applied when necessary:
+The `IsMoving()` method is most useful when you need to react to actual movement, not just input. For example, when braking, you might want to check whether the object has effectively stopped and, if so, set its velocity to zero by calling `Stop()`:
 
 ```csharp
-if (IsMoving())
-    ApplyBraking();
+  if (!IsMoving())
+  {
+      Stop();
+  }
 ```
 
 ---
-
 
 ## Gradual Stopping with Physics
 
@@ -606,42 +632,42 @@ This kind of instant stop**** is useful for:
 
 If our goal, however, is to create a more realistic **physics-based movement**, then it would benefit from a **gradual stopping instead of an immediate halt**. Just like we **accelerate smoothly** toward a target velocity, we may also want to slow down smoothly, especially in systems such as **racing games, character inertia, or heavy physics objects**.
 
-### Apply Braking
+### Create a `Brake()` method 
 
-Instead of setting velocity to zero instantly, we will set a **braking force** in the opposite direction of movement. Once we **apply braking**, it will reduce velocity over time. 
+Instead of instantly zeroing the velocity, we apply a **braking force** opposite to the current direction of motion. This force **gradually reduces the object's velocity over time**. We can use the existing **acceleration time** to determine how quickly the object slows down, or optionally define a separate **braking time** if we want braking to feel slower or faster than acceleration. For simplicity and consistency, we are reusing `_accelerationTime`, which is the cleanest and most intuitive approach.
 
-#### Step 1: **Create** a field for the **braking force**
-
-```csharp
-    [SerializeField]
-    [Tooltip("Multiplier controlling how strongly the object slows when braking.")]
-    private float _brakingMultiplier = 10f;
-```
-
-#### Step 2: **create** the method to **`ApplyBraking()`**
+#### Step 1: **Create** the `Brake()` methodd
 
 ```csharp
     /// <summary>
     /// Gradually slows the object by applying a consistent braking force
     /// regardless of mass.
     /// </summary>
-    public void ApplyBraking()
+    public void Brake()
     {
-        // Return immediately if the object is already stopped 
-        if (!IsMoving())
-            return;
+         //Check if the object is not moving
+         if (!IsMoving())
+         {
+            // Ensures object is fully stopped
+            Stop();
 
-        // Get the Rigidbody's current velocity
-        Vector3 currentVelocity = _rigidBody.linearVelocity;
+          return;  
+         }
+        
+         // Get the Rigidbody's current velocity
+         Vector3 currentVelocity = _rigidBody.linearVelocity;
 
-        // Apply braking force opposite to the movement direction
-        Vector3 brakeForce = -currentVelocity.normalized * _brakingMultiplier;
-    
-        // Use Acceleration for consistent braking regardless of mass
-        _rigidBody.AddForce(brakeForce, ForceMode.Acceleration);
-    }
+        // Calculate deceleration, opposite to current velocity
+         Vector3 deceleration = -currentVelocity.normalized * (Speed / _accelerationTime);
+          
+       // Use Acceleration for consistent braking regardless of mass
+       _rigidBody.AddForce(deceleration, ForceMode.Acceleration);
+
+    } //end Brake()
 ```
-Notice that in this implementation of `ApplyBraking()`, we specifically use `ForceMode.Acceleration`. Using `Impulse` and `VelocityChange` would be too abrupt, causing the object to stop suddenly rather than gradually. Since we want **smooth, gradual braking**, these modes are not suitable.
+Here we start by checking if the game object `isMoving()`, if so, then we calculate the opposing forces for braking. Even with gradual braking, small residual velocities can remain due to physics calculations. To ensure the object comes to a **complete halt, eliminating tiny motions and making gameplay more predictable**, we should call the `Stop()` method once the `isMoving()` is no longer true. Essentially, gradual braking handles smooth deceleration, and `Stop()` acts as a reliable safety net to fully stop the object.
+
+In addition, we specifically use `ForceMode.Acceleration`. Using `Impulse` and `VelocityChange` would be too abrupt, causing the object to stop suddenly rather than gradually. Since we want **smooth, gradual braking**, these modes are not suitable.
 
 When deciding between `ForceMode.Acceleration` and `ForceMode.Force` for braking, the difference comes down to **how mass affects deceleration**:
 
@@ -654,6 +680,58 @@ When deciding between `ForceMode.Acceleration` and `ForceMode.Force` for braking
   - **Cons:** Braking is not consistent across objects of different masses, which can feel unpredictable in gameplay.
 
 Using `ForceMode.Acceleration` in this case ensures that the **braking feels consistent and predictable** for gameplay, regardless of the Rigidbody's mass. If a more realistic, mass-dependent braking behavior is desired, **Force** could be used instead.
+
+### Preventing Multiple Brake Applications
+The `Brake()` method works by adding an opposing force to our game object's Rigidbody. However, if we were to call this method in succession, it would essentially create an odd slow-motion ping-pong effect. To avoid this issue, we ensure that braking is only applied once at a time. Since braking is either on or off, we can use a standard flag for checking this condition. 
+
+#### Step 4: **Create** a flag for `isBraking` 
+
+```csharp
+    // Flag to prevent multiple braking applications
+    private bool _isBraking = false;
+```
+
+Now that we have our flag in place, we need to update the `ApplyBraking()` method to check for the flag and set it appropriately. 
+
+#### Step 5: **Update** `ApplyBraking()` with `_isBraking` flag
+```csharp
+    /// <summary>
+    /// Gradually slows the object by applying a consistent braking force
+    /// regardless of mass.
+    /// </summary>
+    public void ApplyBraking()
+    {
+        // Don't apply brakes if already braking
+        if (_isBraking)
+        return;
+
+        // Check if the object is moving
+        if (IsMoving())
+        {
+            // Mark braking as active
+            _isBraking = true;
+
+            // Get the Rigidbody's current velocity
+            Vector3 currentVelocity = _rigidBody.linearVelocity;
+      
+            // Apply braking force opposite to the movement direction
+            Vector3 brakeForce = -currentVelocity.normalized * _brakingMultiplier;
+          
+            // Use Acceleration for consistent braking regardless of mass
+            _rigidBody.AddForce(brakeForce, ForceMode.Acceleration);
+
+        }else{
+
+            // Ensures object is fully stopped
+            Stop();
+
+            //Reset braking state
+            _isBraking = false;
+            
+        }//end if (IsMoving())
+
+    } //end ApplyBraking()
+```
 
 ---
 
@@ -730,6 +808,7 @@ Since we do not yet have input set up for our `MoveRigidbody()` class, we previo
 If spped is too fast include Continuous collision detection 
 
 Clamp at max speed 
+
 
 
 
