@@ -203,12 +203,22 @@ Think of the Player Input component as a **manager**: it doesn’t handle the ga
   - Assign the **Default Scheme** to **Keyboard & Mouse** 
   - Assign the **Defaulat Map** to **Player**
  
+### Choosing a Behavior
 
+The Behavior setting determines how the Player Input component sends input to your game. There are three main options:
 
-Behavior: Choose how input should be processed:
+ - **Invoke Unity Events:**
+  - Triggers UnityEvents when Actions occur.
+  - Easy for beginners or visual workflows because you can assign functions directly in the Inspector.
 
-Invoke Unity Events – Calls UnityEvents when Actions are triggered (good for beginners / visual workflow).
+- **Send Messages**
+  - Calls methods on the GameObject that have the same name as the Action.
+  - Lightweight, good if you want to keep things organized in scripts without using UnityEvents.
 
-Send Messages – Calls methods on the GameObject with the same name as the Action.
+- **Broadcast Messages**
+  - Sends input messages to all child objects of the Player GameObject.
+  - Less common, but useful if multiple components need to react to the same Action.
+ 
 
-Broadcast Messages – Sends messages to all child objects (less common).
+ 
+  
