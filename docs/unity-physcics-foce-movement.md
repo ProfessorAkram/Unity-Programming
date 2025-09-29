@@ -684,55 +684,73 @@ Using `ForceMode.Acceleration` in this case ensures that the **braking feels con
 ### Preventing Multiple Brake Applications
 The `Brake()` method works by adding an opposing force to our game object's Rigidbody. However, if we were to call this method in succession, it would essentially create an odd slow-motion ping-pong effect. To avoid this issue, we ensure that braking is only applied once at a time. Since braking is either on or off, we can use a standard flag for checking this condition. 
 
-#### Step 4: **Create** a flag for `isBraking` 
+#### Step 2: **Create** a flag for `isBraking` 
 
 ```csharp
     // Flag to prevent multiple braking applications
     private bool _isBraking = false;
 ```
 
-Now that we have our flag in place, we need to update the `ApplyBraking()` method to check for the flag and set it appropriately. 
+Now that we have our flag in place, we need to update the `Brake()` method to set the _isBraking flag appropriately. 
 
-#### Step 5: **Update** `ApplyBraking()` with `_isBraking` flag
+#### Step 3: **Update** `Brake()` method
+
 ```csharp
     /// <summary>
     /// Gradually slows the object by applying a consistent braking force
     /// regardless of mass.
     /// </summary>
-    public void ApplyBraking()
+    public void Brake()
     {
-        // Don't apply brakes if already braking
-        if (_isBraking)
-        return;
-
-        // Check if the object is moving
-        if (IsMoving())
-        {
-            // Mark braking as active
-            _isBraking = true;
-
-            // Get the Rigidbody's current velocity
-            Vector3 currentVelocity = _rigidBody.linearVelocity;
-      
-            // Apply braking force opposite to the movement direction
-            Vector3 brakeForce = -currentVelocity.normalized * _brakingMultiplier;
-          
-            // Use Acceleration for consistent braking regardless of mass
-            _rigidBody.AddForce(brakeForce, ForceMode.Acceleration);
-
-        }else{
-
+         //Check if the object is not moving
+         if (!IsMoving())
+         {
             // Ensures object is fully stopped
             Stop();
 
             //Reset braking state
             _isBraking = false;
-            
-        }//end if (IsMoving())
 
-    } //end ApplyBraking()
+          return;  
+         }
+
+          // Mark braking as active
+          _isBraking = true;
+          Debug.Log("Braking rigid body is " + _isBraking);
+
+         // Get the Rigidbody's current velocity
+         Vector3 currentVelocity = _rigidBody.linearVelocity;
+
+        // Calculate deceleration, opposite to current velocity
+         Vector3 deceleration = -currentVelocity.normalized * (Speed / _accelerationTime);
+          
+       // Use Acceleration for consistent braking regardless of mass
+       _rigidBody.AddForce(deceleration, ForceMode.Acceleration);
+
+    } //end Brake()
 ```
+Once the `Brake()` method is called, we need to keep braking until we have stopped. This check will be called in the `Fixedupdate()`. 
 
+#### Step 4: **Update** `FixedUpdate()` method
+```csharp
+ //Called at fixed intervals (i.e., physic steps) 
+    private void FixedUpdate()
+    {
+        // Updated movement if speed or direction changed
+        if (Speed != _currentSpeed || Direction != _currentDirection)
+        {
+            Move(Direction, Speed);
+        }
+        
+        
+        //If braking, continue until stopped
+        if (_isBraking)
+        {
+            Brake();
+        }
+
+    }//end FixedUpdate()
+```
 ---
 
 ## Updating Testing
@@ -808,6 +826,7 @@ Since we do not yet have input set up for our `MoveRigidbody()` class, we previo
 If spped is too fast include Continuous collision detection 
 
 Clamp at max speed 
+
 
 
 
