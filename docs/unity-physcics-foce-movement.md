@@ -1306,7 +1306,8 @@ public class MoveRigidbody : MonoBehaviour
 ```
 While this system works well, it's important to understand that **its behavior is heavily influenced by multiple variables**. Factors such as **mass, speed, acceleration/braking time, friction, and drag** all interact to determine how the object actually moves and responds.
 
-Because of this, **tuning is essential**. Testing different combinations—varying mass values, speed limits, acceleration times, and damping settings—will help you dial in the exact feel you want. There’s no single “correct” configuration; the right one is the one that _feels_ best for your gameplay.
+Because of this, **tuning is essential**. Testing different combinations, varying mass values, speed limits, acceleration times, and damping settings, will help you dial in the exact feel you want. There’s no single “correct” configuration; the right one is the one that _feels_ best for your gameplay.
+
 
 
 
