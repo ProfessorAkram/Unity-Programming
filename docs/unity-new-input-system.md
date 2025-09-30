@@ -257,16 +257,7 @@ Now that we have our input system set up, we can start work on the `PlayerContro
 **2. Double-click on `PlayerController`** to open it in your editor.
 
 ## Get the Move Component
-In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes. Each of these moves the GameObject in a different way. For setting up our `PlayerController`, we need to decide which movement style we want to use and get a reference to the appropriate component.
-
-> [!NOTE]
-> By specifically referencing one component over another, we hard-code our `PlayerController` to work only with that class. A more flexible approach would be to create an interface, like `IMovable`.
-> 
-> An **interface** is like a contract that defines what methods a class must have (for example, a `Move(Vector3 direction)` method) without specifying how they work. Both `MoveTransform` and `MoveRigidbody` could implement `IMovable`, and then our `PlayerController` could simply check for a component of type `IMovable`.
-> 
-> While more flexible, this approach is beyond the scope of this lesson.
-
-For this lesson, we'll be using a reference to the `MoveRigidbody` component. 
+In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes. Each of these moves the GameObject in a different way. When setting up our `PlayerController`, we need to decide which movement style we want to use and get a reference to the appropriate component. For this lesson, we'll be using a reference to the `MoveRigidbody` component. 
 
 #### 3. Get a Reference for the `MoveRigidbody` component
 
@@ -319,14 +310,79 @@ This naming convention is essential because it allows Unity to **automatically t
 
 ### Create `OnMove()` Method
 
-With our Player Input component and `MoveRigidbody` reference ready, it’s time to create the `OnMove.
+With our Player Input component and `MoveRigidbody` reference ready, it’s time to create the `OnMove()` 
 
+#### 1. **Define** the `OnMove()` method
 
+```csharp
 public void OnMove(InputValue value)
-{
-    Vector2 inputVector = value.Get<Vector2>();
-    Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
-    _moveRigidbody.Move(direction);
-}
+```
+The parameter `InputValue`, not the actual Vector2, but a generic container that can hold any type. Since we have set the *Action* control type to `Vector2` we need to then get the Vector2 value. 
 
+```csharp
+  /// <summary>
+  /// Triggered by the Move input Action. Converts the 2D input from the player
+  /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+  /// MoveRigidbody component to move the player.
+  /// </summary>
+  /// <param name="value">
+  /// The InputValue wrapper passed automatically by the Player Input component. 
+  /// </param>
+  public void OnMove(InputValue value)
+  {
+    // Extract the Vector2 from the InputValue
+    Vector2 inputVector = value.Get<Vector2>();
+    
+  }//end OnMove()
+```
+Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystick), most movement systems in Unity expect a Vector3 because objects move in 3D space (X, Y, Z). So, we will need convert the Vector2 input into a Vector3. 
+
+#### 2. **Convert** the Vector2 to Vector3
+
+```csharp
+/// <summary>
+  /// Triggered by the Move input Action. Converts the 2D input from the player
+  /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+  /// MoveRigidbody component to move the player.
+  /// </summary>
+  /// <param name="value">
+  /// The InputValue wrapper passed automatically by the Player Input component. 
+  /// </param>
+  public void OnMove(InputValue value)
+  {
+    // Extract the Vector2 from the InputValue
+    Vector2 inputVector = value.Get<Vector2>();
+
+    // Convert the 2D input into a 3D direction on the XZ plane
+    Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+
+  }//end OnMove()
+
+```
+
+#### 3. **Call** the `Move()` method
+
+```csharp
+/// <summary>
+  /// Triggered by the Move input Action. Converts the 2D input from the player
+  /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+  /// MoveRigidbody component to move the player.
+  /// </summary>
+  /// <param name="value">
+  /// The InputValue wrapper passed automatically by the Player Input component. 
+  /// </param>
+  public void OnMove(InputValue value)
+  {
+    // Extract the Vector2 from the InputValue
+    Vector2 inputVector = value.Get<Vector2>();
+
+    // Convert the 2D input into a 3D direction on the XZ plane
+    Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+
+    // Call the movement component with the calculated direction
+    _moveRigidbody.Move(direction);
+
+  }//end OnMove()
+
+```
 
