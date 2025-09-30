@@ -310,9 +310,17 @@ This naming convention is essential because it allows Unity to **automatically t
 
 ### Create `OnMove()` Method
 
-With our Player Input component and `MoveRigidbody` reference ready, it’s time to create the `OnMove()` 
+Before creating the method that will be triggered by the Move Action, make sure your script **includes the necessary namespace** for the new Input System.
 
-#### 1. **Define** the `OnMove()` method
+#### 1. **Import** the Namespace
+
+```csharp
+using UnityEngine.InputSystem;
+```
+
+This namespace gives you access to `InputValue`, `PlayerInput`, and other classes needed to work with the new Input System. Without it, the compiler will not recognize `InputValue` or related types.
+
+#### 2. **Define** the `OnMove()` method
 
 ```csharp
 public void OnMove(InputValue value)
@@ -337,7 +345,7 @@ The parameter `InputValue`, not the actual Vector2, but a generic container that
 ```
 Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystick), most movement systems in Unity expect a Vector3 because objects move in 3D space (X, Y, Z). So, we will need convert the Vector2 input into a Vector3. 
 
-#### 2. **Convert** the Vector2 to Vector3
+#### 3. **Convert** the Vector2 to Vector3
 
 ```csharp
 /// <summary>
@@ -360,7 +368,7 @@ Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystic
 
 ```
 
-#### 3. **Call** the `Move()` method
+#### 4. **Call** the `Move()` method
 
 ```csharp
 /// <summary>
