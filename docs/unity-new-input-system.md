@@ -336,7 +336,7 @@ This namespace gives you access to `InputValue`, `PlayerInput`, and other classe
     /// <summary>
     /// Triggered by the Move input Action. Converts the 2D input from the player
     /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
-    /// MoveRigidbody component to move the player.
+    /// MoveTransform component to move the player.
     /// </summary>
     /// <param name="value">
     /// The InputValue wrapper passed automatically by the Player Input component. 
@@ -352,7 +352,7 @@ The parameter `InputValue` **is not the actual** `Vector2`, but a generic contai
     /// <summary>
     /// Triggered by the Move input Action. Converts the 2D input from the player
     /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
-    /// MoveRigidbody component to move the player.
+    /// MoveTransform component to move the player.
     /// </summary>
     /// <param name="value">
     /// The InputValue wrapper passed automatically by the Player Input component. 
@@ -386,7 +386,7 @@ The parameter `InputValue` **is not the actual** `Vector2`, but a generic contai
     /// <summary>
     /// Triggered by the Move input Action. Converts the 2D input from the player
     /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
-    /// MoveRigidbody component to move the player.
+    /// MoveTransform component to move the player.
     /// </summary>
     /// <param name="value">
     /// The InputValue wrapper passed automatically by the Player Input component. 
@@ -415,20 +415,88 @@ The parameter `InputValue` **is not the actual** `Vector2`, but a generic contai
 
 <br>
 
+---
 
+# 🎉 New Achievement: Player Contoller
 
+We now have a `PlayerContoller` that works exactly like our `CharacterController` but implments **Unity's New Input System** 
 
+```csharp
+using UnityEngine;
+using UnityEngine.InputSystem;
+ 
+public class PlayerController : MonoBehaviour
+{
+    //Reference to the MoveTransform component 
+    private MoveTransform _moveTransform;
+    
+  // Start is called once before the first Update
+    private void Start()
+    {
+        // Check if MoveTransform component DOES NOT EXIST
+        if (!TryGetComponent<MoveTransform>(out _moveTransform))
+        {
+            Debug.LogError("MoveTransform component missing!");
 
+        }//end if(!TryGetComponent<MoveTransform>(out _moveTransform))
+      
+    }//end Start()
+ 
+    
+    /// <summary>
+    /// Triggered by the Move input Action. Converts the 2D input from the player
+    /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+    /// MoveTransform component to move the player.
+    /// </summary>
+    /// <param name="value">
+    /// The InputValue wrapper passed automatically by the Player Input component. 
+    /// </param>
+    public void OnMove(InputValue value)
+    {
+        // Extract the Vector2 from the InputValue
+        Vector2 inputVector = value.Get<Vector2>();
+        Debug.Log("OnMove called: " + inputVector);
 
+        // Convert the 2D input into a 3D direction on the XZ plane
+        Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+        Debug.Log("OnMove direction: " + direction);
+        
 
+        // Call the movement component with the calculated direction
+        _moveTransform.Move(direction);
 
+    }//end OnMove()
+ 
+ 
+ 
+}//end PlayerController
+```
 
+It’s important to note that the new Input System, just like the old one, **reacts every frame** of the game. This means input values are only recorded during `Update()`.
 
+But what if we want to use our `MoveRigidbody` component to control the object’s movement? Since this component uses **physics**, any changes to velocity or forces need to be applied in `FixedUpdate()`, which runs at a consistent interval in sync with the physics engine.
 
+What would a controller that bridges frame-based input and physics-based movement look like? 
+When would we use this type of controller instead of moving an object directly via Transform or Rigidbody.velocity?
 
+--- 
+
+# Vehicle Controller
+If our game requires precise **physics-based movement** while still responding to player input, like in a racing game where we want to control a vehicle that obeys physics, we need a way to **leverage both input and physics updates**.
+
+To do this, we will create a `VehicleController` that collects input via the new Input System and feeds it into our `MoveRigidbody` component, ensuring smooth, consistent movement while respecting Unity’s physics update cycle.
+
+#### 1. **Create** the class
+- **Create a new C# class** named `VehicleController` and open it in your editor.
+- **Double-click on `VehicleController`** to open it in your editor.
+
+#### 2. **Import** the Namespace
+
+```csharp
+using UnityEngine.InputSystem;
+```
 
 #### 3. Get a Reference for the `MoveRigidbody` component
-
 ```csharp
     //Reference to the MoveTransform component 
     private MoveRigidbody _moveRigidbody;
@@ -445,62 +513,172 @@ The parameter `InputValue` **is not the actual** `Vector2`, but a generic contai
       
     }//end Start()
 ```
-
 ---
 
+## Getting Vector Input
+Just like our previous `PlayerController`, the _Move_ action provides a **Vector2** representing the X and Y input from the keyboard, joystick, or gamepad. Since our `MoveRigidbody` component uses **physics**, all movement updates must happen in `FixedUpdate()`, including calls to `Move()`.
 
-Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystick), most movement systems in Unity expect a Vector3 because objects move in 3D space (X, Y, Z). So, we will need convert the Vector2 input into a Vector3. 
+This means we **cannot **calculate and apply movement directly inside `OnMove()`. Instead, we need to:
+- **Record the input vector** when the action is triggered.
+- **Convert it to a 3D direction** inside `FixedUpdate()`.
+- **Call** `Move()` on the `MoveRigidbody` with that calculated direction.
 
-#### 3. **Convert** the Vector2 to Vector3
+To accomplish this, the first step is to create a **field to store the input vector**. This field will be updated in `OnMove()` whenever the player provides input, and then `FixedUpdate()` will use it to calculate the direction and move the object smoothly with physics.
 
-```csharp
-/// <summary>
-  /// Triggered by the Move input Action. Converts the 2D input from the player
-  /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
-  /// MoveRigidbody component to move the player.
-  /// </summary>
-  /// <param name="value">
-  /// The InputValue wrapper passed automatically by the Player Input component. 
-  /// </param>
-  public void OnMove(InputValue value)
-  {
-    // Extract the Vector2 from the InputValue
-    Vector2 inputVector = value.Get<Vector2>();
-
-    // Convert the 2D input into a 3D direction on the XZ plane
-    Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
-
-
-  }//end OnMove()
-
-```
-
-
-#### 4. **Call** the `Move()` method
+#### 4. Create the a field for Input Vector
 
 ```csharp
-/// <summary>
-  /// Triggered by the Move input Action. Converts the 2D input from the player
-  /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
-  /// MoveRigidbody component to move the player.
-  /// </summary>
-  /// <param name="value">
-  /// The InputValue wrapper passed automatically by the Player Input component. 
-  /// </param>
-  public void OnMove(InputValue value)
-  {
-    // Extract the Vector2 from the InputValue
-    Vector2 inputVector = value.Get<Vector2>();
+    // Stores the current 2D input from the SendMessage system
+    private Vector2 _inputVector;
+```
 
-    // Convert the 2D input into a 3D direction on the XZ plane
-    Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+## Creating the `OnMove()` method
+Next, we will create the `OnMove()` method which simply updates the `_inputVector` field with the value passed.
 
-    float
+#### 5. Create the `OnMove()` method
 
-    // Call the movement component with the calculated direction
-    _moveRigidbody.Move(direction);
-
-  }//end OnMove()
+```csharp
+// This method will be automatically called by SendMessage from PlayerInput
+    public void OnMove(InputValue value)
+    {
+        // Extract Vector2 from InputValue
+        _inputVector = value.Get<Vector2>();
+        Debug.Log("OnMove called: " + _inputVector);
+    }
 
 ```
+---
+
+## Applying Movement in FixedUpdate
+
+Since our `MoveRigidbody` component relies on physics, we need to update the movement inside `FixedUpdate()`. Physics updates in Unity are frame-independent and occur at consistent intervals, which ensures smooth, predictable motion regardless of frame rate. 
+
+
+
+#### 6. Create a `FixedUdpate()`
+To use the input collected from `OnMove()`, we need to create the following in the `FixedUpdate()`:
+
+```csharp
+    private void FixedUpdate()
+    {
+        // Code goes here
+    }//end FixedUpdate()
+```
+
+- **Convert the 2D input to 3D**
+  - Take the `_inputVector` from `OnMove()` (Vector2).
+  - Map X to X and Y to Z to move on the XZ plane, using `direction`
+
+```csharp
+    Vector3 moveDirection = new Vector3(_inputVector.x, 0f, _inputVector.y);
+```
+
+- Check if there is **significant input**
+  – If the vector magnitude is very small (near zero), we treat it as no input.
+
+```csharp
+  if (moveDirection.sqrMagnitude > 0.01f)
+  {
+      // Code for movement goes here
+  }
+  else
+  {
+      // Code for braking goes here
+  }//end if (moveDirection.sqrMagnitude > 0.01f)
+
+```
+**- If there is Input**
+  - Normalize the direction
+    - Ensures consistent movement speed, even for diagonal input.
+    - Optional, since MoveRigidbody already normalizes the direction internally, but still considered good practice.
+  - Call `Move()` on `MoveRigidbody`
+    - Pass the normalized `direction` to `Move()`
+    - `MoveRigidbody` handles updating the internal Direction and applying smooth acceleration.
+      
+  ```csharp
+          if (moveDirection.sqrMagnitude > 0.01f)
+        {
+             //Optional, but good practice to normalize direction before passing it
+             moveDirection.Normalize();
+
+            // Move() updates Direction internally
+            _moveRigidbody.Move(moveDirection); 
+        }
+```   
+**- else** (No input detected)
+    - **Brake when no input is present**
+      – If the player isn’t pressing any keys or joystick directions, we call Brake() to gradually stop the object.
+
+
+  ```csharp
+            else
+        {
+            _moveRigidbody.Brake();
+            
+        }//end if (moveDirection.sqrMagnitude > 0.01f)
+```
+---
+
+## Handling Turns
+
+In many games, especially racing or driving games, **how an object turns is just as important as how it moves**. Smooth turning makes the vehicle feel responsive and realistic, while instant rotation can feel stiff or unnatural.
+
+### Who Handles Turning
+
+Turning is a **decision about movement direction**, not about raw physics. Therefore, it belongs in the **controller** rather than the `MoveRigidbody` component:
+
+- **Controller Responsibility:** Converts player input into a target direction and rotation.
+- **MoveRigidbody Responsibility:** Moves the object in a given direction using forces, velocity, and acceleration.
+
+Keeping these responsibilities separate makes your code cleaner, easier to maintain, and more flexible for different movement behaviors.
+
+### Implementing Smooth Turns 
+To implment smooth turning we need controls how fast the vehicle rotates. Increase it for snappier turns, decrease it for more gradual turns. We can do this by defining a turning speed. 
+
+#### 7. **Create** a Turning Speed field
+
+ ```csharp
+    [SerializeField]
+    [Tooltip("How quickly the vehicle rotates toward the input direction.")]
+    private float _turnSpeed = 5f;
+```
+
+### Calculating Turns
+
+To make our vehicle rotate smoothly toward the input direction, we use **interpolation techniques**. Interpolation lets us gradually move from a **current value** to a **target value** over time, instead of snapping instantly.
+
+The most common way to interpolate values is **Linear Interpolation**, or **Lerp**.
+- **Lerp** takes a **start value**, a **target value**, and a **factor** (usually between 0 and 1).
+- It returns a value **somewhere between the start and target** based on that factor.
+- Repeatedly calling Lerp each frame or physics step gradually moves a value toward the target.
+- Lerp works great for simple scalars like speed, opacity, or health bars.
+
+However, when dealing with **3D rotations or directions**, Lerp has a limitation: it interpolates in a straight line. This can produce **unnatural turning** behavior for objects moving in 3D space, because directions live on a **sphere**, not along a straight line.
+
+For smooth 3D turns, we use **Spherical Linear Interpolation**, or **Slerp**.
+- Slerp operates along the **surface of a sphere**, smoothly rotating one direction toward another.
+- It ensures the object takes the **shortest rotational path**, creating natural, realistic turns.
+- In Unity, `Vector3.Slerp(currentDirection, targetDirection, t)` or `Quaternion.Slerp(currentRotation, targetRotation, t)` are commonly used.
+- By repeatedly applying Slerp in `FixedUpdate()`, we can rotate a vehicle gradually while still respecting physics-based movement.
+
+
+#### 8. **Update** Rotation on `FixedUpdate()`
+- Implment `Slerp` to create smooth turning
+
+  ```csharp
+          if (moveDirection.sqrMagnitude > 0.01f)
+        {
+             //Optional, but good practice to normalize direction before passing it
+             moveDirection.Normalize();
+
+  // Smoothly rotate the vehicle toward the input direction
+    transform.forward = Vector3.Slerp(transform.forward, moveDirection, turnSpeed * Time.fixedDeltaTime);
+
+
+            // Move() updates Direction internally
+            _moveRigidbody.Move(moveDirection); 
+        }
+```   
+
+
 
