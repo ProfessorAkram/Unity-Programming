@@ -269,9 +269,9 @@ Now that we have our input system set up, we can start work on the `PlayerContro
 **2. Double-click on `PlayerController`** to open it in your editor.
 
 ## Get the Move Component
-In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes. Each of these moves the GameObject in a different way. When setting up our `PlayerController`, we need to decide which movement style we want to use and get a reference to the appropriate component. For this lesson, we'll be using a reference to the `MoveRigidbody` component. 
+In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes. Each of these moves the GameObject in a different way. When setting up our `PlayerController`, we need to decide which movement style we want to use and get a reference to the appropriate component. For this lesson, we will keep things simple and use the `MoveTransform` component. In the end the `PlayerController` should work exactly like the `CharacterController` just with the new Input System
 
-#### 3. Get a Reference for the `MoveRigidbody` component
+#### 3. Get a Reference for the `MoveTransform` component
 
 ```csharp
     //Reference to the MoveTransform component 
@@ -280,17 +280,15 @@ In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes.
     // Start is called once before the first Update
     private void Start()
     {
-        // Check if MoveRigidbody component DOES NOT EXIST
-        if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+        // Check if MoveTransform component DOES NOT EXIST
+        if (!TryGetComponent<MoveTransform>(out _moveTransform))
         {
-            Debug.LogError("MoveRigidbody component missing!");
+            Debug.LogError("MoveTransform component missing!");
 
-        }//end if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+        }//end if(!TryGetComponent<MoveTransform>(out _moveTransform))
       
     }//end Start()
 ```
-
----
 
 ## Creating Triggered Methods
   
@@ -337,7 +335,7 @@ This namespace gives you access to `InputValue`, `PlayerInput`, and other classe
 ```csharp
 public void OnMove(InputValue value)
 ```
-The parameter `InputValue`, not the actual Vector2, but a generic container that can hold any type. Since we have set the *Action* control type to `Vector2` we need to then get the Vector2 value. 
+The parameter `InputValue`, not the actual Vector2, but a generic container that can hold any type. Since we have set the *Action* control type to `Vector2` we need to then get the Vector2 value. This value will then be convered to a Vector3. 
 
 ```csharp
   /// <summary>
@@ -351,10 +349,51 @@ The parameter `InputValue`, not the actual Vector2, but a generic container that
   public void OnMove(InputValue value)
   {
     // Extract the Vector2 from the InputValue
-    Vector2 inputVector = value.Get<Vector2>();
+   Vector2 inputVector = value.Get<Vector2>();
+   Debug.Log("OnMove called: " + inputVector);
     
   }//end OnMove()
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### 3. Get a Reference for the `MoveRigidbody` component
+
+```csharp
+    //Reference to the MoveTransform component 
+    private MoveRigidbody _moveRigidbody;
+
+    // Start is called once before the first Update
+    private void Start()
+    {
+        // Check if MoveRigidbody component DOES NOT EXIST
+        if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+        {
+            Debug.LogError("MoveRigidbody component missing!");
+
+        }//end if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+      
+    }//end Start()
+```
+
+---
+
+
 Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystick), most movement systems in Unity expect a Vector3 because objects move in 3D space (X, Y, Z). So, we will need convert the Vector2 input into a Vector3. 
 
 #### 3. **Convert** the Vector2 to Vector3
@@ -376,9 +415,11 @@ Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystic
     // Convert the 2D input into a 3D direction on the XZ plane
     Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
 
+
   }//end OnMove()
 
 ```
+
 
 #### 4. **Call** the `Move()` method
 
@@ -398,6 +439,8 @@ Even though our Move Action gives us a Vector2 (X and Y from keyboard or joystic
 
     // Convert the 2D input into a 3D direction on the XZ plane
     Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+
+    float
 
     // Call the movement component with the calculated direction
     _moveRigidbody.Move(direction);
