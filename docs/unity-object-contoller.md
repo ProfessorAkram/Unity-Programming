@@ -79,8 +79,38 @@ In this example, we first declare a private field to hold a reference to our `Mo
 > When `TryGetComponent` succeeds, it automatically assigns the found component to our `_moveTransform` field. We don’t need to manually set it. In this example, we only handle the false case, logging an error to help us catch problems early in development.
 
 ---
+## Handling Multiple Keys at Once
+We've identified how to check for a key press and pass the corresponding direction to the `Move()` method. While this approach works for single-key movement, it has a limitation: pressing two keys at once, like `W` + `D`, should ideally move the object forward-right. Currently, these inputs would cancel each other out, because each call to `Move()` can override the previous direction.
 
+To handle multiple simultaneous inputs, we start by declaring a field for the accumulative movement direction:
+```csharp
+    //Accunlative movement direction
+    private Vector3 _direction = Vector3.zero;
+```
+We initialize `_direction` to `Vector3.zero` because, at the start, the character should not be moving. This provides a neutral starting point each frame, allowing us to accumulate input without leftover movement from previous frames.
 
+When checking for key input, we add to `_direction` for each key pressed and then call `Move()` once at the end:
+
+```csharp
+    if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+    {
+      _direction += Vector3.forward;
+    
+    }
+
+    if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+    {
+        _direction += Vector3.right;
+    }
+
+    _moveTransform.Move(_direction);
+
+```
+We would also want to reset `_direction` to `zero` at the start of each `Update()` to ensure it reflects only the current frame's input.
+
+Using an accumulative `_direction` allows us to handle multiple key presses and achieve smooth diagonal movement by combining input vectors. However, this approach is only necessary **if your game requires diagonal movement**. For the challenge below, where single-direction movement is sufficient, the simpler approach, checking each key and calling `Move()` directly, is entirely valid. 
+
+By understanding both methods, you can choose the approach that best fits your game's movement requirements.
 
 ---
 
@@ -98,10 +128,9 @@ Using the skills we've already learned, create your own `CharacterController` cl
 
 ## Bonus Challenge
 
-Think about how to add jumping along the Y-axis? 
+How could you add **jumping along the Y-axis**?
 
-Without using gravity, how can we get the object to jump up and then return to its original Y position? 
+Without using gravity, how could you make the object jump upward and then return to its original Y position? Consider ways to control the vertical movement manually, while keeping it smooth and consistent.
 
-
-
+Additionally, think about how **diagonal movement** could be handled using the `_direction` accumulation method we discussed. How would combining horizontal and vertical directions affect the overall movement logic, and how might you integrate it with jumping?
 
