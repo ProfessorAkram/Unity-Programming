@@ -1,7 +1,7 @@
 # Unity's New Input System
-Unity’s original input system is **polling-based**: every frame your code checks whether input has happened. This works for simple projects, but it gets brittle as your game grows or targets multiple platforms with different control schemes.
+Unity’s original input system is **polling-based**: every frame, your code checks whether input has happened. This works for simple projects, but it gets brittle as your game grows or targets multiple platforms with different control schemes.
 
-Unity’s new Input System is **event-driven and action-based**. Instead of constantly checking for specific keys or buttons, you define **Actions** (_e.g., Move, Jump, Attack_) and bind them to any device. When input occurs, the system raises an event and your code responds. (You can still poll an Action’s value when you need to.)
+Unity’s new Input System is **event-driven and action-based**. Instead of constantly checking for specific keys or buttons, you define **Actions** (_e.g, Move, Jump, Attack_) and bind them to any device. When input occurs, the system raises an event, and your code responds. (You can still poll an Action’s value when you need to.)
 
 **Benefits:**
 
@@ -14,7 +14,7 @@ In this lesson, we’ll create a new Input Actions asset from scratch, configure
 
 ---
 ## Input System Package
-By default the latest Unity 6.2 3D core template should come standard with the new input system. However, if it is not installed or if you are working with an older, or different template the **Input System Package** will first need to be installed. 
+By default, the latest Unity 6.2 3D core template should come standard with the new input system. However, if it is not installed or if you are working with an older or different template, the **Input System Package** will first need to be installed. 
 
 #### 1. **Install** the Input System Package:
 - Open Unity Package Manager `Window > Package Manager`.
@@ -40,9 +40,9 @@ Even after installing the Input System package, your project may still be using 
 
 ---
 ## Input Action Asset
-We now have the new input system installed and turned on, but it doesn't actually do anything yet. Unity won't know what a _Jump_ or a _Move_ means untile we define it. 
+We now have the new input system installed and turned on, but it doesn't actually do anything yet. Unity won't know what a _Jump_ or a _Move_ means until we define it. 
 
-To make the new input system work, we need to create an **Input Actions Asset**. This asset can be thought as a _Input Database_ stroing all of the following information: 
+To make the new input system work, we need to create an **Input Actions Asset**. This asset can be thought of as an _Input Database_ storing all of the following information: 
 
 - **Action Maps**: Group actions by context (Player, UI, Vehicle, etc.)
 - **Actions**: Define what the player wants to do (Jump, Fire, Move)
@@ -55,12 +55,12 @@ To make the new input system work, we need to create an **Input Actions Asset**.
 - Name the asset **PlayerControls** or **InputActions**.
 
 > [!WARNING]
-> If you started with the 3D core template a default **InputSystems_Actions** will already be included in the Assets folder. To avoid confusion, go ahead and **delete this asset**. Also, note that if you have imported the Unity Character Controlle, it also has it's own _StarteAssets_ input actions asset. We will leave this asset for now.
+> If you started with the 3D core template, a default **InputSystems_Actions** will already be included in the Assets folder. To avoid confusion, go ahead and **delete this asset**. Also, note that if you have imported the Unity Character Controller, it also has its own _StarteAssets_ input actions asset. We will leave this asset for now.
 
 #### 2. **Open** the Input Action Asset
-- Double click on the newly created input asset
-- In the **Input Actions Editor** dialog window, click **Auto-Save** on the right hand side of the screen.
-  - This ensures any changes made in the editor will auto save if exited.
+- Double-click on the newly created input asset
+- In the **Input Actions Editor** dialog window, click **Auto-Save** on the right-hand side of the screen.
+  - This ensures any changes made in the editor will auto-save if exited.
 
 ---
 
@@ -87,12 +87,12 @@ Using multiple Action Maps keeps your project organized, modular, and easy to ex
 An **Action** represents a single player intention or **event**, like _Jump, Fire, or Move_. Think of it as a **named command** that your gameplay code will respond to. Every _Action_ belongs to a specific _Action Map_, which provides context. For example, a **Confirm** action might belong to a **UI Action Map**, while **Jump** would belong to the **Player Action Map**.
 
 > [!NOTE]
-> When naming Actions, use **one-word verbs** that clearly describe the player’s intention (e.g., Jump, Fire or Move). Clean, concise names make it easier to **reference Actions in code**, read the Input Actions Asset at a glance, and **maintain consistency** across Action Maps.
+> When naming Actions, use **one-word verbs** that clearly describe the player’s intention (e.g., Jump, Fire, or Move). Clean, concise names make it easier to **reference Actions in code**, read the Input Actions Asset at a glance, and **maintain consistency** across Action Maps.
 
-Each action Action has a **type** that defines how input is processed:
+Each **Action** has a **type** that defines how input is processed:
 - **Button:** Triggered when pressed (e.g., Jump, Fire)
 - **Value:** Returns continuous input (e.g., Move returns a Vector2 for WASD or joystick)
-- **Pass-Through:** Similar to Value but does not block other actions
+- **Pass-Through:** Similar to Value, but does not block other actions
 
 #### 2. **Rename** new Action
 - In the center panel, of the **Input Actions Editor**, right-click on the default **New action** and chose **Rename**
@@ -116,7 +116,7 @@ After defining the** Action Type**, the next step is to choose a **Control Type*
 - In the **Action Properties** panel, click the **Control Type** drop down and choose **Vector2**
 
 ### Bindings
-The newly created **Move** action represents the payer intention; what they want to do; but not how they do it. **Bindings** are the actual keys, buttons, or sticks that trigger each Action. Bindings translate **abstract actions** (like _Jump or Fire_) into **real input devices**.
+The newly created **Move** action represents the player's intention; what they want to do, but not how they do it. **Bindings** are the actual keys, buttons, or sticks that trigger each Action. Bindings translate **abstract actions** (like _Jump or Fire_) into **real input devices**.
 
 #### 5. **Add** bindings
 - With the **Move** Action selected in the **Input Actions Editor**
@@ -124,17 +124,17 @@ The newly created **Move** action represents the payer intention; what they want
 - Select **Move** Action and click on the `+` next to the right of the Action.
   -  Select **`Add Up/Down/Left/Right Composite`**
  
-A **composite binding** allows for multiple physcial inputs to be comibined into a **single logincal value** for an Action. This is especially useful for movement because a character usually moves in two directions at once (horizontal and vertical), and players might use different devices to control it.
+A **composite binding** allows for multiple physical inputs to be combined into a **single logical value** for an Action. This is especially useful for movement because a character usually moves in two directions at once (horizontal and vertical), and players might use different devices to control it.
 
 Think of a composite binding like a music keyboard, where each key (Up, Down, Left, Right) makes a sound on its own. But you can **press two keys at the same time** to play a chord. The composite binding “hears” all the keys pressed at once and combines them into **one output** (like a chord) that your game can understand.
 
 #### 6. **Setup** the Keyboard composite bindings
 - Click **2D Vector Composite** dropdown arrow
-  - This exapnds the Up/Down/Left/Right composites
+  - This expands the Up/Down/Left/Right composites
 - Click on the **Up** composite
   - In the **Bindinds Properites** click on **Path**
   - Choose **`Keyboard > By Character Mapped to Key > W [Keybboard]`**
-- **Repeat** this process for the rest of the composites settings.
+- **Repeat** this process for the rest of the composite settings.
 
 #### 7. **Add** Gamepad bindings
 - Select **Move** Action and click on the `+` next to the right of the Action.
@@ -143,7 +143,7 @@ Think of a composite binding like a music keyboard, where each key (Up, Down, Le
 - Click on the **Up** composite
   - In the **Bindinds Properites** click on **Path**
   - Choose **`Gamepad > Left Stick/Up`** 
-- **Repeat** this process for the rest of the composites settings.
+- **Repeat** this process for the rest of the composite settings.
 
 **Use the following bindings for the Move Action:**
 
@@ -162,7 +162,7 @@ As mentioned earlier, Unity's new input system is **event-driven**, which means 
 
 This is where **Control Schemes** come in. A Control Scheme is a group of devices that a player can use together to control the game. It tells Unity **which devices' bindings should be active**. Using Control Schemes helps optimize input handling, keeps your project organized, and makes it easier to support multiple devices or players. While Control Schemes aren’t strictly required, **they make your input setup cleaner, more flexible, and easier to scale**.
 
-Importantly, **setting up a Control Scheme doesn’t require any changes to individual bindings**. You just define the group of devices. For example, if you create a Control Scheme for Keyboard & Mouse, Unity will automatically only listen to the bindings for those devices, you don’t need to do any extra work.
+Importantly, **setting up a Control Scheme doesn’t require any changes to individual bindings**. You just define the group of devices. For example, if you create a Control Scheme for Keyboard & Mouse, Unity will automatically only listen to the bindings for those devices; you don’t need to do any extra work.
 
 #### 8. **Add** a Control Scheme
 - In the **Input Actions Editor**, in the left pane at the top
@@ -179,7 +179,7 @@ Importantly, **setting up a Control Scheme doesn’t require any changes to indi
 - Repeat and Add **Mouse**
 
 #### 11. **Create** Gamepad Scheme
- - Repeat steps 9 and 10 creating a control scheme for **Gamepad**
+ - Repeat steps 9 and 10, creating a control scheme for **Gamepad**
  - Set the **Device Type** to **Gamepad** 
 
 #### 12. **Save** Action Settings
@@ -250,11 +250,11 @@ In this lesson, we’ll be using **Send Messages** for its simplicity and flexib
 ---
 
 # Player Controller 
-Now that we have our input system setup we can start work on the `PlayerController` class that defines the methods triggereted by the **Player Input component**. 
+Now that we have our input system set up, we can start work on the `PlayerController` class that defines the methods triggered by the **Player Input component**. 
 
 **1. Create a new C# class** named `PlayerController` and open it in your editor.
 
-**2. Double click on `PlayerController`** to open it in your editor.
+**2. Double-click on `PlayerController`** to open it in your editor.
 
 ## Get the Move Component
 In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes. Each of these moves the GameObject in a different way. For setting up our `PlayerController`, we need to decide which movement style we want to use and get a reference to the appropriate component.
@@ -264,9 +264,9 @@ In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes.
 > 
 > An **interface** is like a contract that defines what methods a class must have (for example, a `Move(Vector3 direction)` method) without specifying how they work. Both `MoveTransform` and `MoveRigidbody` could implement `IMovable`, and then our `PlayerController` could simply check for a component of type `IMovable`.
 > 
-> While more fexliable, this approach is beyond the scope of this lesson.
+> While more flexible, this approach is beyond the scope of this lesson.
 
-For this lesson we'll be ussing a reference to the `MoveRigidbody` component. 
+For this lesson, we'll be using a reference to the `MoveRigidbody` component. 
 
 #### 3. Get a Reference for the `MoveRigidbody` component
 
@@ -289,5 +289,44 @@ For this lesson we'll be ussing a reference to the `MoveRigidbody` component.
 
 ---
 
-## 
+## Creating Triggered Methods
   
+Now that we have a reference to our `MoveRigidbody` component, we need to create the **methods that are triggered by the input actions** from the Player Input component. These methods will receive the input data and tell the movement component what to do.
+
+### Observer Pattern
+The way in which the **Player Input component** and `PlayerController` interact is an example of the **Observer pattern** (sometimes called the **subscription pattern**). In this pattern, an **event source notifies subscribers whenever something happens**.
+
+In this case: 
+- The Player Input component is the event source; it detects input actions like Move or Jump.
+- Your associated methods _(e.g, `OnMove()`)_ is the subscriber; it “registers interest” in that input.
+- When the input Action occurs, the **Player Input component** automatically **triggers the corresponding method**.
+
+> [!IMPORTANT]
+> Unlike in a traditional Observer pattern implementation, **you do not need to manually subscribe to these events**. Unity automatically connects Actions to methods on the GameObject based on the method naming convention _(See below)_.
+
+### Method Naming Conventions for Input Actions
+
+A key part of using the Player Input component is understanding **how it finds and calls your methods**. Every time an Input Action fires, the Player Input component looks for a method on the same GameObject that **matches the Action name, prefixed with `On`**.
+
+**Example:**
+- Action name: `Move` → Method name: `OnMove`
+- Action name: `Jump` → Method name: `OnJump`
+
+This naming convention is essential because it allows Unity to **automatically trigger the correct method** without manually wiring each Action. If the method is missing or the name doesn’t match, the Action will fire, but nothing will happen.
+
+> [!TIP]
+> Using **short, descriptive, verb-based** names for Actions and their corresponding methods. This will ensure that your code is easier to read and maintains a consistent pattern for all input actions.
+
+### Create `OnMove()` Method
+
+With our Player Input component and `MoveRigidbody` reference ready, it’s time to create the `OnMove.
+
+
+public void OnMove(InputValue value)
+{
+    Vector2 inputVector = value.Get<Vector2>();
+    Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+    _moveRigidbody.Move(direction);
+}
+
+
