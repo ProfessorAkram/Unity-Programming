@@ -162,7 +162,7 @@ As mentioned earlier, Unity's new input system is **event-driven**, which means 
 
 This is where **Control Schemes** come in. A Control Scheme is a group of devices that a player can use together to control the game. It tells Unity **which devices' bindings should be active**. Using Control Schemes helps optimize input handling, keeps your project organized, and makes it easier to support multiple devices or players. While Control Schemes aren’t strictly required, **they make your input setup cleaner, more flexible, and easier to scale**.
 
-Importantly, **setting up a Control Scheme doesn’t require any changes to individual bindings**. You just define the group of devices. For example, if you create a Control Scheme for Keyboard & Mouse, Unity will automatically only listen to the bindings for those devices; you don’t need to do any extra work.
+For Unity to know which bindings belong to which device group, you **must assign each binding to one or more Control Schemes** using the “Use in Control Scheme” option.
 
 #### 8. **Add** a Control Scheme
 - In the **Input Actions Editor**, in the left pane at the top
@@ -180,9 +180,21 @@ Importantly, **setting up a Control Scheme doesn’t require any changes to indi
 
 #### 11. **Create** Gamepad Scheme
  - Repeat steps 9 and 10, creating a control scheme for **Gamepad**
- - Set the **Device Type** to **Gamepad** 
+ - Set the **Device Type** to **Gamepad**
 
-#### 12. **Save** Action Settings
+#### 12. **Assign** the Keyboard Control Scheme 
+- Select the **Up** binding for the `W` Key
+- In the **Binding Properties** in the right pane
+  - Check the **KeyBoard & Mouse** under the **Use in Control Scheme** setting
+- Repeat for each Keyboard binding
+
+#### 13. **Assign** the Gamepad Control Scheme 
+- Select the **Up** binding for the `Left Stick /Up` gamepad
+- In the **Binding Properties** in the right pane
+  - Check the **Gamepad** under the **Use in Control Scheme** setting
+- Repeat for each Gamepad binding
+
+#### 14. **Save** Action Settings
 - Click **Save** or ensure that **Auto-Save** is enabled on the **Input Actions Editor**
 - Exit the **Input Actions Editor**
 
