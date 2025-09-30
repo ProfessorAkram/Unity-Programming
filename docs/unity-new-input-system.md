@@ -333,32 +333,87 @@ This namespace gives you access to `InputValue`, `PlayerInput`, and other classe
 #### 2. **Define** the `OnMove()` method
 
 ```csharp
-public void OnMove(InputValue value)
+    /// <summary>
+    /// Triggered by the Move input Action. Converts the 2D input from the player
+    /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+    /// MoveRigidbody component to move the player.
+    /// </summary>
+    /// <param name="value">
+    /// The InputValue wrapper passed automatically by the Player Input component. 
+    /// </param>
+    public void OnMove(InputValue value)
+    {
+
+    } //end OnMove()
 ```
-The parameter `InputValue`, not the actual Vector2, but a generic container that can hold any type. Since we have set the *Action* control type to `Vector2` we need to then get the Vector2 value. This value will then be convered to a Vector3. 
+The parameter `InputValue` **is not the actual** `Vector2`, but a generic container that can hold any type. Since our _Move_ action is set to a **Vector2** control type, we need to extract the `Vector2` value from it. This value can then be converted into a `Vector3` for movement in 3D space.
 
 ```csharp
-  /// <summary>
-  /// Triggered by the Move input Action. Converts the 2D input from the player
-  /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
-  /// MoveRigidbody component to move the player.
-  /// </summary>
-  /// <param name="value">
-  /// The InputValue wrapper passed automatically by the Player Input component. 
-  /// </param>
-  public void OnMove(InputValue value)
-  {
-    // Extract the Vector2 from the InputValue
-   Vector2 inputVector = value.Get<Vector2>();
-   Debug.Log("OnMove called: " + inputVector);
-    
-  }//end OnMove()
+    /// <summary>
+    /// Triggered by the Move input Action. Converts the 2D input from the player
+    /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+    /// MoveRigidbody component to move the player.
+    /// </summary>
+    /// <param name="value">
+    /// The InputValue wrapper passed automatically by the Player Input component. 
+    /// </param>
+    public void OnMove(InputValue value)
+    {
+        // Extract the Vector2 from the InputValue
+        Vector2 inputVector = value.Get<Vector2>();
+        Debug.Log("OnMove called: " + inputVector);
+
+        // Convert the 2D input into a 3D direction on the XZ plane
+        Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+        Debug.Log("OnMove direction: " + direction);
+        
+
+        // Call the movement component with the calculated direction
+        _moveTransform.Move(direction);
+
+    }//end OnMove()
 ```
 
+> [!TIP]
+> Adding a `Debug.Log()` is a quick way to verify that the correct input value is being passed to your method.
+
+#### 4. **Call** the `Move()` method
+- Call the `Move()` method on the `MoveTransform` component
+- Pass the `direction` into the method
 
 
+```csharp
+    /// <summary>
+    /// Triggered by the Move input Action. Converts the 2D input from the player
+    /// (keyboard, joystick, or gamepad) into a 3D direction and passes it to the 
+    /// MoveRigidbody component to move the player.
+    /// </summary>
+    /// <param name="value">
+    /// The InputValue wrapper passed automatically by the Player Input component. 
+    /// </param>
+    public void OnMove(InputValue value)
+    {
+        // Extract the Vector2 from the InputValue
+        Vector2 inputVector = value.Get<Vector2>();
+        Debug.Log("OnMove called: " + inputVector);
 
+        // Convert the 2D input into a 3D direction on the XZ plane
+        Vector3 direction = new Vector3(inputVector.x, 0f, inputVector.y);
+        Debug.Log("OnMove direction: " + direction);
 
+        // Call the movement component with the calculated direction
+        _moveTransform.Move(direction);
+
+    }//end OnMove()
+```
+
+<br>
+
+> **✔️ CHECK POINT**
+> 
+> Save your script, switch back to the Unity editor, and press **Play** to test the changes in action.
+
+<br>
 
 
 
