@@ -249,4 +249,45 @@ In this lesson, we’ll be using **Send Messages** for its simplicity and flexib
 
 ---
 
+# Player Controller 
+Now that we have our input system setup we can start work on the `PlayerController` class that defines the methods triggereted by the **Player Input component**. 
+
+**1. Create a new C# class** named `PlayerController` and open it in your editor.
+
+**2. Double click on `PlayerController`** to open it in your editor.
+
+## Get the Move Component
+In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes. Each of these moves the GameObject in a different way. For setting up our `PlayerController`, we need to decide which movement style we want to use and get a reference to the appropriate component.
+
+> [!NOTE]
+> By specifically referencing one component over another, we hard-code our `PlayerController` to work only with that class. A more flexible approach would be to create an interface, like `IMovable`.
+> 
+> An **interface** is like a contract that defines what methods a class must have (for example, a `Move(Vector3 direction)` method) without specifying how they work. Both `MoveTransform` and `MoveRigidbody` could implement `IMovable`, and then our `PlayerController` could simply check for a component of type `IMovable`.
+> 
+> While more fexliable, this approach is beyond the scope of this lesson.
+
+For this lesson we'll be ussing a reference to the `MoveRigidbody` component. 
+
+#### 3. Get a Reference for the `MoveRigidbody` component
+
+```csharp
+    //Reference to the MoveTransform component 
+    private MoveRigidbody _moveRigidbody;
+
+    // Start is called once before the first Update
+    private void Start()
+    {
+        // Check if MoveRigidbody component DOES NOT EXIST
+        if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+        {
+            Debug.LogError("MoveRigidbody component missing!");
+
+        }//end if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+      
+    }//end Start()
+```
+
+---
+
+## 
   
