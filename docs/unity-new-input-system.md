@@ -204,21 +204,49 @@ Think of the Player Input component as a **manager**: it doesn’t handle the ga
   - Assign the **Defaulat Map** to **Player**
  
 ### Choosing a Behavior
+The last **Player Input Setting** that needs to be set is the **behavior setting**, which determines how the Player Input component sends input to your game. 
 
-The Behavior setting determines how the Player Input component sends input to your game. There are three main options:
+There are three main **Behavior options**, and each one uses a different **method signature** when calling your scripts:
 
  - **Invoke Unity Events:**
-  - Triggers UnityEvents when Actions occur.
-  - Easy for beginners or visual workflows because you can assign functions directly in the Inspector.
+    - Triggers UnityEvents when Actions occur.
+    - Visual workflows; functions are assigned directly in the Inspector.
+    - Unity calls your method with a **CallbackContext** that provides **full event details**, such as:
+      - Whether the input **started**, **performed**, or **canceled**
+      -  _Ex._ `OnMove(InputAction.CallbackContext context)`
+    - Useful for **tap vs hold**, **charging attacks**, or **timing-based actions**
 
 - **Send Messages**
-  - Calls methods on the GameObject that have the same name as the Action.
-  - Lightweight, good if you want to keep things organized in scripts without using UnityEvents.
+    - Calls methods on the GameObject that have the **same name as the Action**.
+    - Clean and simple for script-based setups.
+    - Passes an **InputValue** which only gives the **final input data**, such as:
+      - A `Vector2` for movement
+      - A `float` for trigger pressure
+      - A `bool` for button press
+      - _Ex._ `OnMove(InputValue value)`
+    - Best for **simple actions** like movement, jump, or fire
 
 - **Broadcast Messages**
-  - Sends input messages to all child objects of the Player GameObject.
-  - Less common, but useful if multiple components need to react to the same Action.
- 
+    - Works like Send Messages, but **sends the method call to all child objects** as well.
+    - Uses the same **Input Value** as **Send Message**
+    - Useful when multiple components need to respond to the same Action.
 
- 
+> [!NOTE]
+> A **method signature** is the combination of a **function’s name and the type of parameter it expects**. Two methods can have the same name but be treated as different methods if their parameter types are different. 
+
+#### Which Behavior to Choose?
+
+- **Invoke Unity Events** is strict and intentional. Since you manually connect methods in the Inspector, Unity expects the function to exist and match perfectly. If something is missing or mismatched, the input won’t fire. This makes it reliable for controlled setups, but a bit rigid.
+
+- **Send Messages** are more flexible. Unity simply asks, “Does any script care about this Action?” If a matching method exists, it gets called. If not, nothing breaks. This is ideal for script-based workflows and rapid iteration.
+
+
+In this lesson, we’ll be using **Send Messages** for its simplicity and flexibility.
+
+#### 3. **Set** Behavior
+- Under the **Player Input** settings in the **Inspector Window**
+  - Set the **Behavior** property to **Send Message**
+
+---
+
   
