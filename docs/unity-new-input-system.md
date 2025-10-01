@@ -735,6 +735,8 @@ public class VehicleController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        Vector3 moveDirection = new Vector3(_inputVector.x, 0f, _inputVector.y);
+
         if (moveDirection.sqrMagnitude > 0.01f)
         {
              //Optional, but good practice to normalize direction before passing it
