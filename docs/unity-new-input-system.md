@@ -633,7 +633,7 @@ Turning is a **decision about movement direction**, not about raw physics. There
 Keeping these responsibilities separate makes your code cleaner, easier to maintain, and more flexible for different movement behaviors.
 
 ### Implementing Smooth Turns 
-To implment smooth turning we need controls how fast the vehicle rotates. Increase it for snappier turns, decrease it for more gradual turns. We can do this by defining a turning speed. 
+To implement smooth turning, we need to control how fast the vehicle rotates. Increase it for snappier turns, decrease it for more gradual turns. We can do this by defining a turning speed. 
 
 #### 7. **Create** a Turning Speed field
 
@@ -658,12 +658,23 @@ However, when dealing with **3D rotations or directions**, Lerp has a limitation
 For smooth 3D turns, we use **Spherical Linear Interpolation**, or **Slerp**.
 - Slerp operates along the **surface of a sphere**, smoothly rotating one direction toward another.
 - It ensures the object takes the **shortest rotational path**, creating natural, realistic turns.
-- In Unity, `Vector3.Slerp(currentDirection, targetDirection, t)` or `Quaternion.Slerp(currentRotation, targetRotation, t)` are commonly used.
+- In Unity, `Vector3.Slerp(currentDirection, targetDirection, time)` or `Quaternion.Slerp(currentRotation, targetRotation, time)` is commonly used.
 - By repeatedly applying Slerp in `FixedUpdate()`, we can rotate a vehicle gradually while still respecting physics-based movement.
+
+Before we interpolate, we need to know **where the object is facing**. In a vehicle or character controller:
+- The **target direction** is the **player input**, calculated from the input vector (e.g., _inputVector converted to a Vector3).
+- This target vector represents the **desired forward direction** in world space.
+
+Slerp will then **rotate the object’s current forward** toward this target vector over time, producing smooth turns instead of instant snapping. 
+
+In Unity, the forward direction is accessed using **`transform.forward`**:
+- Every GameObject has a **Transform**, which defines its **position**, **rotation**, and **scale**.
+- `transform.forward` is a **vector pointing along the object’s Z-axis** in world space, taking into account its current rotation.
+- By assigning a new value to `transform.forward` using `Slerp`, we **gradually update the object’s facing direction**, moving smoothly from the current orientation toward the target direction.
 
 
 #### 8. **Update** Rotation on `FixedUpdate()`
-- Implment `Slerp` to create smooth turning
+- Implement `Slerp` to create smooth turning
 
   ```csharp
           if (moveDirection.sqrMagnitude > 0.01f)
@@ -671,9 +682,9 @@ For smooth 3D turns, we use **Spherical Linear Interpolation**, or **Slerp**.
              //Optional, but good practice to normalize direction before passing it
              moveDirection.Normalize();
 
-  // Smoothly rotate the vehicle toward the input direction
-    transform.forward = Vector3.Slerp(transform.forward, moveDirection, turnSpeed * Time.fixedDeltaTime);
-
+            // Smoothly rotate the vehicle toward the input direction
+            transform.forward = Vector3.Slerp(transform.forward,moveDirection, turnSpeed 
+            * Time.fixedDeltaTime);
 
             // Move() updates Direction internally
             _moveRigidbody.Move(moveDirection); 
