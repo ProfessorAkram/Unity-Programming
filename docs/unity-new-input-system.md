@@ -417,9 +417,9 @@ The parameter `InputValue` **is not the actual** `Vector2`, but a generic contai
 
 ---
 
-# 🎉 New Achievement: Player Contoller
+# 🎉 New Achievement: Player Controller
 
-We now have a `PlayerContoller` that works exactly like our `CharacterController` but implments **Unity's New Input System** 
+We now have a `PlayerContoller` that works exactly like our `CharacterController` but implements **Unity's New Input System** 
 
 ```csharp
 using UnityEngine;
@@ -477,7 +477,7 @@ It’s important to note that the new Input System, just like the old one, **rea
 But what if we want to use our `MoveRigidbody` component to control the object’s movement? Since this component uses **physics**, any changes to velocity or forces need to be applied in `FixedUpdate()`, which runs at a consistent interval in sync with the physics engine.
 
 What would a controller that bridges frame-based input and physics-based movement look like? 
-When would we use this type of controller instead of moving an object directly via Transform or Rigidbody.velocity?
+When would we use this type of controller instead of moving an object directly?
 
 --- 
 
@@ -525,7 +525,7 @@ This means we **cannot **calculate and apply movement directly inside `OnMove()`
 
 To accomplish this, the first step is to create a **field to store the input vector**. This field will be updated in `OnMove()` whenever the player provides input, and then `FixedUpdate()` will use it to calculate the direction and move the object smoothly with physics.
 
-#### 4. Create the a field for Input Vector
+#### 4. Create a field for Input Vector
 
 ```csharp
     // Stores the current 2D input from the SendMessage system
@@ -533,18 +533,25 @@ To accomplish this, the first step is to create a **field to store the input vec
 ```
 
 ## Creating the `OnMove()` method
-Next, we will create the `OnMove()` method which simply updates the `_inputVector` field with the value passed.
+Next, we will create the `OnMove()` method, which simply updates the `_inputVector` field with the value passed.
 
 #### 5. Create the `OnMove()` method
 
 ```csharp
-// This method will be automatically called by SendMessage from PlayerInput
+    /// <summary>
+    /// Triggered by the Move input Action. Converts the 2D input from the player
+    /// (keyboard, joystick, or gamepad)
+    /// </summary>
+    /// <param name="value">
+    /// The InputValue wrapper passed automatically by the Player Input component. 
+    /// </param>
     public void OnMove(InputValue value)
     {
         // Extract Vector2 from InputValue
         _inputVector = value.Get<Vector2>();
         Debug.Log("OnMove called: " + _inputVector);
-    }
+
+    }//end OnMove()
 
 ```
 ---
@@ -690,6 +697,78 @@ In Unity, the forward direction is accessed using **`transform.forward`**:
             _moveRigidbody.Move(moveDirection); 
         }
 ```   
+---
+
+# 🎉 New Achievement: Vehicle Controller
+Now that we’ve connected player input to physics-based movement and added smooth turning, we have a working `VehicleController` that leverages the new Input System alongside our `MoveRigidbody` component.
+
+```csharp
+using UnityEngine;
+using UnityEngine.InputSystem;
+ 
+public class PlayerController : MonoBehaviour
+{
+    //Reference to the MoveTransform component 
+    private MoveRigidbody _moveRigidbody;
+
+    // Stores the current 2D input from the SendMessage system
+    private Vector2 _inputVector;
+
+    [SerializeField]
+    [Tooltip("How quickly the vehicle rotates toward the input direction.")]
+    private float _turnSpeed = 5f;
+
+    // Start is called once before the first Update
+    private void Start()
+    {
+        // Check if MoveRigidbody component DOES NOT EXIST
+        if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+        {
+            Debug.LogError("MoveRigidbody component missing!");
+
+        }//end if (!TryGetComponent<MoveRigidbody>(out _moveRigidbody))
+      
+    }//end Start()
 
 
+    private void FixedUpdate()
+    {
+        if (moveDirection.sqrMagnitude > 0.01f)
+        {
+             //Optional, but good practice to normalize direction before passing it
+             moveDirection.Normalize();
 
+            // Smoothly rotate the vehicle toward the input direction
+            transform.forward = Vector3.Slerp(transform.forward,moveDirection, turnSpeed 
+            * Time.fixedDeltaTime);
+
+            // Move() updates Direction internally
+            _moveRigidbody.Move(moveDirection); 
+        }else
+        {
+            _moveRigidbody.Brake();
+            
+        }//end if (moveDirection.sqrMagnitude > 0.01f)
+
+    }//end FixedUpdate()
+ 
+    
+    /// <summary>
+    /// Triggered by the Move input Action. Converts the 2D input from the player
+    /// (keyboard, joystick, or gamepad)
+    /// </summary>
+    /// <param name="value">
+    /// The InputValue wrapper passed automatically by the Player Input component. 
+    /// </param>
+    public void OnMove(InputValue value)
+    {
+        // Extract Vector2 from InputValue
+        _inputVector = value.Get<Vector2>();
+        Debug.Log("OnMove called: " + _inputVector);
+
+    }//end OnMove()
+
+ 
+}//end PlayerController
+```
+With this setup, you have a **modular controller system**: the input logic is separated from the movement logic, and both are tied into the physics system correctly.
