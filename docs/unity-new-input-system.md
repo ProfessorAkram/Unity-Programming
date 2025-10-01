@@ -597,7 +597,7 @@ To use the input collected from `OnMove()`, we need to create the following in t
 **- If there is Input**
   - Normalize the direction
     - Ensures consistent movement speed, even for diagonal input.
-    - Optional, since MoveRigidbody already normalizes the direction internally, but still considered good practice.
+    - Optional, since MoveRigidbody already normalizes the direction internally, but it is still considered good practice.
   - Call `Move()` on `MoveRigidbody`
     - Pass the normalized `direction` to `Move()`
     - `MoveRigidbody` handles updating the internal Direction and applying smooth acceleration.
@@ -617,7 +617,7 @@ To use the input collected from `OnMove()`, we need to create the following in t
       – If the player isn’t pressing any keys or joystick directions, we call Brake() to gradually stop the object.
 
 
-  ```csharp
+ ```csharp
             else
         {
             _moveRigidbody.Brake();
@@ -682,8 +682,7 @@ In Unity, the forward direction is accessed using **`transform.forward`**:
 
 #### 8. **Update** Rotation on `FixedUpdate()`
 - Implement `Slerp` to create smooth turning
-
-  ```csharp
+```csharp
           if (moveDirection.sqrMagnitude > 0.01f)
         {
              //Optional, but good practice to normalize direction before passing it
@@ -696,17 +695,20 @@ In Unity, the forward direction is accessed using **`transform.forward`**:
             // Move() updates Direction internally
             _moveRigidbody.Move(moveDirection); 
         }
-```   
+```
+
+
 ---
 
 # 🎉 New Achievement: Vehicle Controller
+
 Now that we’ve connected player input to physics-based movement and added smooth turning, we have a working `VehicleController` that leverages the new Input System alongside our `MoveRigidbody` component.
 
 ```csharp
 using UnityEngine;
 using UnityEngine.InputSystem;
  
-public class PlayerController : MonoBehaviour
+public class VehicleController : MonoBehaviour
 {
     //Reference to the MoveTransform component 
     private MoveRigidbody _moveRigidbody;
@@ -752,7 +754,7 @@ public class PlayerController : MonoBehaviour
 
     }//end FixedUpdate()
  
-    
+
     /// <summary>
     /// Triggered by the Move input Action. Converts the 2D input from the player
     /// (keyboard, joystick, or gamepad)
@@ -769,6 +771,6 @@ public class PlayerController : MonoBehaviour
     }//end OnMove()
 
  
-}//end PlayerController
+}//end VehicleController 
 ```
 With this setup, you have a **modular controller system**: the input logic is separated from the movement logic, and both are tied into the physics system correctly.
