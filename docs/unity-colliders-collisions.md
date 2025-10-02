@@ -175,7 +175,7 @@ Here are some common scenarios:
 
 ---
 
-**Example: Falling Spikes**
+### Falling Spikes - Example
 Spike is a falling hazard that damages the player.
 - Actions that happen:
   - Player loses health
@@ -216,7 +216,7 @@ void OnTriggerEnter(Collider other)
 
 ---
  
-**Example: Coin Collection**
+### Coin Collection - Example
 Player collects coins from around an area. 
 - Actions that happen:
   - Coin is destroyed
@@ -248,7 +248,7 @@ void OnTriggerEnter(Collider other)
 }//end OnTriggerEnter
 
 ```
-Even though the coin is the object being removed, the **player owns most of the game logic** for collecting coins: updating score, playing sounds, etc. Because of this, it’s simpler and more efficient for the player to handle the destruction of the coin.
+Even though the coin is the object being removed, the **player owns most of the game logic** for collecting coins, such as updating the score and playing sounds. The coin itself only needs to handle its own removal. Since Unity automatically calls the `OnDestroy` method as part of its object lifecycle, the coin doesn’t require any special setup. This means the **Player class can simply call `Destroy(coin)`**, making the interaction straightforward and efficient.
 
 ---
 
@@ -256,14 +256,56 @@ Even though the coin is the object being removed, the **player owns most of the 
 Door opens when player touches it
 - Actions that happen:
   - Door checks for key
-  - Door opens or closes
   - Door animation plays
   - Door plays sound 
   
 → The door is what changes, so the **door should handle the collision check**.
 
+While all the main actions is on the door, we still need to query infomration from the other obejct. 
+
+**Example code for Door Class**
+
+```csharp
+// Player.cs
+void OnTriggerEnter(Collider other)
+{
+    // Check if the object is the player
+    if (other.CompareTag("Player"))
+    {
+        // Get the Player component from the other object
+        if (other.TryGetComponent<Player>(out Player player))
+        {
+            // Only open the door if the player has the key
+            if (player.HasKey)
+            {
+                OpenDoor();
+
+            }//end if (player.HasKey)
+
+        }//end if (other.TryGetComponent<Player>(out Player player))
+
+    }//end if("Player")
+
+}//end OnTriggerEnter()
+
+
+// Example Open Door method
+void OpenDoor()
+{
+   //Play Soundfx                         
+   _audioSource.PlayOneShot(_openClip); 
+
+   //Play Animation
+   .....
+
+}//end Open Door()
+
+```
+This structure emphasizes **delegation and data querying**: the object that changes owns the collision logic, but it can query other objects for necessary information.
+
 ---
-**Example: Explosive Barrel vs. Enemy**
+
+### Explosive Barrel vs. Enemy - Example
 When an enemy walks into an explosive barrel
 - Actions that happen:
   - Enemy takes damage 
