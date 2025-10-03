@@ -3,25 +3,31 @@
 In Unity, collisions are the backbone of interaction in most games. They allow objects to detect each other, respond physically, and trigger events like collecting items, taking damage, or bouncing off walls.
 
 ## Coliders and Rigidbody Components 
-In order for collisions to be detected, all objects will need a **Collider**. For collisions or triggers to register, at least one object of the interacting objects needs a **Rigidbody**.
+For collisions to be detected, all objects will need a **Collider**. For collisions or triggers to register, at least one object of the interacting objects needs a **Rigidbody**.
 
 - **Colliders** define the shape of a game object for physics interactions. Every game object that should participate in collision detection must have a collider. By default, primitive shapes like cubes or spheres automatically have colliders attached when created.
-   - _Example:_ If a player runs into a coin, either the player or the coin must have a Rigidbody attached for Unity to register the collision.- 
 
 - **Rigidbody** allows an object to participate in Unity’s physics simulation. A collision will only be detected if at least one of the colliding objects has a Rigidbody. This is an important rule to keep in mind when designing interactive objects.
+   - _Example:_ If a player runs into a coin, either the player or the coin must have a Rigidbody attached for Unity to register the collision.- 
 
 - **Triggers** are a special type of collider that do not physically block other objects _(no physic calculations)_. Instead, they detect overlaps with other colliders. Triggers are useful for areas, pickups, or zones where you want something to happen without stopping movement. 
-   - _Example:_  If the player walks through an invisible area that triggers a checkpoint, the area’s collider can be a trigger. The player passes through it without stopping, but Unity still detects the overlap so you can run logic like saving progress.
+   - _Example:_  If the player walks through an invisible area that triggers a checkpoint, the area’s collider can be a trigger. The player passes through it without stopping, but Unity still detects the overlap, so you can run logic like saving progress.
+ 
+## Simple Physics vs. Scripted Reactions
+As long as a GameObject has a **Rigidbody**, Unity's physics engine will affect it automatically. That means:
 
+- A Rigidbody will **fall due to gravity**.
+- If it **collides with another Rigidbody**, both objects will respond physically (bounce, slide, topple, etc.).
+- A player with a Rigidbody **can push other Rigidbody objects** just by moving into them — _no code required_.
 
-## Collision and Trigger Event Methods 
-Unity provides built-in life-cycle methods that automatically fire when objects interact using **Colliders** and **Rigidbodies**. These methods belong inside scripts that define behavior, such as `Player`, `Enemy`, `Coin`,etc.
+**But physics alone only handles movement and force.**
 
-> [!NOTE]
-> The object responsible for the behavior that occurs as a result of the collision should handle the check.
+If you want _additional gameplay logic_, like playing a sound, subtracting health, collecting items, or triggering animations, then physics isn’t enough. You must define this behavior with either `OnCollision` or `OnTrigger` methods.
 
-### Collisions vs Triggers
-Unity provides two types of physics event methods: `OnCollision` and `OnTrigger` Which one is called depends on whether the collider **has `IsTrigger**` enabled.
+## Collision and Trigger Methods 
+Unity provides built-in life-cycle methods that automatically fire when objects interact using **Colliders** and **Rigidbodies**. These methods belong inside scripts that define behavior, such as `Player`, `Enemy`, `Coin`, etc.
+
+Unity provides two types of physics event methods: `OnCollision` and `OnTrigger`. Which one is called depends on whether the collider **has `IsTrigger**` enabled.
 
 - `IsTrigger` OFF =  Physical collision calculated  = `OnCollision`
 - `IsTrigger` ON =  Overlap detection only, no physics =  `OnTrigger`
@@ -46,14 +52,14 @@ When Unity calls one of these event methods, it automatically passes **informati
 | `void OnCollisionEnter(Collision collision)` | `Collision`    | Detailed collision info (contact points, impulse, and the other object) |
 | `void OnTriggerEnter(Collider other)`        | `Collider`     | Only the other object’s collider (no physics force data)                |
 
-Think of collision or other as Unity handing you a report about what you just hit or entered.
+Think of a collision or other as Unity handing you a report about what you just hit or entered.
 
 > [!CAUTION]
 > Do not confuse these parameters with the `Collider` components on your GameObjects.
 > The parameters (`collision` or `other`) are **NOT references to visual components** that you add in the Inspector, like a BoxCollider or SphereCollider.
 > Instead, they are instances of special `Collision` and `Collider` classes **automatically created by Unity**. They represent information about the other object involved in the interaction (e.g., its GameObject, contact points, etc.) and are populated by the physics engine when the event occurs.
 
-### Example Implmentation
+### Example Implementation
 
 Collision (Physical Contact)
 ```csharp
@@ -75,7 +81,7 @@ Trigger (No Physical Pushback)
 ```
 
 ## Accessing the Other Object 
-The parameter (`Collision collision` or `Collider other`) contains information about the other object involved in the interaction. From there we get a reference to the object's `gameObject` via `collision.gameObject` (for collisions) or `other.gameObject` (for triggers).
+The parameter (`Collision collision` or `Collider other`) contains information about the other object involved in the interaction. From there, we get a reference to the object's `gameObject` via `collision.gameObject` (for collisions) or `other.gameObject` (for triggers).
 
 This reference is extremely useful because it allows your script to inspect and interact with the other object. From here, you can:
 - Check **basic properties** like its **name**, **tag**, or **layer**
@@ -129,6 +135,8 @@ Tags are created and set in the inspector. These are just a **string data type**
 While you could write a comparison like:
 
 ```csharp
+//❌ NOT RECOMMENDED
+
       void OnTriggerEnter(Collider other)
       {
           // Get the GameObject we triggered
@@ -149,6 +157,8 @@ Unity provides the `CompareTag()` method, which is **more efficient and safer** 
 Because `CompareTag()` automatically checks the GameObject associated with the Collider/Collision, there is **no need to explicitly reference** `other.gameObject`.
 
 ```csharp
+//✅Optimize Implmentation
+
       void OnTriggerEnter(Collider other)
       {
           // Check if it has the "Coin" tag
@@ -164,8 +174,6 @@ Because `CompareTag()` automatically checks the GameObject associated with the C
 
 >[!WARNING]
 >**Always use `CompareTag()`** instead of comparing the **tag** string directly. It is faster and prevents potential errors if the tag is changed in the Inspector.
-### 
-
 
 ## Who Handles Collision Checks
 
@@ -217,7 +225,7 @@ void OnTriggerEnter(Collider other)
 ---
  
 ### Coin Collection - Example
-Player collects coins from around an area. 
+The player collects coins from around an area. 
 - Actions that happen:
   - Coin is destroyed
   - Player gains score
@@ -240,7 +248,7 @@ void OnTriggerEnter(Collider other)
       //Play Soundfx
       _audioSource.PlayOneShot(_scoreClip, 2);
 
-      //Destory the Coin
+      //Destroy the Coin
       Destroy(other.gameObject);
 
     } //end if("Coin")
@@ -253,15 +261,15 @@ Even though the coin is the object being removed, the **player owns most of the 
 ---
 
 **Example: Opening Door**
-Door opens when player touches it
+The door opens when the player touches it
 - Actions that happen:
   - Door checks for key
   - Door animation plays
-  - Door plays sound 
+  - Door plays a sound 
   
 → The door is what changes, so the **door should handle the collision check**.
 
-While all the main actions is on the door, we still need to query infomration from the other obejct. 
+While all the main actions are on the door, though, we still need to query information from the other object. 
 
 **Example code for Door Class**
 
@@ -301,7 +309,7 @@ void OpenDoor()
 }//end Open Door()
 
 ```
-This structure emphasizes **delegation and data querying**: the object that changes owns the collision logic, but it can query other objects for necessary information.
+This structure emphasizes **delegation and data querying**. The door checks for collision and delegates actions to internal methods. It also queries other objects for necessary information.
 
 ---
 
@@ -311,14 +319,14 @@ When an enemy walks into an explosive barrel
   - Enemy takes damage 
   - Enemy gets launched back
   - Enemy plays “hit” animation
-  - Barrel spawns explosion VFX/SFX _(oarticle system)_
+  - Barrel spawns explosion VFX/SFX _(particle system)_
   - Barrel destroys itself
  
-→ Both objects have meaningful self-contained effects, which one owns the check? 
+→ Both objects have meaningful self-contained effects. Which one owns the check? 
 
 While each object could **check for collisions and control its own behavior**, performing multiple collision checks can become **expensive**, especially if there are many interactive objects in the scene.
 
-We can **optimize** this by having the object that is **most likely to initate the interaction** handel the collision check and then call the behaviors of the other object. 
+We can **optimize** this by having the object that is **most likely to initiate the interaction** handle the collision check and then call the behaviors of the other object. 
 
 **Rule of thumb:**
 - Moving objects usually detect collisions against static objects.
@@ -346,7 +354,7 @@ void OnCollisionEnter(Collision collision)
             barrel.Explode();
         }
 
-    }//end if("Explosive")
+    }//end if("Barrel")
 
 } // end OnCollisionEnter
 
@@ -360,7 +368,7 @@ void OnCollisionEnter(Collision collision)
    - Calls the `TakeDamage()` method.
    - Accesses the Rigidbody component via a variable (e.g., `_rigidBody`) and applies `AddForce` for knockback.
 - Checks if the other object (the barrel) has a `Barrel` component:
-   - If it does, calls the `Explode()` method.
+   - If it does, call the `Explode()` method.
  
 > [!IMPORTANT]
 > In order for the Enemy to call `barrel.Explode()`, it needs to **know that this method exists** on the Barrel class. This highlights why **clear documentation and consistent method naming are so important** in game development. For example, having a naming convention for explosion methods (like always calling them `Explode`) makes your code easier to read, maintain, and integrate.
@@ -369,3 +377,50 @@ Another approach is to use an **interface** (e.g., `IExplodable`) that guarantee
 
 ---
 
+### When Both Objects Have Collision Logic
+
+While collision and trigger checks are usually handled by the object that owns the majority of the game logic or initiates the interaction, there are cases where the object being checked may also need its own collision logic for interactions with other objects.
+
+Take our **Explosive Barrel** scenario above:
+**Enemy** walks into an explosive **barrel**
+- Actions that happen:
+  - Enemy takes damage 
+  - Enemy gets launched back
+  - Enemy plays “hit” animation
+  - Barrel spawns explosion VFX/SFX _(particle system)_
+  - Barrel destroys itself
+
+ Player tosses **explosive matter** onto **barrel**
+ - Actions that happen:
+   - Barrel increases in power
+   - Barrel increases in scale
+   - Explosive matter gets destroyed 
+    
+Because this interaction between the barrel and explosive matter mainly affects the barrel itself, the barrel now needs its own collision check logic to handle these new interactions, even though the enemy is already checking collision with the barrel. 
+
+**Example of Barrel class:**
+```csharp
+      // Barrel.cs
+      void OnTriggerEnter(Collider other) 
+      {
+          // Get the GameObject we interact with
+          GameObject otherObject = other.gameObject;
+      
+          if (otherObject.CompareTag("Explosive")) 
+          {
+              // Add to barrel's power
+              IncreasePower(50);
+      
+              // Grow the barrel in size (doubling scale as an example)
+              transform.localScale *= 2f;
+      
+              // Destroy the explosive object
+              Destroy(otherObject);
+      
+          } // end if("Explosive")
+      
+      } // end OnCollisionEnter
+
+```
+
+Notice that the **barrel does not check for collisions with the enemy**; this is handled by the enemy itself. Also, because we don't need physics interactions with the explosive matter, we can set its collider as a **trigger** and use `OnTriggerEnter()` instead of a collision event.
