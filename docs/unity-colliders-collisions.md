@@ -565,7 +565,190 @@ You can also check for **custom classes** by adding them as components. For inst
 This method allows for more flexible and robust collision handling, especially when dealing with complex object hierarchies or multiple object types that share behaviors.
 
 ---
+# Extend PlayerController with Jump Check
+Now that we understand how colliders, collisions, and triggers work, let's apply these behaviors to our current project. Our existing `PlayerController` already has a jump _(simple move up)_ mechanism, but we want to **restrict jumping to when the player is grounded**. This introduces a common gameplay mechanic: preventing multiple mid-air jumps unless specifically allowed (like double jumps).
 
+## Adding Jump Action
+The first thing we need to do is update our **PlayerControls** _Actions Asset_ in the Unity editor to include an action for jump. 
+
+#### 1. Update the Input Action Asset
+- In the Unity Editor, open your **Player Input Actions** asset **PlayerControls**
+   - Add a new action called `Jump`.
+   - Action type: Button
+   - Binding: Spacebar (keyboard), gamepad button, or any other input you want.
+- Save the asset.
+
+---
+
+## Player Behaviors
+Next, we'll create a `Player` class to contain all of the behaviors for the Player object. Note that the `PlayerController` will continue to handle input.
+
+#### 2. Create the `Player` class
+
+- **Create** a new C# class named `Player` and open it in your editor.
+
+---
+
+#### 3. Create a private field and a read-only property
+- Add a private field to track whether the player is grounded
+- Expose the value using a public property with only a get accessor
+
+```csharp
+   private bool _isGrounded;
+   public bool IsGrounded => _isGrounded; 
+```
+
+> [!NOTE]
+> The `=>` syntax here is called an expression-bodied property. It’s shorthand for:
+> ```csharp
+> public bool IsGrounded
+> {
+>    get { return _isGrounded; }
+> }
+> ```
+> It simply returns the value of the backing field `_isGrounded` without allowing external code to modify it.
+
+---
+
+### Collision Detection
+The `Player` class will handle all the checks for collisions and triggers. 
+
+#### 4. Detect Ground Collision
+- Create a  `OnCollisionEnter()` method 
+   - Check if the player hits an object tagged _"Ground"_
+   - If so, set `_isGrounded = true` and print a Debug.Log message
+
+```csharp
+private void OnCollisionEnter(Collision collision)
+{
+    // Check for collision with ground
+    if (collision.gameObject.CompareTag("Ground"))
+    {
+        _isGrounded = true;
+        Debug.Log("Player is grounded");
+
+    } // end if("Ground")
+
+} // end OnCollisionEnter()
+
+```
+- Save the `Player` class
+  
+--- 
+
+### Jump Behavior on the Player 
+When we set up our `MoveTransform` component, it was designed to provide general movement for any type of object. While we could refactor it to include jumping, we need to consider the scope and responsibility of the class. Many objects may require standard horizontal and vertical movement, but not all need a jump. In this case, **only the Player object requires jumping**, so it makes sense to **implement this behavior directly within the `Player` class** itself.
+
+### 4. Add a Jump Method to the Player Class
+
+```csharp
+public void Jump()
+{
+    //if Player is on the ground
+    if (_isGrounded)
+    {
+        //start jump
+
+    }//end  if(_isGrounded)
+
+}//end Jump()
+```
+
+---
+
+We will later update the `PlayerController` to handle inputs for telling the Player when to jump by calling the `Jump()` method. This keeps input handling separate from behavior, making your code modular and easier to maintain.
+
+### 5. Create a Coroutnie for Smooth Animation
+To smoothly animate the player's movement over time without relying on Unity's physics, we will implement a **coroutine**.
+
+A **coroutine** is a special type of method in Unity that allows you to pause execution and resume it over multiple frames. This makes it ideal for tasks that need to unfold gradually, such as animations, timers, or smooth transitions.
+
+In this case, the coroutine will **interpolate the player’s Y position frame by frame** to create a smooth jump and automatic return to the ground. Using a coroutine keeps the code simple, readable, and avoids the need for complex physics calculations, while still producing a natural, continuous movement effect.
+
+```csharp
+public void Jump()
+{
+    //if Player is on the ground
+    if (_isGrounded)
+    {
+        //start jump
+        StartCoroutine(JumpCoroutine());
+
+    }//end  if(_isGrounded)
+
+}//end Jump()
+
+
+private IEnumerator JumpCoroutine()
+{
+    // Set the grounded flag to false to prevent another jump mid-air
+    _isGrounded = false;
+
+    // Store the starting position of the player
+    Vector3 startPos = transform.position;
+
+    // Calculate the target position by adding jumpHeight to the Y axis
+    Vector3 targetPos = startPos + Vector3.up * jumpHeight;
+
+    // Initialize a timer to track elapsed time
+    float elapsed = 0f;
+
+    // Continue the loop until the total jump duration has elapsed
+    while (elapsed < jumpDuration)
+    {
+        // Calculate normalized time (0 to 1) for the current frame
+        float t = elapsed / jumpDuration;
+
+        // Interpolate the Y position using a sine curve for smooth up-and-down motion
+        transform.position = Vector3.Lerp(startPos, targetPos, Mathf.Sin(t * Mathf.PI));
+
+        // Increment elapsed time by the time passed since the last frame
+        elapsed += Time.deltaTime;
+
+        // Pause execution here and resume in the next frame
+        yield return null;
+    }
+
+    // Ensure the player lands exactly back at the starting position
+    transform.position = startPos;
+
+    // Reset the grounded flag so the player can jump again
+    _isGrounded = true;
+
+}//end JumpCoroutine()
+
+```
+
+
+  
+
+
+---
+
+# Challenge: Build Your Own Collision and Trigger Handler
+
+Using what we've learned about Colliders, Rigidbody, and Triggers, create a simple class that detects interactions with other objects.
+
+## Instructions
+
+1. Create a new class called `Player` and attach it to your player GameObject.
+4. Create an empty GameObject in the scene with a Collider to act as a trigger (e.g., a coin, spike, or special zone).
+5. Check the **Is Trigger** box on the Collider for trigger detection.
+6. In the `Player` script:
+   - Implement both `OnCollisionEnter()` and `OnTriggerEnter()` methods.
+   - Use `Debug.Log()` to output a message when a collision or trigger is detected. Include the **name** or **tag** of the other object.
+   - Optionally, experiment with `CompareTag()` to identify different objects.
+
+## Example Debug Output
+
+- `"Collided with Wall"`
+- `"Triggered Coin pickup"`
+
+## Bonus Challenge
+
+- How could you differentiate between multiple types of objects using **tags** or **components**?
+- Extend your debug messages to include the type of interaction (e.g., `"Player hit enemy"`, `"Player collected coin"`).
+- Try combining collision and trigger detection in a single player class while keeping the code **modular**.
 
 
 
