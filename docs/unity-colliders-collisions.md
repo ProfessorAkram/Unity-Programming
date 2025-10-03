@@ -13,7 +13,7 @@ For collisions to be detected, all objects will need a **Collider**. For collisi
 - **Triggers** are a special type of collider that do not physically block other objects _(no physic calculations)_. Instead, they detect overlaps with other colliders. Triggers are useful for areas, pickups, or zones where you want something to happen without stopping movement. 
    - _Example:_  If the player walks through an invisible area that triggers a checkpoint, the area’s collider can be a trigger. The player passes through it without stopping, but Unity still detects the overlap, so you can run logic like saving progress.
  
-## Simple Physics vs. Scripted Reactions
+### Simple Physics vs. Scripted Reactions
 As long as a GameObject has a **Rigidbody**, Unity's physics engine will affect it automatically. That means:
 
 - A Rigidbody will **fall due to gravity**.
@@ -23,6 +23,20 @@ As long as a GameObject has a **Rigidbody**, Unity's physics engine will affect 
 **But physics alone only handles movement and force.**
 
 If you want _additional gameplay logic_, like playing a sound, subtracting health, collecting items, or triggering animations, then physics isn’t enough. You must define this behavior with either `OnCollision` or `OnTrigger` methods.
+
+### Invisible Colliders and Boundaries
+
+Sometimes, you may want to detect collisions or triggers with objects that don’t have a visible mesh. For example:
+
+- **Invisible walls or boundaries:** Prevent the player from leaving a level or entering restricted areas.
+- **Trigger zones:** Activate cutscenes, spawn enemies, or save progress when the player enters a specific area.
+
+In these cases, you can attach a **Collider** to an **empty GameObject**. Even though the object has no visible mesh, its collider will still participate in collision and trigger detection. This allows you to control gameplay flow and interactions without cluttering the scene with visible objects.
+
+**Example:** A player reaches the edge of a level. An invisible boundary collider detects the overlap and triggers a “Level Complete” event, without requiring any visible wall or barrier in the scene.
+
+> [!TIP]
+>  Mark the collider as a **Trigger** if you don’t want it to physically block movement, or leave it as a solid collider if you want the player to collide with it physically.
 
 ## Collision and Trigger Methods 
 Unity provides built-in life-cycle methods that automatically fire when objects interact using **Colliders** and **Rigidbodies**. These methods belong inside scripts that define behavior, such as `Player`, `Enemy`, `Coin`, etc.
@@ -177,7 +191,7 @@ Because `CompareTag()` automatically checks the GameObject associated with the C
 
 ## Who Handles Collision Checks
 
-Which object should run the `OnCollision` and `OnTrigger` methods depends on on **which object owns the majority of the behavior triggered by the event** or which object is **primarily responsible for initiating the interaction**.
+The `OnCollision` and `OnTrigger` methods should reside on the **object that owns the majority of the behavior triggered** or which object is **primarily responsible for initiating the interaction**.
 
 Here are some common scenarios:
 
@@ -211,16 +225,15 @@ void OnTriggerEnter(Collider other)
 }//end OnTriggerEnter
 
 ```
+**How it Works** 
+- `CompareTag()` method checks if the `other` object is tagged with _"Spikes"_
+- The `UpdateHealth(-10)` call is a method in the **Player class** that handles changing the player’s health.
+   - The `-10` value is passed as a parameter to indicate damage.
+- The `_audioSource` variable is a reference to the **AudioSource component** attached to the GameObject (_i.e. Player_). The `PlayOneShot(_hitClip, 2)` method on the AudioSource.
+   - The method then plays the specified audio clip (`_hitClip`) at a volume level of `2`.
+
 > [!NOTE]
-> While the **tag check** typically occurs inside the `OnCollision` and `OnTrigger` methods, the actual tasks or game logic are usually handled by other methods within the same class or component.
-> 
-> In this example:
-> - The `UpdateHealth(-10)` call is a method in the **Player class** that handles changing the player’s health.
->    - The `-10` value is passed as a parameter to indicate damage.
-> - The `_audioSource` variable is a reference to the **AudioSource component** attached to the GameObject (_i.e. Player_). The `PlayOneShot(_hitClip, 2)` method on the AudioSource.
->    - The method then plays the specified audio clip (`_hitClip`) at a volume level of `2`.
->      
->  This pattern keeps the `OnCollision` and `OnTrigger` methods **clean and focused on detecting the collision**, while delegating the actual behavior to **dedicated methods** that manage health, animations, sound, or other gameplay effects.
+> While the **tag check** typically occurs inside the `OnCollision` and `OnTrigger` methods, the actual tasks or game logic are usually handled by other methods within the same class or component.  This pattern keeps the `OnCollision` and `OnTrigger` methods **clean and focused on detecting the collision**, while delegating the actual behavior to **dedicated methods** that manage health, animations, sound, or other gameplay effects.
 
 ---
  
@@ -304,7 +317,7 @@ void OpenDoor()
    _audioSource.PlayOneShot(_openClip); 
 
    //Play Animation
-   .....
+      //Animation stuff happens here....
 
 }//end Open Door()
 
@@ -362,7 +375,6 @@ void OnCollisionEnter(Collision collision)
 **How it Works**
 
 - `collision.gameObject` gives a reference to the **other object involved in the collision** (the barrel).
-
 - Check if the object has the "Barrel" tag.
 - Local Enemy behaviors run:
    - Calls the `TakeDamage()` method.
@@ -424,3 +436,136 @@ Because this interaction between the barrel and explosive matter mainly affects 
 ```
 
 Notice that the **barrel does not check for collisions with the enemy**; this is handled by the enemy itself. Also, because we don't need physics interactions with the explosive matter, we can set its collider as a **trigger** and use `OnTriggerEnter()` instead of a collision event.
+
+## Checking for Multiple Collisions 
+In all of the examples above, we have been checking for interaction with game objects with one specific tag. But what do we need to check for multiple interactions? Like our Player character may need to check for both _Spikes_ and _Coins_.  
+
+A simple condition will work in this scenario: 
+
+```csharp
+      void OnTriggerEnter(Collider other)
+      {
+          if (other.CompareTag("Spikes"))
+          {
+              TakeDamage(10);  
+              
+          }
+          else if (other.CompareTag("Coin"))
+          {
+              CollectCoin(other); 
+      
+          }//end Tag Check
+      
+      }//end OnTriggerEnter()
+      
+      // Handle taking damage
+      private void TakeDamage(float damageAmount)
+      {
+          // Update player's health
+          UpdateHealth(-damageAmount);
+      
+          // Play hit sound
+          _audioSource.PlayOneShot(_hitClip, 2f);
+      
+      }//end TakeDamage()
+      
+      // Handle collecting a coin
+      private void CollectCoin(Collider coinCollider)
+      {
+          // Update score
+          AddScore(1);
+      
+          // Play coin sound
+          _audioSource.PlayOneShot(_scoreClip, 2f);
+      
+          // Destroy the coin
+          Destroy(coinCollider.gameObject);
+      
+      }//end CollectCoin
+
+```
+**How it Works** 
+
+- `OnTriggerEnter()` checks the tag of the object the player collides with:
+   - `other.CompareTag("Spikes")` → calls `TakeDamage(10)`
+   - `other.CompareTag("Coin")` → calls `CollectCoin(other)`
+
+- `TakeDamage(float damageAmount)`
+   - Updates the player's health `(UpdateHealth(-damageAmount))`
+   - Plays the hit sound (`_audioSource.PlayOneShot(_hitClip, 2f)`)
+
+- `CollectCoin(Collider coinCollider)`
+   - Updates the score `(AddScore(1))`
+   - Plays the coin collection sound (`_audioSource.PlayOneShot(_scoreClip, 2f)`)
+   - Destroys the coin (`Destroy(coinCollider.gameObject)`)
+
+**Delegating** actions to separate methods keeps the `OnTriggerEnter()` method clean and modular, preventing it from becoming cluttered with multiple steps for different interactions. Each method can focus on a single responsibility: 
+- `DamageTaken()` handles all aspects of taking damage
+- `CoinCollected()` handles all aspects of collecting a coin.
+
+Notice that we are also passing a positive damage value to `TakeDamage()`. It's best practice to **use positive values when possible**, making the code easier to read and understand. The method itself will then subtract the value from the player's health.
+
+For coin collection, we need a reference to the **other object** (_i.e. coin's Collider_) because the method must destroy the specific GameObject that was collected.
+
+This structure also makes the code more **maintainable and extensible**. For example, if you later want to add additional effects, such as a particle effect when taking damage, or a combo sound for coins, you can update the respective method without modifying the core collision detection logic. It also makes it easier to reuse these methods in other parts of the game, improving consistency and reducing bugs.
+
+---
+
+### Many more conditions 
+While `if`/`else` statements work well for two or three checks, when you have more conditions, it’s better to use a `switch` statement. The switch can even be delegated to its own method, keeping the `OnTrigger` or `OnCollision` method clean.
+```cshap
+      void OnTriggerEnter(Collider other)
+      {
+          HandleTriggerByTag(other);
+
+      }//end OnTriggerEnter
+
+      
+      private void HandleTriggerByTag(Collider other)
+      {
+          switch (other.tag)
+          {
+              case "Enemy":
+                  Attack();
+                  break;
+      
+              case "Spikes":
+                  TakeDamage(10); // pass a value if needed
+                  break;
+      
+              case "Coin":
+                  CollectCoin(other); // pass the collider to destroy
+                  break;
+      
+              case "PowerUp":
+                  IncreaseSpeed();
+                  break;
+      
+              case "Ground":
+                  isGrounded = true;
+                  break;
+      
+              default:
+                  break;
+          }
+      }//end HandleTriggerByTag
+```
+
+While a `switch` works well for a handful of tag checks, if your game involves many interactions, this approach can become cumbersome and harder to maintain. In those cases, it’s better to optimize the logic for scalability and flexibility. Some common approaches include:
+- **Dictionary of Actions:** Map each tag or object type to a corresponding action. This avoids large switch blocks while still centralizing behavior.
+- **Event System:** Use events or messaging so the player can trigger reactions without hardcoding every tag check. This reduces coupling and makes it easier to extend functionality.
+- **Scriptable Objects:** Create Scriptable Objects that define “interaction rules,” mapping object types to player actions. The player reads these rules at runtime and applies the appropriate effects.
+
+### Checking Beyond Tag
+
+So far, we’ve mostly used tags to identify objects during collisions or triggers. However, you can also check for specific components on the other object. For example, you could use `TryGetComponent<Rigidbody>(out var otherRB)` to see if the object has a Rigidbody.
+
+You can also check for **custom classes** by adding them as components. For instance, if you have an `Enemy` class, you can test whether the object has an `Enemy` component. This approach works well with inheritance: if other objects, like `Spikes` or `Troll`, inherit from `Enemy`, the check will still succeed.
+
+This method allows for more flexible and robust collision handling, especially when dealing with complex object hierarchies or multiple object types that share behaviors.
+
+---
+
+
+
+
