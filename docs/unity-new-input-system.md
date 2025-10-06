@@ -275,7 +275,7 @@ In our previous lessons, we created `MoveTransform` and `MoveRigidbody` classes.
 
 ```csharp
     //Reference to the MoveTransform component 
-    private MoveRigidbody _moveRigidbody;
+    private MoveTransform _moveTransform;
 
     // Start is called once before the first Update
     private void Start()
