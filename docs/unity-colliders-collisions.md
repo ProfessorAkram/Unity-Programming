@@ -153,10 +153,8 @@ While you could write a comparison like:
 
       void OnTriggerEnter(Collider other)
       {
-          // Get the GameObject we triggered
-          GameObject otherObject = other.gameObject;
-
-            if (otherObject.tag == "Coin")
+            //Check the other gameObject tag
+            if (other.gameObect.tag == "Coin")
             {
                 AddScore(1);
                 Destroy(otherObject);
@@ -165,13 +163,17 @@ While you could write a comparison like:
       
       }//end OnTriggerEnter()
 ```
+However, if you try to directly compare `.tag` (e.g., `other.tag == "Coin"`) and the GameObject has **no tag** or `other` is unexpectedly `null`, Unity can throw a runtime error.  
 
-Unity provides the `CompareTag()` method, which is **more efficient and safer** than directly comparing the `.tag` string. This method exists on the `Collider` (or `Collision`) parameter and **returns a bool** indicating whether the GameObject’s tag matches the value you provide.
+Unity provides the `CompareTag()` method, which is **safer and more efficient** than directly comparing the `.tag` string. This method exists on the `Collider` parameter and **returns a `bool`** indicating whether the GameObject’s tag matches the value you provide.
 
-Because `CompareTag()` automatically checks the GameObject associated with the Collider/Collision, there is **no need to explicitly reference** `other.gameObject`.
+> [!TIP]
+> In recent versions of Unity, `CompareTag()` will warn you in the editor if the tag doesn’t exist in the Tag Manager.
+
+Because `CompareTag()` automatically checks the GameObject associated with the `Collider`, and the collider is the `other` reference in an `OnTriggerEnter` method, you can call it directly on `other`.
 
 ```csharp
-//✅Optimize Implmentation
+//✅Optimize Trigger Implmentation
 
       void OnTriggerEnter(Collider other)
       {
@@ -185,6 +187,25 @@ Because `CompareTag()` automatically checks the GameObject associated with the C
 
       }//end OnTriggerEnter()
 ```
+
+When using `OnCollisionEnter`, the parameter `other` is a **Collision** object, not a GameObject or Collider. `Collision` represents the contact points and other collision information. **It does not directly have a `CompareTag()` method**, so you must check the tag through the `gameObject` involved:
+
+```csharp
+//✅Optimize Collision Implmentation
+
+      void OnCollisionEnter(Collision other)
+      {
+          // Check if it has the "Coin" tag
+          if (other.gameObject.CompareTag("Coin"))
+          {
+              AddScore(1);
+              Destroy(otherObject);
+
+          }//end if("Coin")
+
+      }//end OnTriggerEnter()
+```
+
 
 >[!WARNING]
 >**Always use `CompareTag()`** instead of comparing the **tag** string directly. It is faster and prevents potential errors if the tag is changed in the Inspector.
@@ -287,7 +308,7 @@ While all the main actions are on the door, though, we still need to query infor
 **Example code for Door Class**
 
 ```csharp
-// Player.cs
+// Door.cs
 void OnTriggerEnter(Collider other)
 {
     // Check if the object is the player
@@ -415,10 +436,8 @@ Because this interaction between the barrel and explosive matter mainly affects 
       // Barrel.cs
       void OnTriggerEnter(Collider other) 
       {
-          // Get the GameObject we interact with
-          GameObject otherObject = other.gameObject;
       
-          if (otherObject.CompareTag("Explosive")) 
+          if (other.CompareTag("Explosive")) 
           {
               // Add to barrel's power
               IncreasePower(50);
@@ -513,7 +532,7 @@ This structure also makes the code more **maintainable and extensible**. For exa
 
 ### Many more conditions 
 While `if`/`else` statements work well for two or three checks, when you have more conditions, it’s better to use a `switch` statement. The switch can even be delegated to its own method, keeping the `OnTrigger` or `OnCollision` method clean.
-```cshap
+```csharp
       void OnTriggerEnter(Collider other)
       {
           HandleTriggerByTag(other);
