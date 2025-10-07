@@ -93,6 +93,9 @@ Trigger (No Physical Pushback)
       }//end OnTriggerEnter
 
 ```
+> [!NOTE]
+> While `OnTrigger` and `OnCollision` are part of Unity’s lifecycle, we define them in our object classes. The parameters they receive must match the expected data type: `Collider` for triggers and `Collision` for collisions. However, the variable name for these parameters themselves can vary. For triggers, it’s often named `other`, while for collision, it might be `collision` or `other`. Regardless of the name, the parameter always **refers to the component of the other object being interacted with**.
+
 
 ## Accessing the Other Object 
 The parameter (`Collision collision` or `Collider other`) contains information about the other object involved in the interaction. From there, we get a reference to the object's `gameObject` via `collision.gameObject` (for collisions) or `other.gameObject` (for triggers).
@@ -173,7 +176,7 @@ Unity provides the `CompareTag()` method, which is **safer and more efficient** 
 Because `CompareTag()` automatically checks the GameObject associated with the `Collider`, and the collider is the `other` reference in an `OnTriggerEnter` method, you can call it directly on `other`.
 
 ```csharp
-//✅Optimize Trigger Implmentation
+//✅Optimize Trigger Implementation
 
       void OnTriggerEnter(Collider other)
       {
@@ -191,7 +194,7 @@ Because `CompareTag()` automatically checks the GameObject associated with the `
 When using `OnCollisionEnter`, the parameter `other` is a **Collision** object, not a GameObject or Collider. `Collision` represents the contact points and other collision information. **It does not directly have a `CompareTag()` method**, so you must check the tag through the `gameObject` involved:
 
 ```csharp
-//✅Optimize Collision Implmentation
+//✅Optimize Collision Implementation
 
       void OnCollisionEnter(Collision other)
       {
