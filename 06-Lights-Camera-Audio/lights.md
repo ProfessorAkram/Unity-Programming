@@ -135,3 +135,10 @@ private void OnTriggerExit(Collider other)
 }//end OnTriggerExit
 
 ```
+#### 6: Test the Trigger
+1. Have a player controller GameObject in the scene and is tagged as **"Player"**.
+2. Press **Play** an test moving the player into and out of the trigger area.
+3. Ensure the light turn on when entering the trigger and turn off when exiting.
+
+> [!WARNING]
+> If the light doesn’t turn on, make sure the Box Collider is set to **Is Trigger**.
