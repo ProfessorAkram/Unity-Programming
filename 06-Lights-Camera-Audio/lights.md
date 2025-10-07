@@ -292,3 +292,14 @@ public class ColorCycleLight : MonoBehaviour
 The `Mathf.PingPong()` method **“bounces” a value back and forth between 0 and the specified length**. Its output follows a triangle wave pattern, rising linearly to the peak and then falling back down. The first parameter should be a continuously increasing value, such as `Time.time` or `Time.unscaledTime`. Multiplying by `_cycleSpeed` controls how quickly the hue cycles.
 
 The light’s color is then set by converting the hue value to an **RGB** color using `Color.HSVToRGB()`, which takes three parameters: **hue, saturation, and value**. In this example, saturation and value are both set to `1f` (100%), producing fully vivid and bright colors.
+
+> [!CAUTION]
+> Keep `_cycleSpeed` relatively small for a slow, smooth transition. Avoid values over 2, which can make the light change too abruptly and may cause discomfort or visual strain. You can even use a **range cap** in the Inspector to ensure the value stays within a suitable range:
+> ```csharp
+> [SerlizedField]
+> [Range(0f,2f)]
+> [ToolTip("Speed of cycle")]
+> private float _cycleSpeed = 0.25f;
+> ```
+
+---
