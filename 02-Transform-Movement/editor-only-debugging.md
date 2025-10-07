@@ -414,7 +414,7 @@ public class MoveTransform : MonoBehaviour
 
 --- 
 
-**[<< Return to Refactor Movement tutorial >>](refactor-movement.md)**
+**[<< Return to Refactor Movement tutorial](refactor-movement.md)**
 
 
 
