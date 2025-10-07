@@ -94,7 +94,7 @@ Trigger (No Physical Pushback)
 
 ```
 > [!NOTE]
-> While `OnTrigger` and `OnCollision` are part of Unity’s lifecycle, we define them in our object classes. The parameters they receive must match the expected data type: `Collider` for triggers and `Collision` for collisions. However, the variable name for these parameters themselves can vary. For triggers, it’s often named `other`, while for collision, it might be `collision` or `other`. Regardless of the name, the parameter always **refers to the component of the other object being interacted with**.
+> While `OnTrigger` and `OnCollision` are part of Unity’s lifecycle, we define them in our object classes. The parameters they receive must match the expected data type: **`Collider` for triggers** and **`Collision` for collisions.** However, the variable name for these parameters themselves can vary. For triggers, it’s often named `other`, while for collision, it might be `collision` or `other`. Regardless of the name, the parameter always **refers to the component of the other object being interacted with**.
 
 
 ## Accessing the Other Object 
