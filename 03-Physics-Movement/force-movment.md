@@ -1308,7 +1308,9 @@ While this system works well, it's important to understand that **its behavior i
 
 Because of this, **tuning is essential**. Testing different combinations, varying mass values, speed limits, acceleration times, and damping settings, will help you dial in the exact feel you want. There’s no single “correct” configuration; the right one is the one that _feels_ best for your gameplay.
 
+---
 
+**[<< Return to Velocity Movement tutorial ](velocity-movement.md)**
 
 
 
