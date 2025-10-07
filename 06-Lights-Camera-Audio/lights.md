@@ -1,6 +1,6 @@
 # Light Behaviors in Unity
 
-Lights in Unity are powerful tools to shape the mood, guide players, and highlight important areas in your scene. Using scripts, you can dynamically control lights—turn them on and off, adjust intensity, color, or range—based on gameplay events.
+Lights in Unity are powerful tools to shape the mood, guide players, and highlight important areas in your scene. Using scripts, you can dynamically control lights, turn them on and off, adjust intensity, color, or range, based on gameplay events.
 
 ## Unity Light Types
 
@@ -142,3 +142,153 @@ private void OnTriggerExit(Collider other)
 
 > [!WARNING]
 > If the light doesn’t turn on, make sure the Box Collider is set to **Is Trigger**.
+
+---
+
+# Other Light Behaviors
+
+Once you know how to control lights with code, you can start using them creatively to bring your scenes to life. Lights can do far more than just turn on or off, they can flicker like a candle, pulse like a warning beacon, or even change color to set the mood of a scene.
+
+Many of these behaviors rely on **math functions** to create smooth, repeating, or random variations over time. By using functions like `Mathf.Sin()` for rhythmic motion or `Mathf.PerlinNoise()` for organic randomness, we can animate lights in ways that feel natural, dynamic, and interactive.
+
+In this section, we’ll explore several fun examples that show how simple scripts and math can add atmosphere, interactivity, and personality to your Unity projects. Each example demonstrates a different way to animate or respond to the world using the Light component.
+
+## 🔥 Flickering Light
+
+Simulates a torch, candle, or flickering bulb. The flicker speed and range can be adjusted in the Inspector to achieve different effects.
+
+```csharp
+public class FlickeringLight : MonoBehaviour
+{
+    private Light _light;
+    private float _baseIntensity;
+    
+    [Header("Flicker Settings")]
+    [SerializeField] 
+    [Tooltip("How much intensity changes")]
+    private float _flickerRange = 0.2f; 
+   
+    [SerializeField] 
+    [Tooltip("How fast it flickers")]
+    private float _flickerSpeed = 10f; 
+ 
+    // Awake is called once on initialization
+    private void Awake()
+    {
+        _light = GetComponent<Light>();
+        _baseIntensity = _light.intensity;
+        
+    }//end Awake()
+ 
+    // Update is called once per frame
+    private void Update()
+    {
+        Flicker();
+        
+    }//end Update()
+
+
+  //Flicker the light Intensity
+  private void Flicker()
+  {
+        // Randomly change intensity over time
+        float noise = Mathf.PerlinNoise(Time.time * _flickerSpeed, 0f) * 2 - 1;
+
+        //Set light intensity
+        _light.intensity = _baseIntensity + noise * _flickerRange;
+
+  }//end Flicker() 
+
+ 
+}//end FlickeringLight
+```
+
+### Breakdown of `Flicker()`
+To create a flickering effect, the light’s intensity needs to increase and decrease over time. Using completely random values would make the effect look harsh and erratic, like the light is flashing instead of flickering. To achieve a smoother, more natural variation, we can use `Mathf.PerlinNoise()`, a Unity function that generates smooth pseudo-random values. Unlike pure randomness, Perlin noise produces gentle waves where values gradually rise and fall, resulting in a more organic motion often used for effects like fire, clouds, or terrain.
+
+In our case, our first value is `Time.time`, the number of seconds since the game started, multipled by a flickerSpeed value controls how quickly we move through the noise pattern. The second parameter (0f) simply represents the Y-coordinate of the noise function, which we keep constant since we only need one dimension. The result is a smoothly oscillating number between 0 and 1, perfect for adjusting the light’s intensity in a natural, flickering way.
+
+The `Mathf.PerlinNoise()` method **returns a value between 0 and 1**. That’s fine for some uses, but it only gives us positive values,  meaning the flicker would only ever increase from a base intensity, not dip below it. By multiply the result by 2 and then subtract 1, we remap the range from **[0, 1]** to **[-1, 1]**. This symmetrical range lets the intensity fluctuate above and below a midpoint, creating a more balanced and natural variation.
+
+The light’s intensity is then set to the `_baseIntensity`, the value of intensity defined on the Light component, plus the product of `noise * flickerAmount`, which adds or subtracts subtle variation from it.
+
+### 🚨 Creating Plusing Light
+The flicker light can easily be changed into a smooth **plusing light**, like for damage, energy, or magical effects. Instead of randomply chaining intensity with `Mathf.PerlinNoise()`, we can set a prefectly smooth and perditable motion with `Mathf.Sin()`.
+
+```csharp
+  //Pluse the light Intensity
+  private void Pluse()
+  {
+        // Smoothly oscillate the light’s intensity in a rhythmic pattern
+        float wave = Mathf.Sin(Time.time * pulseSpeed);
+
+        //Set light intensity
+        _light.intensity = _baseIntensity + wave * _pluseRange;
+
+  }//end Pluse() 
+
+```
+The `Mathf.Sin()` method produces a smooth, repeating wave between **-1 and 1**. Multiplying the wave by `_pulseRange` controls how much the light fluctuates around the base intensity. Adjusting `_pulseSpeed` changes how fast the pulsing occurs, making it faster or slower.
+
+> [!NOTE]
+> #### Understanding Unity’s Time Properties
+> Unity provides several ways to track time, each useful in different situations:
+> - `Time.timeScale` : a Unity property that controls the speed at which time progresses in the game. It essentially scales how fast everything that depends on `Time.time` or `Time.deltaTime` updates.
+> - `Time.time` : The total number of seconds since the game started. It includes any time scaling (like slowing down the game with `Time.timeScale`). This is commonly used for continuous animations, like cycling light colors or oscillating intensity.
+> - `Time.unscaledTime` : Similar to `Time.time`, but ignores `Time.timeScale`. Use this when you want something to animate or progress even if the game is paused or slowed, such as UI effects or background lights.
+> - `Time.deltaTime` : The time (in seconds) since the last frame. This is typically used to make motion or changes frame-rate independent, e.g., moving objects smoothly or interpolating values per frame.
+> - `Time.unscaledDeltaTime` : Like `Time.deltaTime`, but ignores time scaling, useful for smooth motion in UI or effects during slow motion or pause.
+>   
+> _For most light animations, `Time.time` or `Time.unscaledTime` is preferred because you want a continuous, smooth progression rather than small per-frame changes._
+
+
+---
+
+## 🎨 Color Cycle Light
+
+This effect smoothly rotates a light through a spectrum of colors, creating a dynamic or “party” atmosphere. By cycling the hue over time, you can make lights feel alive and vibrant, perfect for sci-fi scenes, dance floors, or magical effects.
+
+```csharp
+public class ColorCycleLight : MonoBehaviour
+{
+    private Light _light;
+    
+    [Header("Cycle Settings")]
+    [SerializeField] 
+    [Tooltip("Speed of the cycle")]
+    private float _cycleSpeed = 1f; 
+   
+
+    // Awake is called once on initialization
+    private void Awake()
+    {
+        _light = GetComponent<Light>();
+        
+    }//end Awake()
+ 
+    // Update is called once per frame
+    private void Update()
+    {
+        CycleColors();
+        
+    }//end Update()
+
+
+    // Cycle the light color over time
+    private void CycleColors()
+    {
+        // Generate a hue value that moves smoothly between 0 and 1
+        float hue = Mathf.PingPong(Time.time * _cycleSpeed, 1f);
+
+        // Convert HSV to RGB and apply it to the light color
+        _light.color = Color.HSVToRGB(hue, 1f, 1f);
+    }//end CycleColors() 
+
+ 
+}//end CycleColors()
+```
+
+### Breakdown of `CycleColors` 
+The `Mathf.PingPong()` method **“bounces” a value back and forth between 0 and the specified length**. Its output follows a triangle wave pattern, rising linearly to the peak and then falling back down. The first parameter should be a continuously increasing value, such as `Time.time` or `Time.unscaledTime`. Multiplying by `_cycleSpeed` controls how quickly the hue cycles.
+
+The light’s color is then set by converting the hue value to an **RGB** color using `Color.HSVToRGB()`, which takes three parameters: **hue, saturation, and value**. In this example, saturation and value are both set to `1f` (100%), producing fully vivid and bright colors.
