@@ -57,8 +57,10 @@ Unity’s Light component exposes many properties you can modify in code:
 
 ---
 
-# Creating a Light Trigger
+# Creating a Light Behaviors
 Sometimes in a game, you may want a light to turn on or off only when a player enters a specific area. For example, a torch in a dark hallway, a streetlamp that activates when the player approaches, or a warning light that flashes when a player enters a zone. We can achieve this easily using a trigger.
+
+## 👉 Light Trigger
 
 #### 1: Add a Point Light
 1. In your scene, create a **Point Light**.
@@ -104,7 +106,7 @@ private void Awake()
 
 ```
 
-#### 5: Toggle the Light on Trigger Events
+#### 5: Trigger Lights
 1. Add methods to turn the light on when the player enters.
 2. Add a method to turn off when the player leaves the trigger are.
 
@@ -143,6 +145,19 @@ private void OnTriggerExit(Collider other)
 > [!WARNING]
 > If the light doesn’t turn on, make sure the Box Collider is set to **Is Trigger**.
 
+## 🎚️ Toggle Switch
+Instead of using an invisible trigger that automatically turns a light on or off, you can create a **switch** that toggles a light manually. This could be a **physical object in the scene that the player interacts with**, which would require a **trigger collider** to detect the interaction, or it could be controlled by a **key/button press action**. The idea is simple: each time the method is called, the light changes to the opposite of its current state.
+
+```csharp
+  private void ToggleLight()
+  {
+
+   // Invert the current state of the light
+   _light.enabled = !_light.enabled;
+
+  }//end ToggleLight
+
+```
 ---
 
 # Other Light Behaviors
@@ -152,6 +167,107 @@ Once you know how to control lights with code, you can start using them creative
 Many of these behaviors rely on **math functions** to create smooth, repeating, or random variations over time. By using functions like `Mathf.Sin()` for rhythmic motion or `Mathf.PerlinNoise()` for organic randomness, we can animate lights in ways that feel natural, dynamic, and interactive.
 
 In this section, we’ll explore several fun examples that show how simple scripts and math can add atmosphere, interactivity, and personality to your Unity projects. Each example demonstrates a different way to animate or respond to the world using the Light component.
+
+## 💡 Ease In-Out Light
+In the previous example our Trigger simply turned the light on or off. But what if we wanted the light to slowly come on as the player stayed within the trigger. This can be done dyanmically chaining the **intensity** of the light. 
+
+```csharp
+
+public class TriggerEaseLight : MonoBehaviour
+{
+    [SerializeField]
+    [Tooltip("Light to Toggle on/off")]
+    private Light _light;
+
+    [SerializeField]
+    [Tooltip("Max intensity (brightness) of light")]
+    private float _maxIntensity = 50f;
+
+    [SerializeField]
+    [Tooltip("Speed of the ease-in")]
+    private float _easeInSpeed = 20f;
+
+    [SerializeField]
+    [Tooltip("Speed of the ease-out")]
+    private float _easeOutSpeed = 40f;
+
+    private void Awake()
+    {
+        // Start with the light turned off and intensity 0
+        _light.enabled = false;
+        _light.intensity = 0f;
+
+    }//end Awake()
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // Turn light on
+            _light.enabled = true; 
+
+        }//end if(Player)
+
+    }//end OnTriggerEnter()
+
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // Gradually increase intensity while player stays
+            _light.intensity = Mathf.MoveTowards(_light.intensity, _maxIntensity, _easeInSpeed * Time.deltaTime);
+
+        }//end if(Player)
+
+    }//end OnTriggerStay()
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // Gradually decrease intensity after leaving
+            StartCoroutine(EaseOut());
+
+        }//end if(Player)
+
+    }//end OnTriggerExity()
+
+    private IEnumerator EaseOut()
+    {
+        while (_light.intensity > 0f)
+        {
+            _light.intensity = Mathf.MoveTowards(_light.intensity, 0f, _easeOutSpeed * Time.deltaTime);
+            yield return null;
+
+        }//end while
+
+        _light.enabled = false;
+
+    }//end EaseOut()
+
+}//end TriggerEaseLight
+
+```
+
+### Breakdown of `TriggerEaseLight`
+The `_maxIntensity` value represents the brightest the light can reach. While the player remains inside the trigger, the light’s intensity gradually rises toward this maximum value.
+
+The `_easeInSpeed` and `_easeOutSpeed` values control **how quickly the light brightens or dims**. Larger values produce faster transitions, while smaller values create slower, smoother changes.
+
+The `OnTriggerStay()` method is **called continuously every frame as long as the player stays within the trigger**. This allows the light to gradually **ease in** using `Mathf.MoveTowards()`.
+
+The `Mathf.MoveTowards()` method **moves a value at a constant speed toward a target**, ensuring it reaches the target without overshooting. It takes three parameters:  
+- The **current value** of the light
+- The **target value** (i.e, ligth maxium intensity)
+- The **maximum amount the value can change per frame** (represented by `_easeInSpeed` and `_easeOutSpeed`)  
+
+Multiplying this by `Time.deltaTime` makes the transition **frame-rate independent**.
+
+Since `OnTriggerExit()` is **called only once when the player leaves the trigger**, a **coroutine** is used to create a gradual **ease-out**. This coroutine also uses `Mathf.MoveTowards()`, but sets the **target value to zero**. Once the intensity reaches zero, the light is turned off by setting `_light.enabled = false`.
+
+
+---
 
 ## 🔥 Flickering Light
 
@@ -175,7 +291,9 @@ public class FlickeringLight : MonoBehaviour
     // Awake is called once on initialization
     private void Awake()
     {
+        //Get the light component
         _light = GetComponent<Light>();
+        
         _baseIntensity = _light.intensity;
         
     }//end Awake()
@@ -262,6 +380,7 @@ public class ColorCycleLight : MonoBehaviour
     // Awake is called once on initialization
     private void Awake()
     {
+        //Get the light component
         _light = GetComponent<Light>();
         
     }//end Awake()
@@ -303,3 +422,16 @@ The light’s color is then set by converting the hue value to an **RGB** color 
 > ```
 
 ---
+# 🎉 New Achievement: Lighting
+
+These are just a few possibilities of how we can control lights in our scripts. These beahviors can be on the indvidual lights or on objects that control the lights.  
+Lights are highly versatile, and with a little creativity, you can design entirely new behaviors, such as : 
+- A warning beacon that responds to enemy proximity
+- A magical glow that reacts to player actions
+- A disco light that syncs with music
+- A Day/Night cycle on the Directional Light
+
+We’ve also explored several math functions that allow us to **create smooth, rhythmic, or procedural changes in intensity and color**, giving your lights personality and interactivity beyond simple on/off behavior.
+
+--- 
+<< Return to Lesson Contents | Continue to Camera tutorial >>
