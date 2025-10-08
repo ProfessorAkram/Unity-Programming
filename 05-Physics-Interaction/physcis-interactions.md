@@ -56,6 +56,18 @@ Both collision and trigger events come in three forms:
 | **Stay**   | `OnCollisionStay`     | `OnTriggerStay`     | Every frame while overlapping | Damage zones, conveyor belts            |
 | **Exit**   | `OnCollisionExit`     | `OnTriggerExit`     | When objects separate         | Turning off effects, leaving safe zones |
 
+#### Phycis Timing 
+`OnTriggerEnter`, `OnTriggerStay`, `OnTriggerExit`, and their collision counterparts all **run based on physics steps** (not frame updates). This means they’re called in sync with Unity’s physics engine rather than every rendered frame.
+
+`OnTriggerEnter` / `OnCollisionEnter` — **Called once** when two colliders first make contact.
+
+`OnTriggerExit` / `OnCollisionExit` — **Called once** when the colliders stop overlapping.
+
+`OnTriggerStay` / `OnCollisionStay` — **Called continuously every physics step** while the colliders remain in contact.
+
+Because physics steps may occur less frequently than frames, Stay events aren’t ideal for smooth or gradual changes (like fading, moving, or scaling). For these kinds of transitions, it’s better to `set a flag` in `Enter` or `Exit` and then handle the change over time in `Update()`.
+
+On the other hand since `OnTriggerStay` runs with each physics step, ensuring effects happen exactly while objects are in contact. This makes it ideal for things like **damage zones** or **healing areas**, where you want the effect to sync precisely with the physics engine. If we handled healing or damage inside `Update()`, players with higher frame rates would have the code run **more times per second**, meaning they could gain (or lose) health faster.
 
 ### Method Parameters
 
