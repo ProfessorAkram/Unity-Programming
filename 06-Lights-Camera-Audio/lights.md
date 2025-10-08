@@ -13,7 +13,7 @@ Unity has several types of lights, each with specific purposes:
 | **Area Light** *(Baked only)* | Emits light from a rectangle or surface.                    | Soft, realistic lighting in interiors.        |
 
 > [!TIP]
-> Lights can wash each other out. For example, a directional light acting as the sun will overpower smaller spot or point lights. Make sure the lighting hierarchy matches your scene goals.
+Lights can wash out each other. For example, a directional light acting as the sun will overpower smaller spot or point lights. Make sure the lighting hierarchy matches your scene goals.
 
 ## Controlling lights 
 To modify a light in code, you need a reference to the Light component on a GameObject. How you access a light’s properties depends on where your behavior script is located. If the script is attached directly to the GameObject that has the Light component, you can simply call `GetComponent<Light>()` to get a reference. For example, if we wanted to create a day-night cycle behavior, the script would be attached to the **directional light** itself.
@@ -108,7 +108,7 @@ private void Awake()
 
 #### 5: Trigger Lights
 1. Add methods to turn the light on when the player enters.
-2. Add a method to turn off when the player leaves the trigger are.
+2. Add a method to turn off when the player leaves the trigger area.
 
 
 ```csharp
@@ -129,7 +129,7 @@ private void OnTriggerExit(Collider other)
 {
     if (other.CompareTag("Player"))
     {
-        //Trun light off
+        //Turn light off
         _light.enabled = false;
 
     }}//end if(Player)
@@ -138,9 +138,9 @@ private void OnTriggerExit(Collider other)
 
 ```
 #### 6: Test the Trigger
-1. Have a player controller GameObject in the scene and is tagged as **"Player"**.
-2. Press **Play** an test moving the player into and out of the trigger area.
-3. Ensure the light turn on when entering the trigger and turn off when exiting.
+1. Have a player controller GameObject in the scene that is tagged as "Player".
+2. Press Play and test moving the player into and out of the trigger area.
+3. Ensure the light turns on when entering the trigger and turns off when exiting.
 
 > [!WARNING]
 > If the light doesn’t turn on, make sure the Box Collider is set to **Is Trigger**.
@@ -169,7 +169,7 @@ Many of these behaviors rely on **math functions** to create smooth, repeating, 
 In this section, we’ll explore several fun examples that show how simple scripts and math can add atmosphere, interactivity, and personality to your Unity projects. Each example demonstrates a different way to animate or respond to the world using the Light component.
 
 ## 💡 Ease In-Out Light
-In the previous example our Trigger simply turned the light on or off. But what if we wanted the light to slowly come on as the player stayed within the trigger. This can be done dyanmically chaining the **intensity** of the light. 
+In the previous example, our Trigger simply turned the light on or off. But what if we wanted the light to slowly come on as the player stayed within the trigger? This can be done dynamically by chaining the **intensity** of the light. 
 
 ```csharp
 
@@ -259,7 +259,7 @@ The `OnTriggerStay()` method is **called continuously every frame as long as the
 
 The `Mathf.MoveTowards()` method **moves a value at a constant speed toward a target**, ensuring it reaches the target without overshooting. It takes three parameters:  
 - The **current value** of the light
-- The **target value** (i.e, ligth maxium intensity)
+- The **target value** (i.e, light maximum intensity)
 - The **maximum amount the value can change per frame** (represented by `_easeInSpeed` and `_easeOutSpeed`)  
 
 Multiplying this by `Time.deltaTime` makes the transition **frame-rate independent**.
@@ -324,17 +324,17 @@ public class FlickeringLight : MonoBehaviour
 ### Breakdown of `Flicker()`
 To create a flickering effect, the light’s intensity needs to increase and decrease over time. Using completely random values would make the effect look harsh and erratic, like the light is flashing instead of flickering. To achieve a smoother, more natural variation, we can use `Mathf.PerlinNoise()`, a Unity function that generates smooth pseudo-random values. Unlike pure randomness, Perlin noise produces gentle waves where values gradually rise and fall, resulting in a more organic motion often used for effects like fire, clouds, or terrain.
 
-In our case, our first value is `Time.time`, the number of seconds since the game started, multipled by a flickerSpeed value controls how quickly we move through the noise pattern. The second parameter (0f) simply represents the Y-coordinate of the noise function, which we keep constant since we only need one dimension. The result is a smoothly oscillating number between 0 and 1, perfect for adjusting the light’s intensity in a natural, flickering way.
+In our case, our first value is `Time.time`, the number of seconds since the game started, multiplied by a flickerSpeed value controls how quickly we move through the noise pattern. The second parameter (0f) simply represents the Y-coordinate of the noise function, which we keep constant since we only need one dimension. The result is a smoothly oscillating number between 0 and 1, perfect for adjusting the light’s intensity in a natural, flickering way.
 
-The `Mathf.PerlinNoise()` method **returns a value between 0 and 1**. That’s fine for some uses, but it only gives us positive values,  meaning the flicker would only ever increase from a base intensity, not dip below it. By multiply the result by 2 and then subtract 1, we remap the range from **[0, 1]** to **[-1, 1]**. This symmetrical range lets the intensity fluctuate above and below a midpoint, creating a more balanced and natural variation.
+The `Mathf.PerlinNoise()` method **returns a value between 0 and 1**. That’s fine for some uses, but it only gives us positive values,  meaning the flicker would only ever increase from a base intensity, not dip below it. By multiplying the result by 2 and then subtracting 1, we remap the range from **[0, 1]** to **[-1, 1]**. This symmetrical range lets the intensity fluctuate above and below a midpoint, creating a more balanced and natural variation.
 
 The light’s intensity is then set to the `_baseIntensity`, the value of intensity defined on the Light component, plus the product of `noise * flickerAmount`, which adds or subtracts subtle variation from it.
 
 ### 🚨 Creating Plusing Light
-The flicker light can easily be changed into a smooth **plusing light**, like for damage, energy, or magical effects. Instead of randomply chaining intensity with `Mathf.PerlinNoise()`, we can set a prefectly smooth and perditable motion with `Mathf.Sin()`.
+The flicker light can easily be changed into a smooth **pulsing light**, like for damage, energy, or magical effects. Instead of randomly chaining intensity with `Mathf.PerlinNoise()`, we can set a perfectly smooth and periodic motion with `Mathf.Sin()`.
 
 ```csharp
-  //Pluse the light Intensity
+  //Pulse the light Intensity
   private void Pluse()
   {
         // Smoothly oscillate the light’s intensity in a rhythmic pattern
@@ -353,7 +353,7 @@ The `Mathf.Sin()` method produces a smooth, repeating wave between **-1 and 1**.
 > Unity provides several ways to track time, each useful in different situations:
 > - `Time.timeScale` : a Unity property that controls the speed at which time progresses in the game. It essentially scales how fast everything that depends on `Time.time` or `Time.deltaTime` updates.
 > - `Time.time` : The total number of seconds since the game started. It includes any time scaling (like slowing down the game with `Time.timeScale`). This is commonly used for continuous animations, like cycling light colors or oscillating intensity.
-> - `Time.unscaledTime` : Similar to `Time.time`, but ignores `Time.timeScale`. Use this when you want something to animate or progress even if the game is paused or slowed, such as UI effects or background lights.
+> - `Time.unscaledTime` : Similar to `Time.time`, but ignores `Time.timeScale`. Use this when you want something to animate or progress, even if the game is paused or slowed, such as UI effects or background lights.
 > - `Time.deltaTime` : The time (in seconds) since the last frame. This is typically used to make motion or changes frame-rate independent, e.g., moving objects smoothly or interpolating values per frame.
 > - `Time.unscaledDeltaTime` : Like `Time.deltaTime`, but ignores time scaling, useful for smooth motion in UI or effects during slow motion or pause.
 >   
@@ -435,3 +435,4 @@ We’ve also explored several math functions that allow us to **create smooth, r
 
 --- 
 << Return to Lesson Contents | Continue to Camera tutorial >>
+
