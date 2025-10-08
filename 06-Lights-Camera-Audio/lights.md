@@ -169,14 +169,14 @@ Many of these behaviors rely on **math functions** to create smooth, repeating, 
 In this section, we’ll explore several fun examples that show how simple scripts and math can add atmosphere, interactivity, and personality to your Unity projects. Each example demonstrates a different way to animate or respond to the world using the Light component.
 
 ## 💡 Ease In-Out Light
-In the previous example, our Trigger simply turned the light on or off. But what if we wanted the light to slowly come on as the player stayed within the trigger? This can be done dynamically by chaining the **intensity** of the light. 
+In the previous example, our Trigger simply turned the light on or off. But what if we wanted the light to slowly come on as the player remains inside the trigger area? This can be done dynamically by chaining the **intensity** of the light. 
 
 ```csharp
 
 public class TriggerEaseLight : MonoBehaviour
 {
     [SerializeField]
-    [Tooltip("Light to Toggle on/off")]
+    [Tooltip("Light to toggle on/off")]
     private Light _light;
 
     [SerializeField]
@@ -184,67 +184,80 @@ public class TriggerEaseLight : MonoBehaviour
     private float _maxIntensity = 50f;
 
     [SerializeField]
-    [Tooltip("Speed of the ease-in")]
+    [Tooltip("Speed of the ease-in (when player enters)")]
     private float _easeInSpeed = 20f;
 
     [SerializeField]
-    [Tooltip("Speed of the ease-out")]
+    [Tooltip("Speed of the ease-out (when player exits)")]
     private float _easeOutSpeed = 40f;
+
+    // Flag for whether the player is inside the trigger
+    private bool _isInsideTrigger = false;
 
     private void Awake()
     {
-        // Start with the light turned off and intensity 0
+        // Start with the light turned off and intensity at 0
         _light.enabled = false;
         _light.intensity = 0f;
+    }
 
-    }//end Awake()
+    private void Update()
+    {
+        // Only process easing if the light is enabled
+        if (_light.enabled)
+        {
+            EaseLightIntensity();
+
+        }//end if (_light.enabled)
+
+    }//end Update()
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            // Turn light on
-            _light.enabled = true; 
+            // Player entered the trigger
+            _isInsideTrigger = true;
+
+            // Turn light on so Update() can fade it in
+            _light.enabled = true;
 
         }//end if(Player)
 
     }//end OnTriggerEnter()
 
-
-    private void OnTriggerStay(Collider other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            // Gradually increase intensity while player stays
-            _light.intensity = Mathf.MoveTowards(_light.intensity, _maxIntensity, _easeInSpeed * Time.deltaTime);
-
-        }//end if(Player)
-
-    }//end OnTriggerStay()
-
     private void OnTriggerExit(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            // Gradually decrease intensity after leaving
-            StartCoroutine(EaseOut());
+            // Player exited the trigger
+            _isInsideTrigger = false;
 
         }//end if(Player)
 
-    }//end OnTriggerExity()
+    }//end OnTriggerExit()
 
-    private IEnumerator EaseOut()
+    /// <summary>
+    /// Gradually increases or decreases the light's intensity based on whether
+    /// the player is inside the trigger. Disables the light when fully faded out.
+    /// </summary>
+    private void EaseLightIntensity()
     {
-        while (_light.intensity > 0f)
+        // Determine target intensity and appropriate easing speed
+        float targetIntensity = _isInsideTrigger ? _maxIntensity : 0f;
+        float easeSpeed = _isInsideTrigger ? _easeInSpeed : _easeOutSpeed;
+
+        // Gradually move intensity towards the target value
+        _light.intensity = Mathf.MoveTowards(_light.intensity, targetIntensity, easeSpeed * Time.deltaTime);
+
+        // Disable the light if it's fully faded out to save resources
+        if (_light.intensity == 0f)
         {
-            _light.intensity = Mathf.MoveTowards(_light.intensity, 0f, _easeOutSpeed * Time.deltaTime);
-            yield return null;
+            _light.enabled = false;
 
-        }//end while
+        }//end if (_light.intensity == 0f)
 
-        _light.enabled = false;
-
-    }//end EaseOut()
+    }//end EaseLightIntensity()
 
 }//end TriggerEaseLight
 
@@ -254,18 +267,21 @@ public class TriggerEaseLight : MonoBehaviour
 The `_maxIntensity` value represents the brightest the light can reach. While the player remains inside the trigger, the light’s intensity gradually rises toward this maximum value.
 
 The `_easeInSpeed` and `_easeOutSpeed` values control **how quickly the light brightens or dims**. Larger values produce faster transitions, while smaller values create slower, smoother changes.
+The `_isInsideTrigger` flag is a simple boolean that keeps track of whether the player is currently inside the trigger area.
+- `OnTriggerEnter()` sets `_isInsideTrigger = true`
+- `OnTriggerExit()` sets `_isInsideTrigger = false`
 
-The `OnTriggerStay()` method is **called continuously every frame as long as the player stays within the trigger**. This allows the light to gradually **ease in** using `Mathf.MoveTowards()`.
+`OnTriggerEnter()` also enables the light. The `Update()` method checks if the light is enabled, and if so, calls `EaseLightIntensity()`. This method gradually increases or decreases the light's intensity based on the `_isInsideTrigger` flag. Once the intensity reaches zero, the light is disabled to save resources.
 
-The `Mathf.MoveTowards()` method **moves a value at a constant speed toward a target**, ensuring it reaches the target without overshooting. It takes three parameters:  
+The `EaseLightIneensity()` method calls the `Mathf.MoveTowards()` method to create the smooth transition. This method moves a **value at a constant speed toward a target**, ensuring it reaches the target without overshooting. It takes three parameters:
 - The **current value** of the light
-- The **target value** (i.e, light maximum intensity)
+- The **target value** (e.g., light maximum intensity or 0f for off)
 - The **maximum amount the value can change per frame** (represented by `_easeInSpeed` and `_easeOutSpeed`)  
 
 Multiplying this by `Time.deltaTime` makes the transition **frame-rate independent**.
 
-Since `OnTriggerExit()` is **called only once when the player leaves the trigger**, a **coroutine** is used to create a gradual **ease-out**. This coroutine also uses `Mathf.MoveTowards()`, but sets the **target value to zero**. Once the intensity reaches zero, the light is turned off by setting `_light.enabled = false`.
-
+> [!IMPORTANT]
+> We use the `_isInsideTrigger` flag to track whether the player is inside the trigger instead of relying on `OnTriggerStay()`. This is because **`OnTriggerStay()` is only called on physics updates**, which can be less frequent than frame updates and may result in choppy transitions. By using the flag and handling the easing in `Update()`, we can smoothly fade the light in and out every frame, and continue the fade even after the player leaves the trigger.
 
 ---
 
@@ -435,4 +451,5 @@ We’ve also explored several math functions that allow us to **create smooth, r
 
 --- 
 << Return to Lesson Contents | Continue to Camera tutorial >>
+
 
