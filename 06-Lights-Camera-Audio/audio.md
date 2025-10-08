@@ -257,6 +257,79 @@ Instead of changing the AudioSource in the Inspector each time, we can store mul
 
 ---
 
+## Fading Audio In and Out
+There are times when you want audio to gradually fade in or out, for example, when a player enters or exits a trigger area. This demonstrates how to dynamically control audio volume over time. The functionality should be placed on the GameObject with the trigger, such as a boss room. For instance, when the player enters the room, the music can fade in to build tension, and fade out when they leave.
+
+```csharp
+public class BossRoom: MonoBehaviour
+{
+    [Header("Audio Settings")]
+
+    [SerializeField, Tooltip("Speed at which volume fades in/out (per second)")]
+    private float _fadeSpeed = 0.5f;
+
+    private AudioSource _audioSource;
+
+    // Tracks whether the player is currently inside the trigger
+    private bool _playerInRoom = false;
+
+    private void Update()
+    {
+        //If the audio source is playing fade music 
+        if(_audioSource.isPlaying)
+        {
+            FadeAudio();
+        }
+
+    }//end Update()
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            _isPlayerInside = true;
+
+            // Start playing the music if it isn’t already
+            if (!_audioSource.isPlaying)
+            {
+                _audioSource.Play();
+            }
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            _isPlayerInside = false;
+        }
+    }
+
+    /// <summary>
+    /// Gradually fades audio in and out when the player enters or exits a trigger area.
+    /// </summary>
+    
+    private void FadeAudio()
+    {
+        // Determine the target volume based on player presence
+        float targetVolume = _playerInRoom ? 1f : 0f;
+
+        // Smoothly move the current volume toward the target volume
+        _musicSource.volume = Mathf.MoveTowards(_audioSource.volume, targetVolume, _fadeSpeed * Time.deltaTime);
+
+        // Stop the audio if the player leaves and the volume reaches zero
+        if (!_playerInRoom && _audioSource.volume == 0f && _audioSource.isPlaying)
+        {
+            _audioSource.Stop();
+
+        }//end if
+    }///end FadeAudio()
+
+}//end FadeMusic()
+
+
+```
+
 
 
 
