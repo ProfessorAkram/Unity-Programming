@@ -173,7 +173,7 @@ In the previous example, our Trigger simply turned the light on or off. But what
 
 ```csharp
 
-public class TriggerEaseLight : MonoBehaviour
+public class EaseLightTrigger : MonoBehaviour
 {
     [SerializeField]
     [Tooltip("Light to toggle on/off")]
@@ -259,11 +259,11 @@ public class TriggerEaseLight : MonoBehaviour
 
     }//end EaseLightIntensity()
 
-}//end TriggerEaseLight
+}//end EaseLightTrigger
 
 ```
 
-### Breakdown of `TriggerEaseLight`
+### Breakdown of `EaseLightTrigger`
 The `_maxIntensity` value represents the brightest the light can reach. While the player remains inside the trigger, the light’s intensity gradually rises toward this maximum value.
 
 The `_easeInSpeed` and `_easeOutSpeed` values control **how quickly the light brightens or dims**. Larger values produce faster transitions, while smaller values create slower, smoother changes.
@@ -450,6 +450,8 @@ Lights are highly versatile, and with a little creativity, you can design entire
 We’ve also explored several math functions that allow us to **create smooth, rhythmic, or procedural changes in intensity and color**, giving your lights personality and interactivity beyond simple on/off behavior.
 
 --- 
+
 << Return to Lesson Contents | Continue to Camera tutorial >>
+
 
 
