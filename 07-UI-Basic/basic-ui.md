@@ -1,16 +1,14 @@
 # Unity UI Basics
 
-The **User Interface (UI)** in Unity is a special layer that displays information and provides ways for the player to interact with your game. Common examples include health bars, score counters, buttons, and menus.
+The **User Interface (UI)** in Unity is a special layer that displays information and allows players to interact with your game. Common examples include health bars, score counters, buttons, and menus. Unity provides three UI systems: **UI Toolkit**, **uGUI**, and **IMGUI**. This lesson focuses on uGUI, a legacy, GameObject-based UI system that uses GameObjects and components to create, arrange, and style UI elements directly in the Scene and Game views.
 
-When you create a new UI element (for example, by going to GameObject → UI → Button), Unity automatically creates two things if they don’t already exist:
+When you create a new UI element, Unity automatically creates two things if they don’t already exist:
 - **Canvas** – the root object that holds your UI.
 - **EventSystem** – the component that listens for and handles user input like mouse clicks, touch events, and key presses.
 
----
-
-## Unity Event System
-The **EventSystem** uses something called a **Graphic Raycaster**. This Raycaster sends an invisible ray from the pointer (like a mouse or touch position) into the Canvas.
-When that ray **“hits”** a UI element, it triggers an **event**, such as `OnClick()` on a Button.
+> [!NOTE]
+> A scene can have **multiple Canvases** to organize different UI groups (like HUD, menus, or popups).
+> However, **only one Event System per scene is needed**, as it can handle input for all UI elements across all canvases.
 
 ---
 
@@ -131,4 +129,109 @@ The position fields displayed depend on the anchor configuration:
 
 Normally, changing anchor or pivot values automatically adjusts position to keep the element in place. If you want to move anchors without Unity compensating, enable **Raw Edit Mode**. This allows you to freely adjust anchors and pivots, though it may visually move or resize the element.
 
+---
+
+## UI Visual Components
+
+Unity’s UI system includes several visual components that allow you to display information and create interactive interfaces. These components are all designed to work inside a Canvas, and each has its own set of properties and uses. By combining them, you can build menus, HUDs, overlays, and other graphical interfaces.
+
+Below is a quick reference of the main UI visual components:
+| Component               | Purpose / Description                                                                                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Text**                | Displays text in the UI. Allows setting font, size, style, alignment, overflow, and auto-sizing (Best Fit).             |
+| **Image**               | Displays a sprite. Supports Simple, Sliced (with 9-slicing), Tiled, or Filled render modes. Can apply color, material, and “Set Native Size” to match the sprite’s original dimensions. |
+| **Raw Image**           | Displays a texture directly (without borders or slicing). Use when you need a texture not compatible with the Image component.                                                          |
+| **Mask**                | Restricts child elements to the shape of the parent. Children outside the mask are hidden. The mask itself is not visible.                                                              |
+| **Effects**             | Adds visual modifications like Drop Shadow or Outline to Text or Image components. Useful for improving readability and visual style.                                                   |
+
+These components can be combined and customized to create rich, interactive user interfaces. Later, you’ll learn how to layer these elements, apply anchors and pivots, and handle user input through the Event System.
+
+> [!NOTE]
+> By default, all text components in Unity use **TextMesh Pro (TMP)** for high-quality text rendering and advanced styling options. TMP must be imported into your project. When you add your first text element to the Canvas, a TMP Import dialog will appear, prompting you to **Import TMP Essentials**.
+
+---
+## Interaction Components
+
+Unity’s UI system includes **interaction components** that allow players to interact with your game through mouse, touch, keyboard, or controller input. Unlike visual components, these elements are **not visible** on their own and must be paired with one or more visual components (such as Button or Image) to function correctly.
+
+Most interaction components share some common functionality:
+- They are **Selectables**, meaning they include built-in support for visual transitions between states like **Normal**, **Highlighted**, **Pressed**, and **Disabled**.
+- They support **navigation** between other selectable components using keyboard or controller input.
+- Each component has one or more **UnityEvents** that are triggered when the user interacts with it. Unity automatically handles any exceptions thrown by code attached to these events.
+
+| Component                     | Purpose / Description                                                                                                                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Button**                    | A clickable component that triggers an **OnClick** UnityEvent when pressed. Often paired with an Image for visuals.                                                                               |
+| **Toggle**                    | A switch that can be turned **on** or **off**. Includes an **OnValueChanged** UnityEvent. Can display a checkmark to indicate state.                                                              |
+| **Toggle Group**              | Groups multiple Toggles so only one can be active at a time. Selecting one automatically deselects the others.                                                                                    |
+| **Slider**                    | Allows the user to select a **numeric value** within a range by dragging a handle. Can be horizontal or vertical. Fires an **OnValueChanged** UnityEvent when adjusted.                           |
+| **Scrollbar**                 | Similar to a Slider but typically used to navigate content in a **Scroll Rect**. The **Size** property controls the handle’s proportion relative to content. Fires **OnValueChanged** when moved. |
+| **Dropdown**                  | Displays a list of selectable options, each with text and optionally an image. Fires **OnValueChanged** when the selected option changes.                                                         |
+| **Input Field**               | Makes a Text element editable by the user. Fires UnityEvents when the text changes and when editing ends.                                                                                         |
+| **Scroll Rect (Scroll View)** | Provides a scrollable area for large content. Often used with a **Mask** to limit visible content and optional **Scrollbars** for navigation.                                                     |
+
+--- 
+
+## Unity Event System
+
+The **Event System** in Unity is responsible for handling input events from the mouse, keyboard, touch, or controllers and sending them to the appropriate objects in your scene.
+
+Think of it as a **manager** that connects user actions to the UI or other interactive objects.
+
+Key Roles of the Event System:
+- Keeps track of which **GameObject is currently selected**
+- Determines which **Input Module** is active
+- Handles **raycasting** to figure out what the pointer is over
+- Updates all input modules as needed
+
+### Input Modules
+Input Modules define **how input is handled**. They:
+- Detect user input (mouse, keyboard, touch)
+- Track the current state of interactions
+- Send events to objects in the scene
+
+Only one Input Module can be active at a time. They are always attached to the same GameObject as the Event System.
+
+### Raycasters
+Raycasters help determine **what the pointer is pointing at**. Different types exist for different kinds of objects:
+- Graphic Raycaster – for UI elements
+- Physics 2D Raycaster – for 2D physics objects
+- Physics Raycaster – for 3D physics objects
+
+Raycasters work with Input Modules to detect which objects the user is interacting with. Non-UI objects can also receive events if they have a script that implements an event interface, such as `IPointerClickHandler` or `IPointerEnterHandler`.
+
+--- 
+
+## Attaching Events to Interaction Components
+
+Once the **Event System** is in place, you can make UI components respond to player input by connecting their **UnityEvents** to your scripts. This is how Buttons, Toggles, Sliders, and other interactive components perform actions in your game.
+
+Each interaction component has one or more **event fields** in the Inspector (for example, **OnClick** for a Button). To use these events:
+1. **Assign a GameObject** that has the script containing the method you want to call.
+2. **Select the method** from the dropdown list of public functions in that script.
+
+Additional event types include: 
+
+| Component  | Main UnityEvent            |
+| ---------- | -------------------------- |
+| Button     | OnClick                    |
+| Toggle     | OnValueChanged             |
+| Slider     | OnValueChanged             |
+| InputField | OnValueChanged / OnEndEdit |
+| Dropdown   | OnValueChanged             |
+
+
+### UI Interaction Logic
+The game object that has the script with the method for the UI element should be placed on a class specficially for UI Interaction. 
+For example, suppose we are desiging a main menu. The **Canvas** itself can be renamed as **Main Menu** and a `MainMenu` class can be attached to it. The `MainMenu` class might also inlcude a method `PlayGame()`. 
+
+In order for the **Play button** start the game when clicked:
+- Drag the GameObject with the MainMenu script (i.e., the **Canvas** named **MainMenu**) into the Button’s **OnClick field**.
+- Select `MainMenu` > `PlayGame()` from the method dropdown.
+
+Now, whenever the player clicks the Button, the `PlayGame()` method is executed.
+
+This approach allows you to link UI interactions to your game logic without writing extra input-handling code.
+
+---
 
