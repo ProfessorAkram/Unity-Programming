@@ -5,11 +5,11 @@ Audio in Unity is **essential for creating atmosphere, providing feedback, and g
 
 Unity has several audio components, each with specific purposes:
 
-| Component          | Description                                                                            | Best Use Case                                                 |
-| ------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| **Audio Source**   | Plays an audio clip in the scene. Can be 2D or 3D (spatialized).                       | Footsteps, background music, sound effects.                   |
-| **Audio Listener** | Captures audio in the scene. Usually attached to the main camera.                      | Required for any sound to be heard.                           |
-| **Audio Mixer**    | Allows grouping of audio sources for shared control over volume, effects, and routing. | Managing music vs. SFX, applying effects to multiple sources. |
+| Component          | Description                                                                            | 
+| ------------------ | -------------------------------------------------------------------------------------- |
+| **Audio Source**   | Plays an audio clip in the scene. Can be 2D or 3D (spatialized).                       | 
+| **Audio Listener** | Captures audio in the scene. Usually attached to the main camera.                      | 
+| **Audio Mixer**    | Allows grouping of audio sources for shared control over volume, effects, and routing. | 
 
 > [!WARNING]
 > Always have **one Audio Listener** in the scene. Multiple listeners can cause strange audio behavior.
@@ -330,8 +330,37 @@ public class BossRoom: MonoBehaviour
 
 ```
 
+### Breakdown of `BossRoom`
+The `_fadeSpeed` values control **how quickly the audio volume rises and falls**. Larger values produce faster transitions, while smaller values create slower, smoother changes.
 
+The `_playerInRoom` flag is a simple boolean that keeps track of whether the player is currently inside the trigger area.
+- `OnTriggerEnter()` sets `_playerInRoom = true`
+- `OnTriggerExit()` sets `_playerInRoom = false`
 
+`OnTriggerEnter()` also calls `Play()` on the audio source. The `Update()` method checks if the audio source `isPlaying`, and if so, calls `FadeAudio()`. This method gradually increases or decreases the audio volume based on the `_playerInRoom` flag. Once the volume reaches zero, the audio source is stopped using `Stop()`.
 
+The `FadeAudio()` method calls the **`Mathf.MoveTowards()`** method to create the smooth transition. This method moves a **value at a constant speed toward a target**, ensuring it reaches the target without overshooting. It takes three parameters:
+- The **current value** of the audio volume
+- The **target value** (e.g., maximum 1f or minimum 0f)
+- The **maximum amount the value can change per frame** (controlled by `_fadeSpeed`)  
+    - Multiplying this by `Time.deltaTime` makes the transition **frame-rate independent**.
 
+The `FadeAudio()` method also ensures the **audio stops only after it has fully faded out**, rather than cutting off immediately **when the player leaves the room**. By waiting until `_audioSource.volume` reaches `0f`, the fade-out feels smooth and natural. The `isPlaying` check prevents `Stop()` from being called on an audio source that is already stopped.
 
+----
+
+# 🎉 New Achievement: Lighting
+
+These are just a few ways you can control and enhance audio through scripting. Audio behaviors can be attached to the objects that produce sound or to managers that control sound globally.
+Sound adds depth, emotion, and atmosphere to your game, and with a bit of creativity, you can design dynamic audio systems, such as:
+
+- Ambient soundscapes that fade as players move between areas
+- Music that intensifies during battles or boss encounters
+- Environmental sounds that react to weather or time of day
+- Interactive sound effects that respond to player actions or physics events
+
+Mastering audio scripting helps bring your worlds to life, turning simple gameplay into immersive experiences.
+
+---
+
+<< Return to Camera turoial
