@@ -56,6 +56,9 @@ _✅ Commonly used for in-world displays like control panels or holograms (also 
 > [!TIP]
 > While editing UI elements, you may also want to **switch the Scene view to 2D mode** (toggle the 2D button in the Scene view toolbar). This flattens the view, making it much easier to align and position your UI elements precisely on the Canvas.
 
+### Canvas Panel
+A **Panel** is a UI element that lives under a Canvas and is used to organize and group other UI elements. For example, you might use a Panel to contain all the buttons for a main menu, or to group a health bar and score display in the HUD.
+
 --- 
 ## Basic UI Layout
 The layout of your UI determines how elements are positioned, sized, and scaled within the **Canvas**. Every UI element’s position is defined relative to its parent, meaning that changes to a parent object (like resizing a panel) can affect how its children are displayed.
@@ -234,4 +237,5 @@ Now, whenever the player clicks the Button, the `PlayGame()` method is executed.
 This approach allows you to link UI interactions to your game logic without writing extra input-handling code.
 
 ---
+
 
