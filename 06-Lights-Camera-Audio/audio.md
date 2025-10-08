@@ -349,7 +349,7 @@ The `FadeAudio()` method also ensures the **audio stops only after it has fully 
 
 ----
 
-# 🎉 New Achievement: Lighting
+# 🎉 New Achievement: Audio
 
 These are just a few ways you can control and enhance audio through scripting. Audio behaviors can be attached to the objects that produce sound or to managers that control sound globally.
 Sound adds depth, emotion, and atmosphere to your game, and with a bit of creativity, you can design dynamic audio systems, such as:
