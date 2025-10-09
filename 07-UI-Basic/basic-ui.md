@@ -238,4 +238,67 @@ This approach allows you to link UI interactions to your game logic without writ
 
 ---
 
+# UI Asset Naming in Unity
+Organized and consistent naming of UI elements in Unity is essential for maintaining a clean hierarchy, making it easier to navigate, and improving communication with other team members. Following a clear naming convention also simplifies scripting and reduces confusion between objects in your scene.
 
+## Naming the Canvas
+
+The Canvas is the root for all UI elements, so its name should describe what the canvas contains, not the fact that it is a Canvas. This avoids confusion with game objects in the scene. 
+Examples:
+- A Canvas holding the main menu:
+  ```
+  Main Menu
+  ```
+
+- A Canvas for the inventory layout:
+  ```
+  Inventory UI
+  
+  ```
+
+- A Canvas for the HUD:
+  ```
+  HUD
+  ```
+
+> [!NOTE]
+> The `Inventory UI` is so named to differenate an Inventory game object from the **UI** component.
+
+---
+
+## Prefix Rules for UI Elements
+
+UI elements under a Canvas should use consistent prefixes to indicate their type. This makes it easier to identify elements at a glance. 
+Common prefixes include:
+
+| UI Element | Prefix | Example                       |
+| ---------- | ------ | ----------------------------- |
+| Panel      | `pnl`  | `pnlMainMenu`, `pnlInventory` |
+| Button     | `btn`  | `btnStart`, `btnExit`         |
+| Text       | `txt`  | `txtScore`, `txtHealth`       |
+| Image      | `img`  | `imgBackground`, `imgIcon`    |
+| Slider     | `sld`  | `sldVolume`, `sldHealth`      |
+| Toggle     | `tgl`  | `tglMute`, `tglFullscreen`    |
+| InputField | `inp`  | `inpUsername`, `inpChat`      |
+
+### Rules for Prefix Usage:
+1. Always start the object name with the prefix.
+2. Follow the prefix with a descriptive name using PascalCase.
+3. Keep names clear and concise, reflecting the object’s purpose in the UI.
+4. Avoid using spaces or special characters in the object name (underscores _ are optional if necessary).
+
+---
+## Example Hierarchy
+
+A clean, well-named hierarchy for a main menu Canvas might look like this:
+```
+Main Menu (Canvas)
+ ├─ pnlBackground
+ ├─ pnlButtons
+ │   ├─ btnStart
+ │   ├─ btnOptions
+ │   └─ btnExit
+ ├─ txtTitle
+ └─ imgLogo
+```
+Using this convention makes it easy to understand the structure and purpose of each element, even at a glance.
