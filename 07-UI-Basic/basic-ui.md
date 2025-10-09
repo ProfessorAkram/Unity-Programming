@@ -135,7 +135,7 @@ A **Panel** is a UI element that lives under a Canvas and is used to organize an
 
 Besides grouping elements, panels can also control layout and alignment of their child elements using layout components. These components make it easy to automatically position, size, and space UI elements consistently.
 
-## Common Alignment and Layout Components
+### Common Alignment and Layout Components
 
 - **Horizontal Layout Group**
 Aligns child elements in a horizontal row. Options allow you to control spacing, padding, and whether children expand to fill the available width.
@@ -324,4 +324,5 @@ Main Menu (Canvas)
          └─ btnExit
 ```
 Using this convention makes it easy to understand the structure and purpose of each element, even at a glance.
+
 
