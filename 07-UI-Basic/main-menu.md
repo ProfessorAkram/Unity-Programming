@@ -32,7 +32,7 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 
 ![Create UI Panel](imgs/unity-UI-Panel.png)
    
-3. Rename it ``.
+3. Rename it `pnl`.
 4. Panels are containers for organizing UI elements and can also serve as a background.  
    - Set the color of the panel to your choice.
    - Make sure to adjust the alpha setting for an opaque, solid background color
@@ -55,7 +55,7 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 
 ## 4. Add Buttons
 
-### Start Button
+### Play Button
 
 1. Right-click `MainMenu` → `UI > Button - TextMeshPro`.
 2. Rename the button `btn_Play`.
@@ -84,5 +84,6 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 
 - Save your scene.
 - Later, attach scripts to the buttons to handle functionality like starting the game or exiting.
+
 
 
