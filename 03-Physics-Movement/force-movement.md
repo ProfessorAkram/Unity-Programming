@@ -92,7 +92,7 @@ $$
 \vec{d} = \vec{v}_{\text{current}} \cdot \text{FixedDeltaTime} + \frac{1}{2} \vec{a} \cdot (\text{FixedDeltaTime})^2
 $$
 
-![Velocity over time is linear; Distance over time is quadratic](../imgs/velocity-distance-graph.png)
+![Velocity over time is linear; Distance over time is quadratic](imgs/velocity-distance-graph.png)
 
 Because `FixedDeltaTime` is small, velocity and position change gradually rather than instantly. This is why objects **accelerate smoothly**, giving movement a natural, lifelike feel.
 
