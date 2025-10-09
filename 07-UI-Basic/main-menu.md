@@ -15,7 +15,10 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 2. Rename the Canvas to `MenuCanvas`.
 3. In the **Scene** window, click the **2D** button to switch to 2D view.
 4. With `MenuCanvas` selected, check the **Canvas Scaler** component in the **Inspector**.  
-   - Leave it at default for now or set **Scale With Screen Size** for responsive UI.
+   - Set it to **Scale With Screen Size** for responsive UI.
+   - Set the refernce resolution to 1920 X 1080
+   
+
 
 ---
 
@@ -24,7 +27,8 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 1. Right-click `MenuCanvas` → `UI > Panel`.
 2. Rename it `pnl_Background`.
 3. Panels are containers for organizing UI elements and can also serve as a background.  
-   - You can leave the color as default for now.
+   - Set the color of the panel to your choose.
+   - Make sure to adjust the alpha setting for an opaque, solid background color
 
 ---
 
@@ -70,3 +74,4 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 
 - Save your scene.
 - Later, attach scripts to the buttons to handle functionality like starting the game or exiting.
+
