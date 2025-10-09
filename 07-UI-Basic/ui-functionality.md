@@ -153,3 +153,8 @@ In the editor hit the play button and test  the buttons:
 > If the level doesn’t load when the **Play** button is pressed, make sure the **scene has been added** to the Build Settings.
 
 This setup gives you a central script for menu functionality and a clean workflow for connecting UI buttons to game actions.
+
+---
+
+
+**[<< Return Main Menu tutorial](main-menu.md)**

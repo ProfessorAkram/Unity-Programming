@@ -87,3 +87,5 @@ This tutorial will guide you through creating a simple main menu in Unity using 
 
 ---
 
+
+**[<< Return Basic UI Lesson](basic-ui.md)** | **[Continue to Handling UI Functionality tutorial >>](ui-functionality.md)**

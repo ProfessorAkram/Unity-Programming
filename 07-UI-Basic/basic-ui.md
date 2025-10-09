@@ -326,3 +326,6 @@ Main Menu (Canvas)
 Using this convention makes it easy to understand the structure and purpose of each element, even at a glance.
 
 
+---
+
+**[<< Return Lesson Contents](unity-uGUI.md)** | **[Continue to Main Menu tutorial >>](main-menu.md)**
