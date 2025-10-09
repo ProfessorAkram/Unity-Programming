@@ -56,9 +56,6 @@ _✅ Commonly used for in-world displays like control panels or holograms (also 
 > [!TIP]
 > While editing UI elements, you may also want to **switch the Scene view to 2D mode** (toggle the 2D button in the Scene view toolbar). This flattens the view, making it much easier to align and position your UI elements precisely on the Canvas.
 
-### Canvas Panel
-A **Panel** is a UI element that lives under a Canvas and is used to organize and group other UI elements. For example, you might use a Panel to contain all the buttons for a main menu, or to group a health bar and score display in the HUD.
-
 --- 
 ## Basic UI Layout
 The layout of your UI determines how elements are positioned, sized, and scaled within the **Canvas**. Every UI element’s position is defined relative to its parent, meaning that changes to a parent object (like resizing a panel) can affect how its children are displayed.
@@ -131,6 +128,31 @@ The position fields displayed depend on the anchor configuration:
 - When anchors are separated, the fields change to **Left**, **Right**, **Top**, and **Bottom**, which define padding between the element and its parent’s edges.
 
 Normally, changing anchor or pivot values automatically adjusts position to keep the element in place. If you want to move anchors without Unity compensating, enable **Raw Edit Mode**. This allows you to freely adjust anchors and pivots, though it may visually move or resize the element.
+
+---
+## UI Panel
+A **Panel** is a UI element that lives under a Canvas and is used to organize and group other UI elements. For example, you might use a Panel to contain all the buttons for a main menu, or to group a health bar and score display in the HUD.
+
+Besides grouping elements, panels can also control layout and alignment of their child elements using layout components. These components make it easy to automatically position, size, and space UI elements consistently.
+
+## Common Alignment and Layout Components
+
+- **Horizontal Layout Group**
+Aligns child elements in a horizontal row. Options allow you to control spacing, padding, and whether children expand to fill the available width.
+
+- **Vertical Layout Group**
+Aligns child elements in a vertical column. You can adjust spacing, padding, and child alignment similarly to the horizontal layout group.
+
+- **Grid Layout Group**
+Arranges child elements in a uniform grid with defined cell sizes. Useful for inventories, skill trees, or button menus.
+
+- **Content Size Fitter**
+Automatically resizes the panel based on its children’s size. You can control horizontal and vertical fitting modes, such as Preferred Size or Min Size.
+
+- **Layout Element**
+Applied to individual child elements to override layout group behavior, such as setting fixed width, height, or flexible sizing.
+
+Using these components, a panel can not only group elements visually, but also maintain consistent alignment and spacing, making your UI scalable and easier to manage.
 
 ---
 
@@ -293,12 +315,13 @@ Common prefixes include:
 A clean, well-named hierarchy for a main menu Canvas might look like this:
 ```
 Main Menu (Canvas)
- ├─ pnlBackground
- ├─ pnlButtons
- │   ├─ btnStart
- │   ├─ btnOptions
- │   └─ btnExit
- ├─ txtTitle
- └─ imgLogo
+ └─ pnlBackground
+     ├─ txtTitle
+     ├─ imgLogo
+     └─ pnlButtons
+         ├─ btnStart
+         ├─ btnOptions
+         └─ btnExit
 ```
 Using this convention makes it easy to understand the structure and purpose of each element, even at a glance.
+
