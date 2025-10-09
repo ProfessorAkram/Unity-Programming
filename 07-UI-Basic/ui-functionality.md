@@ -113,8 +113,8 @@ Since `Application.Quit()` is ignored in the Editor, we can add an `#if UNITY_ED
 
 ```csharp
 
-     // Loads the first level of the game
-       public void PlayGame()
+     // Quits the game application
+       public void ExitGame()
        {
             #if UNITY_EDITOR
                 // Stop play mode in the Unity Editor
@@ -124,10 +124,32 @@ Since `Application.Quit()` is ignored in the Editor, we can add an `#if UNITY_ED
                 Application.Quit();
             #endif
 
-       }//end PlayGame()
+       }//end ExitGame()
 ```
 
 > [!IMPORTANT]
 > **Always include a method to exit the game in every game build.**
-
 ---
+
+## Connecting Buttons to the Script
+With the script complete we now need to set up our UI buttons to call the correct method. 
+
+1. Select the button in the Hierarchy.
+2. In the Inspector, scroll down to the Button (Script) component and find the OnClick() section.
+   - Click the + button to add a new event.
+
+![Button OnClick Function](imgs/unity-ButtonOnClickObject.png)
+
+3. Drag the **MainMenu** (Canvas with the `MainMenu` script attached) into the object field.
+4. From the function dropdown choose `MainMenu` > `PlayGame()` for the Play button, or `MainMenu` > `ExitGame()` for the Exit button.
+
+
+## Testing the Menu
+In the editor hit the play button and test  the buttons: 
+- **PlayGame():** Click the button in Play mode. The game should load the first level scene.
+- **ExitGame():** In the Editor, the game will stop playing. In a built application, the game will quit.
+
+> [!WARNING]
+> If the level doesn’t load when the **Play** button is pressed, make sure the **scene has been added** to the Build Settings.
+
+This setup gives you a central script for menu functionality and a clean workflow for connecting UI buttons to game actions.
