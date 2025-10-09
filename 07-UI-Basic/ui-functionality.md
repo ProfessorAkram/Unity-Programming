@@ -2,6 +2,8 @@
 
 Once you have your UI set up, the next step is to make it functional. This involves creating a script to handle what happens when buttons are clicked and connecting it to your UI elements. In this tutorial, we’ll create a MainMenu script that controls the main menu behavior.
 
+## `MainMenu` Class
+
 #### 1. Creating the MainMenu Script
 
 1. In your Scripts folder, create a new C# script called `MainMenu`.
@@ -33,6 +35,12 @@ The script will include the following methods:
    }//end MainMenu
 
 ```
+
+3. Attach this class the **`MainMenu` canvas game object** in the scene
+
+---
+
+### `PlayGame()` Method 
 
 #### 2. Unity Scene Management
 
@@ -88,4 +96,38 @@ Example: Load scene with **scene name**
        }//end PlayGame()
 ```
 
+---
 
+### `ExitGame()` Method 
+The `ExitGame()` method is responsible for quitting the game when the player clicks the **Exit** or **Quit** button in the main menu.
+Because quitting behaves differently depending on whether the game is running in the **Unity Editor**, as a **standalone build**, or on the **web**, we use conditional code to handle each case properly.
+
+Unity provides a built-in method for closing applications: `Application.Quit()`.
+When called, this method shuts down the running player application. However, its behavior varies depending on the platform:
+
+- **Ignored in the Editor:** `Application.Quit()` has no effect when running inside the Unity Editor; it only works in a built version of the game.
+- **Used in Embedded Contexts:** If Unity is running inside another application (for example, when using Unity as a Library), refer to the Unity as a Library documentation for details on handling quitting properly.
+- **Web Platform Behavior:** On web builds, `Application.Quit()` stops the **Unity Web Player** or **WebGL** runtime but does not close or reload the web page itself.
+
+Since `Application.Quit()` is ignored in the Editor, we can add an `#if UNITY_EDITOR` condition to simulate quitting during testing. Inside this condition, we check if the editor is currently in play mode using `UnityEditor.EditorApplication.isPlaying`, and then set it to false to stop play mode; effectively mimicking a game exit.
+
+```csharp
+
+     // Loads the first level of the game
+       public void PlayGame()
+       {
+            #if UNITY_EDITOR
+                // Stop play mode in the Unity Editor
+                UnityEditor.EditorApplication.isPlaying = false;
+            #else
+                // Quit the application when running as a built game
+                Application.Quit();
+            #endif
+
+       }//end PlayGame()
+```
+
+> [!IMPORTANT]
+> **Always include a method to exit the game in every game build.**
+
+---
