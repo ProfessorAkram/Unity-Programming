@@ -449,9 +449,8 @@ Lights are highly versatile, and with a little creativity, you can design entire
 
 We’ve also explored several math functions that allow us to **create smooth, rhythmic, or procedural changes in intensity and color**, giving your lights personality and interactivity beyond simple on/off behavior.
 
---- 
+---
 
-<< Return to Lesson Contents | Continue to Camera tutorial >>
-
+**[<< Return Lesson Contents](lights-camera-audio.md)** | **[Continue to Camera Lesson >>](camera.md)**
 
 

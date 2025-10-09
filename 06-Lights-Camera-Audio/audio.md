@@ -363,4 +363,4 @@ Mastering audio scripting helps bring your worlds to life, turning simple gamepl
 
 ---
 
-<< Return to Camera turoial
+**[<< Return to Camera Lesson ](camera.md)**
