@@ -6,12 +6,12 @@ Each lesson focuses on a key area of Unity development, introducing the underlyi
 
 ## 📘 Lesson Contents
 
-### [1. Transform Movement](02-Tansform-Movement/transform-movement.md)
+### [1. Transform Movement](02-Transform-Movement/transform-movement.md)
 Master object motion at its most fundamental level. Learn how to control position using the Transform component, apply frame-rate independent movement, refactor your scripts for clarity, and use in-editor tests to visualize behavior.
 
 ---
 
-### 2. [Physics Movement](03-Physics/Movement/physics-movement.md)
+### 2. [Physics Movement](03-Physics-Movement/physics-movement.md)
 Bring your scenes to life with realistic motion. Explore Unity’s physics engine, harness Rigidbody components, and experiment with velocity and forces to simulate weight, momentum, and dynamic interactions.
 
 ---
@@ -21,15 +21,15 @@ Make your games responsive and interactive. Build action maps with Unity’s New
 
 ---
 
-### 4. [Colliders, Collisions, and Triggers](05-Physics-Interactions/physics-interfactions.md)
+### 4. [Colliders, Collisions, and Triggers](05-Physics-Interaction/physcis-interactions.md)
 Turn contact into interaction. Discover how Unity detects collisions between objects, how to trigger events, and how to use these systems to build mechanics like pickups, hazards, and environmental effects.
 
 ---
 
-### 5. [Lights, Cameras, and Audio](06-Lights-Cameras-Audio/lights-camera-audio.md)
+### 5. [Lights, Cameras, and Audio](06-Lights-Camera-Audio/lights-camera-audio.md)
 Shape the player’s experience through sight and sound. Adjust lighting for mood, position cameras for focus and storytelling, and layer audio for depth and immersion.
 
 ---
 
-### 6. [Unity UI (uGUI)](07-UI-Basics/unity-uGUI.md)
+### 6. [Unity UI (uGUI)](07-UI-Basic/unity-uGUI.md)
 Design interfaces players can see and touch. Use the Canvas system to create menus, HUDs, and buttons, and connect them to scripts for seamless player interaction and feedback.
