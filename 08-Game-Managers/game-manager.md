@@ -15,13 +15,13 @@ Game Managers (GMs) handle a variety of responsibilities, including **game state
 ### Game States
 **Game States** represent the various stages of a game, such as whether the game is running, paused, or over, and the transitions between these states. They are crucial in complex games where different systems (AI, UI, physics, etc.) need to interact in a specific sequence depending on the game's current state.
 
->[!WARRNING]
-> For this example our **GameManager** will handles game states by transitioning between different phases of gameplay, such as "Running," "Paused," and "Game Over." To manage these states, there are generally two common approaches: the **State Pattern** and the **Finite State Machine (FSM)**. In this case, we implement the **FSM** method, which uses a predefined set of states and transitions between them in a clear and structured manner. This is a simpler and more efficient way to manage state changes, especially in our game where the states are not complex enough to require fully encapsulated behaviors per state, as the State Pattern would offer.
+>[!WARNING]
+> For this example our **GameManager** will handles game states by transitioning between different phases of gameplay, such as "GamePlay," "Pause," and "Game Over." To manage these states, there are generally two common approaches: the **State Pattern** and the **Finite State Machine (FSM)**. In this case, we implement the **FSM** method, which uses a predefined set of states and transitions between them in a clear and structured manner. This is a simpler and more efficient way to manage state changes, especially in our game where the states are not complex enough to require fully encapsulated behaviors per state, as the State Pattern would offer.
 
 Before we start development on the GM we need to have a rough idea of the game states we will have in the game and what takes place during that state. While these may vary, the most common states include: 
 - **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
-- **Playing**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or loss.
-- **Paused**: When the game is paused, the GM freezes gameplay systems, disables player input for movement, and opens the pause menu.
+- **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or loss.
+- **Pause**: When the game is paused, the GM freezes gameplay systems, disables player input for movement, and opens the pause menu.
 - **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stopping all gameplay logic.
 
 ### Defining Game States
@@ -45,8 +45,8 @@ We can declare our **Enum** within the **GameManager** class or in its own separ
    public enum GameState
    {
        MainMenu,    // Game is in the main menu
-       Playing,     // Game is actively being played
-       Paused,      // Game is paused
+       GamePlay,     // Game is actively being played
+       Pause,      // Game is paused
        GameOver    // Game is over
    }
    ```
@@ -142,4 +142,5 @@ Now that we have created our GM class, we will return to Unity to actually apply
 In the inspector you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
 5. Press **Play** from the Unity Editor. In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**. The **`Console`** window should also display a message that outputs the GameManager and the object name (in this case "GameManager") that it is an instance of. These are all behaviors that were setup in the **`Singleton`** base class. 
 6. Exit **Play** mode and save the scene.
+
 
