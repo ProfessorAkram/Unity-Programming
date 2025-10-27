@@ -80,22 +80,17 @@ public class GameManager : Singleton<GameManager>
     // Start is called before the first frame update
     void Start()
     {
-        // Sets the game state to MainMenu at the start of the game.
-        CurrentState = GameState.MainMenu;
+        // Ghange the game state to the main menu
+        ChangeState(GameState.MainMenu);
     
     }//end Start()
 
-    // Update is called once per frame
-    void Update()
-    {
-        ManageGameState();
 
-    }//end Update 
 
     //Manages the logic for each game state 
     void ManageGameState(){
 
-        // Checks the current game state and perform the appropriate actions.
+        // Checks the current game state and performs the appropriate actions.
         switch (CurrentState)
         {
             case GameState.MainMenu:
@@ -132,9 +127,7 @@ public class GameManager : Singleton<GameManager>
 
 - **CurrentState (GameState)**: Holds the current state of the game (e.g., `MainMenu`, `Playing`, `Paused`, `GameOver`), determining which game logic to execute.
 
-- **Start Method**: Initializes the game by setting the `CurrentState` to `MainMenu` before the first frame update.
-
-- **Update Method**: Called once per frame, it invokes the `ManageGameState()` method to manage logic based on the current game state.
+- **Start Method**: Initializes the game by calling the `ChangeGameState` method and passing the `GameState.MainMenu` before the first frame update.
 
 - **ManageGameState Method**: Contains a `switch` statement that checks the `CurrentState` and executes the appropriate logic for each game state (e.g., `MainMenu`, `Playing`, `Paused`, `GameOver`).
 
@@ -149,3 +142,4 @@ Now that we have created our GM class, we will return to Unity to actually apply
 In the inspector you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
 5. Press **Play** from the Unity Editor. In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**. The **`Console`** window should also display a message that outputs the GameManager and the object name (in this case "GameManager") that it is an instance of. These are all behaviors that were setup in the **`Singleton`** base class. 
 6. Exit **Play** mode and save the scene.
+
