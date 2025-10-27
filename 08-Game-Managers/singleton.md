@@ -86,4 +86,45 @@ In our singleton base class add the following field:
 [SerlizedField]
 [ToolTip("Is the game object persistent through scenes.)]
 private bool _isPersistant = true;
+
 ```
+
+Next we will updated our `CheckForSingleton()` method to call method for persistance. 
+
+``` csharp
+    // Ensures that only one instance of the Singleton exists
+    void CheckForSingleton()
+    {
+        // If no instance exists, assign this instance
+        if (Instance == null)
+        {
+            Instance = this as T;
+    
+            CheckForPersistance();
+        }
+
+```
+
+Now we will create the `CheckForPersistance()` method: 
+
+```csharp
+    void CheckForPersitance()
+    {       
+        // Check if persistence is required
+        if (isPersistent)
+        {
+            // Detach from parent if there is one
+            if (transform.parent != null)
+            {
+                transform.SetParent(null);
+            }
+
+            // Mark this GameObject as not to be destroyed
+            DontDestroyOnLoad(gameObject);
+
+        }//end CheckForPersitance()
+```
+
+>[!NOTE]
+>The `DontDestroyOnLoad` method only works if the object is a root object in the scene (i.e., it has no parent). If your Singleton instance has a parent object, it will not persist as expected. To ensure persistence in such cases, you **must detach the object from its parent** before calling `DontDestroyOnLoad`, as we have done in the example above.
+
