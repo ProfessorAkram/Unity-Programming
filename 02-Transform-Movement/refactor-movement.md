@@ -628,7 +628,7 @@ public class MoveTransform : MonoBehaviour
     /// <param name="speed">The speed at which the object should move (optional).</param>
     public void Move(Vector3? direction = null, float? speed = null)
     {
-        // Resolve the effective values for this frame
+        // Use provided values if given; otherwise, fall back to current Direction and Speed.
         Vector3 moveDirection = direction ?? Direction;
         float moveSpeed = speed ?? Speed;
 
@@ -642,7 +642,8 @@ public class MoveTransform : MonoBehaviour
         // Flags the object as moving
         _isMoving = true;
 
-        // Move the GameObject using the resolved frame values
+        // Apply frame-rate–independent movement to the GameObject’s position
+       // using the resolved direction and speed values.
         transform.position += Speed * Time.deltaTime * Direction;
 
     }//end Move()
@@ -668,5 +669,6 @@ The `MoveTransform` component is only responsible for movement behavior, not con
 So what if you’re working with a team, and the controller isn’t built yet? How do you test your component without writing unnecessary extra code?
 
 ---
+
 
 **[<< Return to Basic Movement tutorial](basic-movement.md)** | **[Continue to Editor-Only Debugging tutorial >>](editor-only-debugging.md)**
