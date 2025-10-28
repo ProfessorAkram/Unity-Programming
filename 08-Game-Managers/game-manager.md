@@ -68,7 +68,6 @@ As mentioned earlier a GM is typically designed using a **Singleton Design Patte
 
 ```csharp showLineNumbers title="GameManager.cs"
 
-using CSG.General;
 using UnityEngine;
 
 // The GameManager class is derived from the Singleton pattern to ensure there is only one instance of it in the game.
@@ -142,5 +141,6 @@ Now that we have created our GM class, we will return to Unity to actually apply
 In the inspector you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
 5. Press **Play** from the Unity Editor. In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**. The **`Console`** window should also display a message that outputs the GameManager and the object name (in this case "GameManager") that it is an instance of. These are all behaviors that were setup in the **`Singleton`** base class. 
 6. Exit **Play** mode and save the scene.
+
 
 
