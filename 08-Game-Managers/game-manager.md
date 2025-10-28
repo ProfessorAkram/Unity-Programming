@@ -84,8 +84,11 @@ public class GameManager : Singleton<GameManager>
     
     }//end Start()
 
-    //Manages the logic for each game state 
-    void ManageGameState(){
+
+    /// <summary>
+    /// Executes logic for the current game state.
+    /// </summary>
+    private void ManageGameState(){
 
         // Checks the current game state and performs the appropriate actions.
         switch (CurrentState)
@@ -111,14 +114,17 @@ public class GameManager : Singleton<GameManager>
                 break;
         }//end  switch(CurrentState)
 
-    }//end ManageGameState
+    }//end ManageGameState()
 
- // Changes the current state to a new game state
+    /// <summary>
+    /// Changes the current game state and triggers corresponding logic.
+    /// </summary>
+    /// <param name="newState">The new game state to switch to.</param>
     public void ChangeGameState(GameState newState)
     {
         CurrentState = newState;
 
-    }//end ChangeState
+    }//end ChangeState()
 
 }//end GameManager
 
@@ -215,7 +221,100 @@ The debug output on our `OnTriggerEnter()` in the **Player** class and the `Mana
 >Another method to handle order of execution is to have a single entry point scene. Essentially, this means that the game starts with one main empty scene containing the **GameManager** and other global managers, such as a **SceneFlowManager**.
 >All other gameplay, menu, or level scenes are then **loaded additively** on top of this entry scene. This ensures all managers are awake and ready to communicate before any other objects attempt to access them, avoiding timing and dependency issues.
 
+---
 
+## Common GameManager Logic
+As mentioned previously, the **GameManager** primarily oversees the **flow of the game**, managing **game states** and controlling **major systems**. 
+
+**In a small-scale game**, this typically includes:
+- **Starting and stopping gameplay** – initiating or ending a level.
+- **Displaying menus or overlays** – such as main menu, pause, or results screens.
+- **Pausing and resuming the game** – controlling game time and input.
+- **Switching scenes** – loading and unloading levels, menus, or results screens.
+- **Handling game over or level completion** – triggering transitions to results or next levels.
+- **Basic global rules or systems** – things that don’t belong to a single object but affect the entire game.
+
+Let's take a look at how we would implment some of these behaviors. 
+
+### Switching Scenes with GameStates 
+```csharp
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+// The GameManager class is derived from the Singleton pattern to ensure there is only one instance of it in the game.
+public class GameManager : Singleton<GameManager>
+{
+    // Reference to the current state of the game
+    public GameState CurrentState;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        // Change the game state to the main menu
+        ChangeGameState(GameState.MainMenu);
+    
+    }//end Start()
+
+
+    /// <summary>
+    /// Executes logic for the current game state.
+    /// </summary>
+    private void ManageGameState(){
+
+        // Checks the current game state and performs the appropriate actions.
+        switch (CurrentState)
+        {
+            case GameState.MainMenu:
+                // MainMenu Logic
+                Debug.Log("Game State: MainMenu");
+                SceneManager.LoadScene("MainMenu");
+                break;
+
+            case GameState.GamePlay:
+                // Playing Logic
+                Debug.Log("Game State: GamePlay");
+                SceneManager.LoadScene("Level01");
+                break;
+
+            case GameState.Pause:
+                // Paused Logic
+                Debug.Log("Game State: Pause");
+                SceneManager.LoadScene("PauseMenu", LoadSceneMode.Additive);
+                break;
+
+            case GameState.GameOver:
+                // GameOver logic
+                Debug.Log("Game State: GameOver");
+                SceneManager.LoadScene("GameOver");
+                break;
+        }//end  switch(CurrentState)
+
+    }//end ManageGameState()
+
+    /// <summary>
+    /// Changes the current game state and triggers corresponding logic.
+    /// </summary>
+    /// <param name="newState">The new game state to switch to.</param>
+    public void ChangeGameState(GameState newState)
+    {
+        CurrentState = newState;
+
+    }//end ChangeState()
+
+}//end GameManager
+
+```
+#### How It Works
+- **using UnityEngine.SceneManagment** provides access to the **SceneMangment** namespaces for loading scenes in Unity.
+-  Each game state corresponds to a specific scene or menu.
+- **Additive** loading is used for overlays like the pause menu, so gameplay continues underneath.
+
+>[!TIP]
+>For states like **GamePlay**, you might eventually want to create a `NextLevel()` method to determine which scene to load. In a simple one-level game, directly loading **"Level01"** works fine. However, as your game grows, separating the level-loading logic into its own method makes the code cleaner and easier to maintain.
+>
+>If there are many scenes to manage, delegating this responsibility to a dedicated **SceneFlowManager** can help keep the project organized and prevent the **GameManager** from becoming overloaded.
+
+### Manging Pause State 
 
 
 
