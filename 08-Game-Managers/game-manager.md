@@ -476,12 +476,13 @@ case GameState.GamePlay:
 >
 > Additional logic would be required to:
 > - **Load the next level** when a goal is reached.
-> - **Reset the current level **after a player loss or restart.
+> - **Reset the current level** after a player loss or restart.
 > - **Detect when there are no more levels** and switch to the GameOver state.
 >   
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
