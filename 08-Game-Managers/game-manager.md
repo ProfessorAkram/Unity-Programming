@@ -316,6 +316,44 @@ public class GameManager : Singleton<GameManager>
 
 ### Manging Pause State 
 
+Another common function is implementing a **pause menu** in the game. Pausing typically involves opening a menu and stopping gameplay.
 
+In our current setup, the `"PauseMenu"` scene is loaded **additively**, meaning it appears on top of the current gameplay scene. However, this alone **does not actually pause the game**. Additionally, if we were to rely only on switching states in the `ManageGameState()` method, returning from pause to gameplay could unintentionally reload the current level, which is not what we want.
+
+To handle this correctly, we need to:
+- Avoid reloading the current gameplay scene when toggling pause.
+- Stop or resume gameplay, usually by adjusting `Time.timeScale`.
+- Manage additive loading/unloading of the pause menu as needed.
+
+#### 1. Create a TogglePause() method
+
+```csharp
+/// <summary>
+/// Toggles between GamePlay and Pause states.
+/// Freezes or resumes gameplay using Time.timeScale
+/// and loads/unloads the additive pause menu.
+/// </summary>
+public void TogglePause()
+{
+    if (CurrentState == GameState.GamePlay)
+    {
+        ChangeGameState(GameState.Pause);
+        // Freeze gameplay 
+        Time.timeScale = 0f; 
+    }
+    else if (CurrentState == GameState.Pause)
+    {
+        ChangeGameState(GameState.GamePlay);
+        // Resume gameplay 
+        Time.timeScale = 1f; 
+
+        // Unload the pause menu
+        SceneManager.UnloadSceneAsync("PauseMenu");
+
+   }//end if(GamePlay/Pause)
+
+}//end TogglePause()
+
+```
 
 
