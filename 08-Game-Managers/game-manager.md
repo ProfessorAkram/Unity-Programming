@@ -356,4 +356,97 @@ public void TogglePause()
 
 ```
 
+#### How it Works
+- Checks the **current game state** to determine whether to pause or resume gameplay.
+   - If the game is running (`GamePlay`), it switches to Pause and freezes the game by setting Time.timeScale = 0.
+   - If the game is already paused (`Pause`), it switches back to GamePlay and resumes time (Time.timeScale = 1).
+- Uses **additive scene loading** for the pause menu, allowing the menu to overlay the gameplay without unloading the level.
+- **Unloads the pause men**u when returning to gameplay, ensuring the overlay is removed.
+- Keeps pause logic **isolated** so other game state changes don’t unintentionally affect the time scale or UI.
+
+---
+> ### ⏱️ TIME.timeScale
+> In Unity, `Time.timeScale` is a **global multiplier** for how fast time progresses in the game. It affects **all time-dependent systems**, including:
+> - `Update()` loops (for movement, animations, etc.)
+> - Physics simulations (`Rigidbody` updates)
+> - Coroutines that use `WaitForSeconds`
+>
+> **Key points:**
+> - `Time.timeScale = 1` → Normal time progression (default).
+> - `Time.timeScale = 0` → Time is frozen, effectively pausing the game.
+> - `Time.timeScale < 1` → Time moves slower than normal (slow motion).
+> - `Time.timeScale > 1` → Time moves faster than normal (fast forward).
+>
+> **Important Notes:**
+> UI elements and input are **not automatically affected by `Time.timeScale`**. This is why pause menus can still respond to clicks even when the game is frozen.
+> Coroutines using `WaitForSecondsRealtime` are **unaffected by timeScale**, while `WaitForSeconds` is scaled by it.
+
+---
+
+#### 2. Handle Game Level Loads
+When returning from a **Pause** state back to **GamePlay**, we want to **avoid reloading the current level**. Reloading unnecessarily could reset the player’s progress or interrupt gameplay.
+
+One way to handle this is by tracking whether the gameplay has already started.
+- If it has, we simply resume gameplay without reloading the level.
+- If not, we load the first level only once.
+
+#
+
+1. Create a flag to check if gameplay has started
+```csharp
+      // Flag to tracks whether gameplay has started
+      private void _hasGameplayStarted() = false; 
+```
+
+2. Create a StartGameplay() method
+
+```csharp
+
+/// <summary>
+/// Starts gameplay by loading the first level and setting the gameplay flag.
+/// This method should only be called the first time the game enters the GamePlay state.
+/// </summary>
+private void StartGameplay()
+{
+    //Load the first game level
+    SceneManager.LoadScene("Level01");
+
+    //Set the started flag to true
+    _hasGameplayStarted = true;
+
+}//end StartGameplay()
+
+```
+
+3. Update the GamePlay case in the state switch
+
+```csharp
+case GameState.GamePlay:
+    // Gameplay logic
+    Debug.Log("Game State: GamePlay");
+
+    // Load the first level only if gameplay hasn't started
+    if (!_hasGameplayStarted)
+    {
+        StartGameplay();
+    }
+
+    break;
+```
+
+#### How it Works
+- The `_hasGameplayStarted` flag prevents unnecessary reloading when switching between Pause and GamePlay.
+- `StartGameplay()` loads the first level and marks the flag as true.
+- Once gameplay is active, returning from Pause simply resumes the game instead of restarting the scene.
+
+>[!CAUTION]
+> This simple setup only handles loading the first gameplay level.
+>
+> Additional logic would be required to:
+> - **Load the next level** when a goal is reached.
+> - **Reset the current level **after a player loss or restart.
+> - **Detect when there are no more levels** and switch to the GameOver state.
+>   
+> These features can be added later through a `NextLevel()` or **SceneFlowManager**.
+
 
