@@ -72,8 +72,63 @@ public class SceneFlowManager : Singleton<SceneFlowManager>
     [SerializeField] private List<string> fullMenus = new List<string>;
 
 
-}
+}//end SceneFlowManager
 
 ```
 
+<!--
+1. Create a list for all game levles
+2. Create a counter for indexing the game levles
+
+```csharp
+//List of all playable game levels (scenes)
+private List<string> _gamelevels = new List<string> { "Level01", "Level02" };
+
+//Index coutner for gameplay levels
+private int _currentLevelIndex = 0;
+```
+
+3. Create a `LoadGameLevel()` method
+
+```csharp
+
+/// <summary>
+/// Loads the current gameplay level without reloading it unnecessarily.
+/// </summary>
+private void LoadGameLevel()
+{
+    // Check if the current level index is within the range of available levels
+    if (_currentLevelIndex < _gamelevels.Count)
+    {
+        // Determine which level to load based on the current index
+        string levelToLoad = _gameplaylevels[_currentLevelIndex];
+
+        // Get a reference to the currently active scene
+        Scene activeScene = SceneManager.GetActiveScene();
+
+        // Only load if it's not already the active level
+        if (activeScene.name != levelToLoad)
+        {
+            SceneManager.LoadScene(levelToLoad);
+
+         }//end if(activeScene)
+
+    }//end if (_currentLevelIndex < _gamelevels.Count)
+
+}//end LoadGameLevel()
+
+```
+#### How it works
+- Checks the **current level index** to ensure it is within the range of available game levels.
+  - Prevents trying to load a non-existent level if the player has completed all levels.
+- Determines the **level to load** based on the `_currentLevelIndex` in `_gamelevels`.
+- Gets a reference to the currently **active scene**.
+  - This prevents reloading the same level unnecessarily, which could reset player progress or gameplay.
+- Compares the active scene name to the level to load.
+  - Only loads the scene if it is not already active.
+- Uses **SceneManager.LoadScene()** to load the new level when required.
+
+
+4. 
+-->
 
