@@ -1,6 +1,8 @@
 # Game Manager
 The **GameManager (GM)** is a key component of a game's architecture. It's responsible for overseeing the **flow of the game**, managing **game states**, controlling **major systems**, and maintaining **global functionality**. Often seen as the **central controller** of a game, the GM ensures that gameplay is cohesive and functions smoothly.  It plays such a **central role** in orchestrating game logic that it is considered a **core game system**. Nearly all games, from simple prototypes to large-scale productions, rely on some form of **GameManager** to **coordinate gameplay mechanics and state transitions**, making it essential to the game's overall structure. 
 
+#
+
 >[!NOTE]
 >In many cases Game Manager (GM) will implement a **Singleton Pattern** to maintain a single point of control over the game's flow and systems. This ensures that no matter where you are in the game, whether in a scene, menu, or during gameplay, the GM remains the same instance, providing a consistent and unified experience.  
 >
@@ -9,14 +11,22 @@ The **GameManager (GM)** is a key component of a game's architecture. It's respo
 > 2. **Consistency**: Prevents multiple instances with conflicting states, ensuring game-wide synchronization.  
 > 3. **Efficiency**: Reduces memory usage and improves performance by eliminating redundant instances.
 
+# 
+
 ## Game Manager Functionality
 Game Managers (GMs) handle a variety of responsibilities, including **game state management, system coordination, and global functionality**. While a GM may also manage elements like score tracking, scene transitions, or event handling, in this section, we will focus specifically on how it manages **game states** and ensures smooth transitions between them. To demonstrate how this works in practice, we will be building the GameManager for our example game *One Wild Night*.  
 
 ### Game States
 **Game States** represent the various stages of a game, such as whether the game is running, paused, or over, and the transitions between these states. They are crucial in complex games where different systems (AI, UI, physics, etc.) need to interact in a specific sequence depending on the game's current state.
 
+#
+
 >[!WARNING]
-> For this example our **GameManager** will handles game states by transitioning between different phases of gameplay, such as "GamePlay," "Pause," and "Game Over." To manage these states, there are generally two common approaches: the **State Pattern** and the **Finite State Machine (FSM)**. In this case, we implement the **FSM** method, which uses a predefined set of states and transitions between them in a clear and structured manner. This is a simpler and more efficient way to manage state changes, especially in our game where the states are not complex enough to require fully encapsulated behaviors per state, as the State Pattern would offer.
+> For this example our **GameManager** will handles game states by transitioning between different phases of gameplay, such as "GamePlay," "Pause," and "Game Over." To manage these states, there are generally two common approaches: the **State Pattern** and the **Finite State Machine (FSM)**.
+>
+>In this case, we implement the **FSM** method, which uses a predefined set of states and transitions between them in a clear and structured manner. This is a simpler and more efficient way to manage state changes, especially in our game where the states are not complex enough to require fully encapsulated behaviors per state, as the State Pattern would offer.
+
+#
 
 Before we start development on the GM we need to have a rough idea of the game states we will have in the game and what takes place during that state. While these may vary, the most common states include: 
 - **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
@@ -29,6 +39,8 @@ Before we start development on the GM we need to have a rough idea of the game s
 To manage the various phases of the game, we will define the **game states** as an **Enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states, such as "MainMenu," "Playing," "Paused," and "GameOver." Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
 
 We can declare our **Enum** within the **GameManager** class or in its own separate class file. To keep things modular and flexible, we will declare the **GameState Enum** in its own class, ensuring that each state is decoupled from the core logic of the **GameManager**.
+
+# 
 
 >[!TIP]
 > While we refer to **game states** in the plural, it's important to note that we're essentially defining a new **data type**, called **`GameState`** (singular), which will have multiple potential values,each representing a different phase of the game.
@@ -155,7 +167,7 @@ In the inspector you will see that the **`Is Persistent`** property. This proper
 
 ---
 
-## Implement the Player Call to GameManager
+## :hammer_and_wrench: Implement the Player Call to GameManager
 Before adding additional logic to the **GameManager**, it’s important to verify that state changes are being properly managed. One way to do this is by having the **Player** trigger an event that tells the **GameManager** to change states.
 
 While technically any object could communicate with the **GameManager**, it’s important to limit which objects do.
@@ -166,11 +178,15 @@ By limiting communcations with the **GameManager** we:
 In many instances the **Player** class is a natural point of interaction in the game. Most events that affect game state — reaching a goal, taking damage, or completing a level — originate from the player's actions.
 By restricting communication to objects like the Player, the GameManager remains responsible for managing states without becoming entangled with unnecessary object interactions.
 
+#
+
 #### 1. Add A Goal
  1. In the Unity Editor Hierarchy window
      - Add a trigger object in the scene (like a goal) 
      - Ensure it has a Collider and that it is set to **is trigger**
      - Tag this object as "Goal".
+   
+#
 
 #### 2. Update/Create the Player Class 
 1. Make the Player detect the trigger and tell the GameManager to change the state.
@@ -202,10 +218,14 @@ public class Player : MonoBehaviour
 
 }//end Player
 ```
+#
+
 >[!IMPORTANT]
 >The `_gameManager` reference is set in the `Start()` method of the **Player** class to ensure the **GameManager** instance is fully instantiated before the Player tries to access it.
 If you attempt to reference `GameManager.Instance` in `Awake()` or at declaration, there is a chance the **GameManager** has not yet been initialized, which could lead to null reference errors.
 Initializing in `Start()` helps avoid this issue.
+
+#
 
 Now, when the player collides with the goal, you will see messages in the console:
 
@@ -215,6 +235,8 @@ Game State: GameOver
 ```
 
 The debug output on our `OnTriggerEnter()` in the **Player** class and the `ManageGameState()` method in the **GameManager** confirms that the **GameManager** is working and that state changes are being triggered.
+
+#
 
 >[!TIP]
 > #### Use a Single Entry Point
@@ -236,7 +258,9 @@ As mentioned previously, the **GameManager** primarily oversees the **flow of th
 
 Let's take a look at how we would implment some of these behaviors. 
 
-### Switching Scenes with GameStates 
+---
+
+## :hammer_and_wrench: Switching Scenes with GameStates 
 ```csharp
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -309,12 +333,16 @@ public class GameManager : Singleton<GameManager>
 -  Each game state corresponds to a specific scene or menu.
 - **Additive** loading is used for overlays like the pause menu, so gameplay continues underneath.
 
+#
+
 >[!TIP]
 >For states like **GamePlay**, you might eventually want to create a `NextLevel()` method to determine which scene to load. In a simple one-level game, directly loading **"Level01"** works fine. However, as your game grows, separating the level-loading logic into its own method makes the code cleaner and easier to maintain.
 >
 >If there are many scenes to manage, delegating this responsibility to a dedicated **SceneFlowManager** can help keep the project organized and prevent the **GameManager** from becoming overloaded.
 
-### Manging Pause State 
+---
+
+## :hammer_and_wrench: Manging Pause State 
 
 Another common function is implementing a **pause menu** in the game. Pausing typically involves opening a menu and stopping gameplay.
 
@@ -325,6 +353,8 @@ To handle this correctly, we need to:
 - Stop or resume gameplay, usually by adjusting `Time.timeScale`.
 - Manage additive loading/unloading of the pause menu as needed.
 
+#
+ 
 #### 1. Create a TogglePause() method
 
 ```csharp
@@ -448,5 +478,7 @@ case GameState.GamePlay:
 > - **Detect when there are no more levels** and switch to the GameOver state.
 >   
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
+
+---
 
 
