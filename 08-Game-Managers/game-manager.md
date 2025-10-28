@@ -469,6 +469,8 @@ case GameState.GamePlay:
 - `StartGameplay()` loads the first level and marks the flag as true.
 - Once gameplay is active, returning from Pause simply resumes the game instead of restarting the scene.
 
+#
+
 >[!CAUTION]
 > This simple setup only handles loading the first gameplay level.
 >
@@ -480,5 +482,6 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
