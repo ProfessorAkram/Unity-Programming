@@ -79,8 +79,8 @@ public class GameManager : Singleton<GameManager>
     // Start is called before the first frame update
     void Start()
     {
-        // Ghange the game state to the main menu
-        ChangeState(GameState.MainMenu);
+        // Change the game state to the main menu
+        ChangeGameState(GameState.MainMenu);
     
     }//end Start()
 
@@ -92,25 +92,29 @@ public class GameManager : Singleton<GameManager>
         {
             case GameState.MainMenu:
                 // MainMenu Logic
+                Debug.Log("Game State: MainMenu");
                 break;
 
             case GameState.GamePlay:
                 // Playing Logic
+                Debug.Log("Game State: GamePlay");
                 break;
 
             case GameState.Pause:
                 // Paused Logic
+                Debug.Log("Game State: Pause");
                 break;
 
             case GameState.GameOver:
                 // GameOver logic
+                Debug.Log("Game State: GameOver");
                 break;
         }//end  switch(CurrentState)
 
     }//end ManageGameState
 
  // Changes the current state to a new game state
-    public void ChangeState(GameState newState)
+    public void ChangeGameState(GameState newState)
     {
         CurrentState = newState;
 
@@ -137,8 +141,80 @@ Now that we have created our GM class, we will return to Unity to actually apply
 3. Name the new empty game object **GameManager**
 4. Add the GameManager component (i.e. class) from the **`Project`** window to the **`GameManager`** game object. 
 In the inspector you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
-5. Press **Play** from the Unity Editor. In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**. The **`Console`** window should also display a message that outputs the GameManager and the object name (in this case "GameManager") that it is an instance of. These are all behaviors that were setup in the **`Singleton`** base class. 
-6. Exit **Play** mode and save the scene.
+5. Press **Play** from the Unity Editor.
+   - In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**.
+   - The **`Console`** window should also display the **debug message "Game State: MainMenu"**, which is the message for the **GameState.MainMenu** which we setup in the `Start()` mehtod.
+7. Exit **Play** mode and save the scene.
+
+
+---
+
+## Implement the Player Call to GameManager
+Before adding additional logic to the **GameManager**, it’s important to verify that state changes are being properly managed. One way to do this is by having the **Player** trigger an event that tells the **GameManager** to change states.
+
+While technically any object could communicate with the **GameManager**, it’s important to limit which objects do.
+By limiting communcations with the **GameManager** we: 
+- Reduce potential **conflicts and hidden dependencies**, because not every object is trying to control global state.
+- Maintain a **clean and logical line of communication**, making it **easier to track how and why state changes occur**.
+
+In many instances the **Player** class is a natural point of interaction in the game. Most events that affect game state — reaching a goal, taking damage, or completing a level — originate from the player's actions.
+By restricting communication to objects like the Player, the GameManager remains responsible for managing states without becoming entangled with unnecessary object interactions.
+
+#### 1. Add A Goal
+ 1. In the Unity Editor Hierarchy window
+     - Add a trigger object in the scene (like a goal) 
+     - Ensure it has a Collider and that it is set to **is trigger**
+     - Tag this object as "Goal".
+
+#### 2. Update/Create the Player Class 
+1. Make the Player detect the trigger and tell the GameManager to change the state.
+
+```csharp
+using UnityEngine;
+
+public class Player : MonoBehaviour
+{
+    private GameManager _gameManager;
+
+    void Start()
+    {
+        // Reference the GameManager Instance
+        _gameManager = GameManager.Instance;
+
+     }//end Start()
+
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Goal"))
+        {
+            Debug.Log("Goal reached! Changing game state...");
+            _gameManager.ChangeGameState(GameState.GameOver);
+        }//end if("Goal")
+
+    }//end OnTriggerEnter()
+
+}//end Player
+```
+>[!IMPORTANT]
+>The `_gameManager` reference is set in the `Start()` method of the **Player** class to ensure the **GameManager** instance is fully instantiated before the Player tries to access it.
+If you attempt to reference `GameManager.Instance` in `Awake()` or at declaration, there is a chance the **GameManager** has not yet been initialized, which could lead to null reference errors.
+Initializing in `Start()` helps avoid this issue.
+
+Now, when the player collides with the goal, you will see messages in the console:
+
+```
+Goal reached! Changing game state...
+Game State: GameOver
+```
+
+The debug output on our `OnTriggerEnter()` in the **Player** class and the `ManageGameState()` method in the **GameManager** confirms that the **GameManager** is working and that state changes are being triggered.
+
+>[!TIP]
+> #### Use a Single Entry Point
+>Another method to handle order of execution is to have a single entry point scene. Essentially, this means that the game starts with one main empty scene containing the **GameManager** and other global managers, such as a **SceneFlowManager**.
+>All other gameplay, menu, or level scenes are then **loaded additively** on top of this entry scene. This ensures all managers are awake and ready to communicate before any other objects attempt to access them, avoiding timing and dependency issues.
+
 
 
 
