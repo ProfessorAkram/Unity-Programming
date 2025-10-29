@@ -20,6 +20,55 @@ By keeping scene management separate from game state logic, your project becomes
 > Unity already has a class called **SceneManager** in **UnityEngine.SceneManagement**. Naming a custom script **SceneManager** will create conflicts and compiler errors.
 > To avoid any ambuity or conflicts we will name our scene manager, **SceneFlowManager** as this also implies that we are not only manging the different scenes but the flow (transition and sequencing) between the scenes.
 
+
+## Scene Dictionary
+When managing scenes in a game, especially one with **additive loading and overlays**. We need a **centralized way to reference all scenes** and beable to differnate  about each scene:
+1. **Layer** – is it a primary scene (main level, HUD, hub) or an overlay (Pause Menu, Inventory, Dialogue)?
+2. **Category** – is it a menu, gameplay level, cutscene, or hub?
+
+Instead of scattering scene names as strings throughout your code, we use a list of SceneEntry objects as a dictionary-like structure. Each SceneEntry holds the information about one scene: its name, layer, and category.
+
+Using a class as a dictionary is appropriate here because:
+
+It’s reference-based, so multiple parts of your code can reference the same scene entry without duplicating data.
+
+It can be mutable, allowing us to add or remove scenes from lists at runtime if needed.
+
+Unity can serialize it in the Inspector (with [System.Serializable]), so designers can edit the data once in the Inspector, without having to hardcode strings in scripts.
+
+This approach provides a single source of truth for all scenes and makes it easy to automate scene loading/unloading based on game state.
+```csharp
+// Enums at the top of the file
+public enum SceneLayer
+{
+    Primary,   // Main content: levels, HUD, hubs
+    Overlay    // Temporary overlays like Pause Menu
+}
+
+public enum SceneCategory
+{
+    Menu,
+    GameLevel,
+    Cutscene,
+    Hub,
+    Other
+}
+
+// SceneEntry class
+[System.Serializable]
+public class SceneEntry
+{
+    public string sceneName;        // Scene name
+    public SceneLayer layer;        // Primary or Overlay
+    public SceneCategory category;  // Menu, GameLevel, Cutscene, etc.
+}
+
+```
+Explain System.Serializable
+
+
+
+
 ### Implmenting the Singleton Pattern
 Just like our **GameManager** implments the **singleton pattern** so will our **SceneFlowManager**. This will ensure that there is ever only one instance of the **SceneFlowManager** throughout the entire game. 
 The **SceneFlowManager** will also need referece to all Unity's Scene Management libraries.
@@ -47,6 +96,36 @@ using UnityEngine.SceneManagement;
 
 public class SceneFlowManager : Singleton<SceneFlowManager>
 {
+
+    // Determines the “layer” of the scene
+    public enum SceneLayer
+    {
+        Primary,   // Main content: levels, persistent menus like HUD
+        Overlay    // Temporary overlays like Pause Menu, Inventory
+    }
+
+    // Determines the type/kind of the scene
+    public enum SceneCategory
+    {
+        Menu,
+        GameLevel,
+        Cutscene,
+        Hub,
+        Other
+    }
+
+    [System.Serializable]
+    [Tooltip("Dictionary of all scenes")]
+    public class SceneEntry
+    {
+        public string sceneName;         // Name of the scene
+        public SceneLayer layer;         // Primary or Overlay
+        public SceneCategory category;   // Menu, GameLevel, Cutscene, etc.
+    }
+
+
+
+
     [Header("Menu Scenes")]
     [SerializeField] private string _mainMenuScene = "MainMenu";
     [SerializeField] private string _pauseMenuScene = "PauseMenu";
@@ -54,14 +133,16 @@ public class SceneFlowManager : Singleton<SceneFlowManager>
     [SerializeField] private string _gameOverScene = "GameOver";
 
     [SerializeField]
-    [Tooltip("Menus that load on top of the current gameplay scene.")]
-    private List<string> additiveMenus = new List<string>;
+    [Tooltip("Temporary overlay scenes, such as Pause Menu. \nExcludes persistent overlays scenes like the HUD.")]
+    private List<string> _overlayScenes = new List<string>;
 
-    //List of currently loaded additive scenes
-    private List<string> _loadedAdditiveScenes = new List<string>();
+    // Main levels, HUD, menus that replace gameplay
+    private List<string> _primaryScenes = new List<string>();  
+
+    // Temporary overlays like Pause Menu
+    private List<string> _secondaryScenes = new List<string>(); 
 
     [Header("Gameplay Levels")]
-    
     [SerializeField]
     [Tooltip("List of all gameplay levels in the game.")]
     private List<string> _gameplayLevels = new List<string>();
@@ -75,7 +156,7 @@ public class SceneFlowManager : Singleton<SceneFlowManager>
 
 ```
 
-Handle Scene For State
+### Handle Scene For State
 
 ```csharp
 /// <summary>
@@ -88,9 +169,12 @@ Handle Scene For State
 /// </param>
 public void HandleSceneForState(GameState state)
 {
+    // Always clean up additive overlays first
+    UnloadAllOverlays();
+
     switch (state)
     {
-        case GameState.MainMenu:
+        case GameState.MainMenu
             LoadScene(mainMenuScene);
             break;
         case GameState.GamePlay:
@@ -106,6 +190,68 @@ public void HandleSceneForState(GameState state)
     
 }//end HandleSceneForState()
 
+```
+
+### Loading Scenes
+
+```csharp
+/// <summary>
+/// Loads a scene by name. 
+/// - If the scene is listed in _overlayScenes and is not already loaded, it loads additively and tracks it.
+/// - Otherwise, it loads the scene normally (replacing the current scene).
+/// Null or empty scene names are ignored.
+/// </summary>
+/// <param name="sceneName">The name of the scene to load.</param>
+private void LoadScene(string sceneName)
+{
+    if (string.IsNullOrEmpty(sceneName))
+    {
+        Debug.LogWarning("Attempted to load a scene with an empty or null name.");
+        return;
+    }
+
+    // Load temporary overlay scene additively if not already loaded
+    if (_overlayScenes.Contains(sceneName) && !_loadedOverlayScenes.Contains(sceneName))
+    {
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
+        _loadedOverlayScenes.Add(sceneName);
+        Debug.Log($"Loaded overlay scene additively: {sceneName}");
+    }
+    // Otherwise, load normally, will still be additive
+    else
+    {
+        SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
+        Debug.Log($"Loaded scene: {sceneName}");
+        
+    }//end if(_overlayScenes)
+    
+}//end LoadScene()
+```
+
+### Unload Overlay Scenes on State Change 
+Whenever there is a Game State change, any overlay scenes will need to be unloaded. 
+
+```csharp
+/// <summary>
+/// Unloads all currently loaded temporary overlay scenes (e.g., Pause Menu, Inventory)
+/// and clears the tracking list. Persistent overlay scenes like the HUD are not affected.
+/// </summary>
+private void UnloadAllOverlays()
+{
+    //For every overlay scene in loaded list
+    foreach (string overlay in _loadedOverlayScenes)
+    {
+        UnloadScene(overlay);
+        
+    }//end foreach
+
+    _loadedOverlayScenes.Clear();
+    
+}//end UnloadAllOverlays()
+
+```
+
+```csharp
 ```
 
 
@@ -204,6 +350,7 @@ private void LoadGameLevel()
 
 4. 
 -->
+
 
 
 
