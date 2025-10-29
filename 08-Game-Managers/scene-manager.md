@@ -47,34 +47,76 @@ using UnityEngine.SceneManagement;
 
 public class SceneFlowManager : Singleton<SceneFlowManager>
 {
-    [Header("Gameplay Levels")]
-
-    [SerializeField]
-    [Tooltip("List of all gameplay levels in the game.")]
-    private List<string> _gameplayLevels;
-
-    [Tooltip("Set to true if levels are linear; false if next level will be passed explicitly.")]
-    [SerializeField] private bool _levelsAreLinear = true;
-
-    private int currentLevelIndex = 0;
-
-    [Header("Additive Menu Scenes")]
+    [Header("Menu Scenes")]
+    [SerializeField] private string _mainMenuScene = "MainMenu";
+    [SerializeField] private string _pauseMenuScene = "PauseMenu";
+    [SerializeField] private string _hudMenuScene = "HUDMenu";
+    [SerializeField] private string _gameOverScene = "GameOver";
 
     [SerializeField]
     [Tooltip("Menus that load on top of the current gameplay scene.")]
     private List<string> additiveMenus = new List<string>;
 
-    private List<string> loadedAdditiveScenes = new List<string>();
-
-    [Header("Full Replacement Scenes")]
-
-    [Tooltip("Menus or hubs that replace gameplay completely.")]
-    [SerializeField] private List<string> fullMenus = new List<string>;
+    [Header("Gameplay Levels")]
+    
+    [SerializeField]
+    [Tooltip("List of all gameplay levels in the game.")]
+    private List<string> _gameplayLevels = new List<string>();
+    
+    [SerializeField]
+    [Tooltip("Set to true if levels are linear; false if next level will be passed explicitly.")]
+    [SerializeField] private bool _levelsAreLinear = true;
 
 
 }//end SceneFlowManager
 
 ```
+
+Handle Scene For State
+
+```csharp
+```
+
+
+Loading Game Level Scenes
+
+```csharp
+
+    /// <summary>
+    /// Loads the next level (if levels are linear).
+    /// </summary>
+    public void LoadNextLevel()
+    {
+        if (_gameplayLevels.Count == 0)
+        {
+            Debug.LogWarning("No gameplay levels defined in SceneFlowManager.");
+            return;
+            
+        }//end if (_gameplayLevels.Count == 0)
+
+        if (_levelsAreLinear)
+        {
+            _currentLevelIndex++;
+            if (_currentLevelIndex >= _gameplayLevels.Count)
+            {
+                Debug.Log("No more levels. Returning to Main Menu.");
+                LoadScene("MainMenu");
+                return;
+                
+            }//end if (_currentLevelIndex >= _gameplayLevels.Count)
+            
+        }//end if (_levelsAreLinear)
+
+        string nextLevel = _gameplayLevels[_currentLevelIndex];
+        SceneManager.LoadScene(nextLevel);
+
+    }//end LoadNextLevel()
+
+
+
+```
+
+
 
 <!--
 1. Create a list for all game levles
@@ -131,4 +173,5 @@ private void LoadGameLevel()
 
 4. 
 -->
+
 
