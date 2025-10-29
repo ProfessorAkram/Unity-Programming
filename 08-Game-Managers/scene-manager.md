@@ -39,7 +39,7 @@ public class SceneFlowManager : Singleton<SceneFlowManager>
 ---
 
 ## Managing Scenes
-The main responsiblity for our **SceneFlowManager** as the name implies is managing scenes. As, such we need to create a reference to all the different types of scenes we want managed. 
+The main responsibility for our **SceneFlowManager**, as the name implies, is managing scenes. As such, we need to create a reference to all the different types of scenes we want managed. 
 
 ```csharp
 using UnityEngine;
@@ -56,6 +56,9 @@ public class SceneFlowManager : Singleton<SceneFlowManager>
     [SerializeField]
     [Tooltip("Menus that load on top of the current gameplay scene.")]
     private List<string> additiveMenus = new List<string>;
+
+    //List of currently loaded additive scenes
+    private List<string> _loadedAdditiveScenes = new List<string>();
 
     [Header("Gameplay Levels")]
     
@@ -75,6 +78,34 @@ public class SceneFlowManager : Singleton<SceneFlowManager>
 Handle Scene For State
 
 ```csharp
+/// <summary>
+/// Determines and loads the appropriate scene based on the current GameState.
+/// This method is called by the GameManager whenever the game state changes.
+/// </summary>
+/// <param name="state">
+/// The current GameState value representing the phase of the game 
+/// (e.g., MainMenu, GamePlay, Pause, GameOver).
+/// </param>
+public void HandleSceneForState(GameState state)
+{
+    switch (state)
+    {
+        case GameState.MainMenu:
+            LoadScene(mainMenuScene);
+            break;
+        case GameState.GamePlay:
+            LoadLevel(currentLevelIndex);
+            break;
+        case GameState.Pause:
+            LoadScene(pauseMenuScene);
+            break;
+        case GameState.GameOver:
+            LoadScene(gameOverScene);
+            break;
+    }//end switch (state)
+    
+}//end HandleSceneForState()
+
 ```
 
 
@@ -173,5 +204,6 @@ private void LoadGameLevel()
 
 4. 
 -->
+
 
 
