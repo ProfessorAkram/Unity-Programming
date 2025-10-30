@@ -271,8 +271,17 @@ Rather than completely replacing the scene each time the player moves between me
 ### Single Point of Entry
 The **Bootstrap scene** serves as a **single point of entry** for the game, initializing the GameManager and other core systems before any gameplay begins. It is always loaded in the background and ensures everything is ready for the player. **We don’t need a “Bootstrap” GameState**, because GameStates represent what the player experiences, menus, gameplay, or game over; while the Bootstrap scene is purely infrastructure. Once initialization is complete, the GameManager immediately transitions to the first real GameState, so players never notice the Bootstrap scene.
 
+#
+
 >[!NOTE]
-> Using a Bootstrap scene as a single point of entry ensures that scripts like the Player can safely access the GameManager. Other options, such as lazy initialization or setting script execution order, achieve the same goal: guaranteeing that all core systems exist before anything tries to use them.
+> Using a Bootstrap scene as a single point of entry ensures that scripts like the Player can safely access the GameManager. Other options, such as **lazy initialization** or **setting script execution order**, achieve the same goal: guaranteeing that all core systems exist before anything tries to use them.
+
+#
+
+>[!NOTE]
+> **Lazy initalization** ensures safe access to objects by creating or assigning them only when they’re needed; not before. Best for secondary systems and not the core game loop. 
+
+#
 
 #### 1. Create a Bootstrap Scene
  1. In the Unity Editor Create a new scene named `Bootstrap`
@@ -335,13 +344,75 @@ Our first step is to create proper references to each of our scenes and a list f
    private string _currentScene;
    
    //List of all loaded scenes
-   private List<string> _loadedLevels = new List<string>();
+   private List<string> _loadedScenes = new List<string>();
 
 ```
+We have now created the primary fields for accessing and keeping track of all scenes in the game. 
 
-#### 2. Load Levels 
-This will load the level and add it to the list of loaded leveles.
-This will also check if it's not the current scene, if so return.  
+#### 2. Load and Unload Scenes
+While we could simply call the `SceneManagment.Load()` method in the `ManageGameState()` cases, if we add additional logic it will quickly get bloated. Especially if each case does the same thing, with different values. In this instance we not only want to load the scene, but also keep track of it in the `_loadedScenes` list.  Similarly we will need to create a method for unloading a scene when a new scene is loaded, as well as removing it from the `_loadedScenes` list.
+
+1. Create the `LoadedScene()` method that
+   - Loads the scene passed to it
+   - Adds that scene to the `_loadedScenes` list
+  
+```csharp
+/// <summary>
+/// Loads a scene additively and tracks it in the _loadedScenes list.
+/// Helps manage active scenes cleanly across different game states.
+/// </summary>
+/// <param name="sceneName">The name of the scene to load.</param>
+
+private void LoadScene(string sceneName)
+{
+    SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
+    
+    //Tracks loaded scenes
+    _loadedScenes.Add(sceneName); 
+    
+}//end LoadedScene()
+```
+# 
+
+2. Create the `UnloadedScene()` method that
+   - Set's a referene to teh actual scene
+     - Checks if the scene is loaded
+     - Unloads the scene
+   - Check if the scene is in the loaded scenes list
+     - Removes the scene from the `_loadedScenes` list
+  
+```csharp
+/// <summary>
+/// Unloads a single scene and removes it from the _loadedScenes list if present.
+/// </summary>
+/// <param name="sceneName">The name of the scene to unload.</param>
+private void UnloadScene(string sceneName)
+{
+    //Refrence to "this" scene being passed
+    Scene _thisScene = SceneManager.GetSceneByName(sceneName);
+
+    // Checks if "this" scene is loaded and uloads
+    if (scene.isLoaded)
+    {
+        SceneManager.UnloadSceneAsync(sceneName);
+
+    }//end if (scene.isLoaded)
+    
+
+    // Safely remove scene from list if it exists
+    if (_loadedScenes.Contains(sceneName))
+    {
+        _loadedScenes.Remove(sceneName);
+        
+    }if (_loadedScenes.Contains(sceneName))
+    
+}//end UnloadScene()
+```
+
+
+
+
+
 
 #### 2. Update ManageGameState()
 
@@ -562,6 +633,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
