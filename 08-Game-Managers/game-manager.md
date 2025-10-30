@@ -1,10 +1,10 @@
 # Game Manager
-The **GameManager (GM)** is a key component of a game's architecture. It's responsible for overseeing the **flow of the game**, managing **game states**, controlling **major systems**, and maintaining **global functionality**. Often seen as the **central controller** of a game, the GM ensures that gameplay is cohesive and functions smoothly.  It plays such a **central role** in orchestrating game logic that it is considered a **core game system**. Nearly all games, from simple prototypes to large-scale productions, rely on some form of **GameManager** to **coordinate gameplay mechanics and state transitions**, making it essential to the game's overall structure. 
+The **GameManager** is a key component of a game's architecture. It's responsible for overseeing the **flow of the game**, managing **game states**, controlling **major systems**, and maintaining **global functionality**. Often seen as the **central controller** of a game, the Game Manager ensures that gameplay is cohesive and functions smoothly.  It plays such a **central role** in orchestrating game logic that it is considered a **core game system**. Nearly all games, from simple prototypes to large-scale productions, rely on some form of **GameManager** to **coordinate gameplay mechanics and state transitions**, making it essential to the game's overall structure. 
 
 #
 
 >[!NOTE]
-> In many cases, Game Manager (GM) will implement a **Singleton Pattern** to maintain a single point of control over the game's flow and systems. This ensures that no matter where you are in the game, whether in a scene, menu, or during gameplay, the GM remains the same instance, providing a consistent and unified experience.  
+> In many cases, Game Manager will implement a **Singleton Pattern** to maintain a single point of control over the game's flow and systems. This ensures that no matter where you are in the game, whether in a scene, menu, or during gameplay, the GM remains the same instance, providing a consistent and unified experience.  
 >
 > **Why Use a Singleton for the Game Manager?**  
 > 1. **Global Access**: The GM needs to be easily accessible from UI, player input, AI, and other systems without manually passing references.  
@@ -13,18 +13,15 @@ The **GameManager (GM)** is a key component of a game's architecture. It's respo
 
 # 
 
-## Game Manager Functionality
-Game Managers (GMs) handle a variety of responsibilities, including **game state management, system coordination, and global functionality**. While a GM may also manage elements like score tracking, scene transitions, or event handling, in this section, we will focus specifically on how it manages **game states** and ensures smooth transitions between them. To demonstrate how this works in practice, we will be building the GameManager for our example game *One Wild Night*.  
+## Game States
+One of the core responsibilities of a Game Manager is **game state management**. GameStates define **what the game is doing right now**; for example, `MainMenu`, `GamePlay`, or `GameOver`. They represent mutually exclusive, player-visible modes. Systems like scoring, level progression, or UI updates are **not GameStates**; instead, they are **actions or systems that respond to the current state**.
 
-### Game States
-GameStates define **what the game is doing right now**; for example, `MainMenu`, `GamePlay`, or `GameOver`. They represent mutually exclusive, player-visible modes. Systems like scoring, level progression, or UI updates are **not GameStates**; instead, they are **actions or systems that respond to the current state**.
+For instance, the scoring system only updates during `GamePlay` and ignores input in other states. Similarly, level progression triggers only while the player is actively playing. By centralizing the current mode in a GameState, all other systems can **check the state and behave appropriately**, making the game logic easier to manage, more predictable, and scalable as new states are added.
 
-For instance, the scoring system only updates during `GamePlay` and ignores input on other states. Similarly, level progression triggers only while the player is actively playing. By centralizing the current mode in a GameState, all other systems can **check the state and behave appropriately**, making the game logic easier to manage, more predictable, and scalable as new states are added.
+### State Pattern vs Finite State Machine (FSM)
+Beyond **GameStates**, states are used in many other contexts in games. For example, a character could have states like `Idle`, `Walk`, `Run`, and `Jump`, while an AI NPC might have states such as `Patrol`, `Attack`, or `Sleep`. Whether managing individual object states or overarching game states, there are two common approaches: the **Finite State Machine (FSM)** and the **State Pattern**. 
 
-#### State Pattern vs Finite State Machine (FSM)
-Beyond **GameStates**, states are used in many other contexts in games. For example, a character could have states like `Idle`, `Walk`, `Run`, and `Jump`, while an AI NPC might have states such as `Patrol`, `Attack`, or `Sleep`. Whether managing individual object states or overarching game states, there are two common approaches: the Finite State Machine (FSM) and the State Pattern. 
-
-- **Finite State Machine (FSM):** is are predefined states, typically represented as an enum. Transitions between states are controlled in a centralized system, such as the GameManager or the object the states relate to. Each state triggers the relevant logic when entered, but the behavior is handled in one place.
+**Finite State Machine (FSM):** is are predefined states, typically represented as an enum. Transitions between states are controlled in a centralized system, such as the GameManager or the object the states relate to. Each state triggers the relevant logic when entered, but the behavior is handled in one place.
 
 **✅ Pros:**
 - Simple to implement and easy to read
@@ -35,7 +32,9 @@ Beyond **GameStates**, states are used in many other contexts in games. For exam
 - Can become cluttered if there are many states or complex behaviors
 - Less flexible for objects with unique, independent state logic
 
-- **State Pattern:** involves encapsulating each state as its own class with its own behavior and logic. Transitions between states are handled through methods within these state objects.
+# 
+
+**State Pattern:** involves encapsulating each state as its own class with its own behavior and logic. Transitions between states are handled through methods within these state objects.
 
 **✅ Pros:**
 - Very flexible and modular — each state can define its own behavior independently
@@ -47,13 +46,17 @@ Beyond **GameStates**, states are used in many other contexts in games. For exam
 - Can be overkill for simple games with only a few states
 - More classes and files to manage, which may confuse beginners
 
+#
+
 For our GameManager, we will be **implementing the FSM approach**. This approach is beginner-friendly, simple to implement, and ideal for small-scale prototype game projects. Using an FSM allows us to clearly manage state transitions, load and unload scenes, and control gameplay behavior without the extra complexity of creating separate classes for each state, as the State Pattern would require.
+
+#
 
 ### Defining Game States
 
 Since we are implementing an **FSM** for our **game states**, we will want to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
 
-Before we start development on the GM we need to have a rough idea of the game states we will have in the game and what takes place during that state. While these may vary, the most **common core game states** include: 
+Before we start development on the Game Manager, we need to have a rough idea of the game states we will have in the game and what takes place during each state. While these may vary, the most **common core game states** include: 
 - **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
 - **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or a loss.
 - **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stop all gameplay logic.
@@ -63,15 +66,16 @@ We can declare our **Enum** within the **GameManager** class or in its own separ
 # 
 
 >[!TIP]
-> While we refer to **game states** in the plural, it's important to note that we're essentially defining a new **data type**, called **`GameState`** (singular), which will have multiple potential values,each representing a different phase of the game.
+> While we refer to **game states** in the plural, it's important to note that we're essentially defining a new **data type**, called **`GameState`** (singular), which will have multiple potential values, each representing a different phase of the game.
 ---
 
 ## :hammer_and_wrench: Creating Game States
 
 1.	Open the **example project** in Unity
-2.	In the **`project window`** under **`Assets > Scripts > Managers`** right-click and create a new script.
-3.	Name this new script **`GameState`** and open the file in your preferred IDE. 
-4. Clear any default class information and instead define the **`enum`** as shown below.
+2.	In the **`project panel`** under **`Assets > Scripts >`** right-click and create a new folder named **`Managers`**
+3.	In the newly created **`Managers`** folder, right-click and **create a new script**.
+4.	Name this new script **`GameState`** and open the file in your preferred IDE. 
+5. Clear any default class information and instead define the **`enum`** as shown below.
 
 ```csharp
    public enum GameState
@@ -86,17 +90,17 @@ We can declare our **Enum** within the **GameManager** class or in its own separ
 ---
 
 ## :hammer_and_wrench: Basic Game Manager 
+Now that we have our game states established, we can start to build out our Game Manager, which inherits from our **Singleton** base class. This guarantees that there is **only one instance** of the GameManager at any time. Singleton-based managers are ideal for **global systems** like game state management, scoring, or persistent data.
 
-1.	In the **`Project`** window under **`Assets > Scripts > Managers`** right-click and create a new script.
-2.	Name this new script **`GameManager`** and open the file in your preferred IDE.
-3.	Convert the **`GameManager`** game object into a **prefab**. 
+#
 
-### Singleton Inheritance
-As mentioned earlier, a **GameManager** is typically designed using a **Singleton Design Pattern**. To implement this we will be making use of our **`Singleton`** base class we created previously. 
+#### 1. Create the GameManager Class
 
-3. Type the following code below.
+1.	In the **`Project`** panel under **`Assets > Scripts > Managers`** right-click and create a new script.
+   - Name this new script **`GameManager`** and open the file in your preferred IDE.
+2. Edit the script as follows: 
 
-```csharp showLineNumbers title="GameManager.cs"
+```csharp
 
 using UnityEngine;
 
@@ -104,78 +108,128 @@ using UnityEngine;
 public class GameManager: Singleton<GameManager>
 {
     // Reference to the current state of the game
-    public GameState CurrentState;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        // Change the game state to the main menu
-        ChangeGameState(GameState.MainMenu);
-    
-    }//end Start()
-
-
-    /// <summary>
-    /// Executes logic for the current game state.
-    /// </summary>
-    private void ManageGameState(){
-
-        // Checks the current game state and performs the appropriate actions.
-        switch (CurrentState)
-        {
-            case GameState.MainMenu:
-                // MainMenu Logic
-                Debug.Log("Game State: MainMenu");
-                break;
-
-            case GameState.GamePlay:
-                // Playing Logic
-                Debug.Log("Game State: GamePlay");
-                break;
-
-            case GameState.GameOver:
-                // GameOver logic
-                Debug.Log("Game State: GameOver");
-                break;
-        }//end  switch(CurrentState)
-
-    }//end ManageGameState()
-
-    /// <summary>
-    /// Changes the current game state and triggers corresponding logic.
-    /// </summary>
-    /// <param name="newState">The new game state to switch to.</param>
-    public void ChangeGameState(GameState newState)
-    {
-        CurrentState = newState;
-
-    }//end ChangeState()
-
-}//end GameManager
+    public GameState CurrentState {get; private set;};
 
 ```
-#### **How It Works:**
-- **Singleton Pattern**: The `GameManager` class inherits from `Singleton<GameManager>`, ensuring only one instance of the `GameManager` exists in the game, commonly used for game-wide management like state control.
+Here, we implement the **Singleton base class** to ensure there is **only one instance** of the GameManager in the game. At the same time, we define a reference to the **current game state** using a property with a `private set`.
 
-- **CurrentState (GameState)**: Holds the current state of the game (e.g., `MainMenu`, `GamePlay`, `GameOver`), determining which game logic to execute.
+The `private set` ensures that while other scripts can **read** the value of `CurrentState`, **only the GameManager itself can modify it**, maintaining control over the game's state transitions.
 
-- **Start Method**: Initializes the game by calling the `ChangeGameState` method and passing the `GameState.MainMenu` before the first frame update.
+#
 
-- **ManageGameState Method**: Contains a `switch` statement that checks the `CurrentState` and executes the appropriate logic for each game state (e.g., `MainMenu`, `Playing`, `Paused`, `GameOver`).
+#### 3. Create a `ChangeGameState()` method
+Because the GameManager is **responsible for state transitions**, it needs a method to **change the current game state**. This method acts as the central point for initiating any state change, making it easy to ensure that all associated logic and scene management occur in a controlled and consistent way. Without such a method, state changes could become scattered and harder to maintain.
 
-- **ChangeState Method**: Changes the `CurrentState` to a new game state when called, allowing the game to transition between different states (e.g., from `MainMenu` to `Playing`).
+```csharp
+   /// <summary>
+   /// Changes the current game state and triggers corresponding logic
+   /// only if the new state is different from the current state.
+   /// </summary>
+   /// <param name="newState">The new game state to switch to.</param>
+   public void ChangeGameState(GameState newState)
+   {
+       // Early exit if already in this state
+       if (newState == CurrentState)
+           return;
+   
+       // Update the current state and manage scenes
+       CurrentState = newState;
 
-### GamManager Game Object
-Now that we have created our GM class, we will return to Unity to actually apply the class to a GM object in our scene. 
-1. Open the included **`SampleScene`** in the project. 
-2. In the hierarchy under the **Managers** folder right-click and choose **`Create > Create Empty`** 
-3. Name the new empty game object **GameManager**
-4. Add the GameManager component (i.e., class) from the **`Project`** window to the **`GameManager`** game object. 
-In the inspector, you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
-5. Press **Play** from the Unity Editor.
+       ManageGameState();
+
+   }//end ChangeGameState
+
+```
+To prevent unnecessary calls, we first check whether the new state is different from the current state. Only if it is different do we update `CurrentState` and proceed.
+
+After updating the state, our method calls the `ManageGameState()` method to **manage the behaviors of the state change**.
+
+# 
+
+#### 4. Create a `ManageGameState()` method
+This method ensures that every time the game state changes, the GameManager **consistently executes the relevant logic** for that state. As the game grows, you can expand each case to include scene management, UI updates, and other state-specific behaviors.
+
+```csharp
+/// <summary>
+/// Executes the logic associated with the current game state.
+/// This method is called whenever ChangeGameState() updates the state.
+/// </summary>
+private void ManageGameState()
+{
+    switch (CurrentState)
+    {
+        case GameState.MainMenu:
+            Debug.Log("Game State: MainMenu");
+            break;
+
+        case GameState.GamePlay:
+            Debug.Log("Game State: GamePlay");
+            break;
+
+        case GameState.GameOver:
+            Debug.Log("Game State: GameOver");
+            break;
+
+        default:
+            Debug.LogError($"[GameManager] Unknown GameState: {CurrentState}. No scenes loaded.");
+            break;
+
+    }//end switch(CurrentState)
+
+}//end ManageGameState()
+
+```
+#
+
+#### 5. Add a `Start()` method
+Since our game uses a **single entry point** with a **bootstrap scene**, we need to ensure that the game is properly initialized before any gameplay or menu logic runs. The `Start()` method executes **before the first frame update**, making it the perfect place to set up the initial game state.
+
+In this case, we **initialize the game** by setting the starting state to `MainMenu` using our `ChangeGameState()` method. This ensures that all scene loading and state-specific logic is executed consistently right at the beginning of the game.
+
+```csharp
+// Start is called before the first frame update
+void Start()
+{
+    // Set the initial game state to Main Menu
+    ChangeGameState(GameState.MainMenu);
+
+}//end Start()
+```
+
+By calling `ChangeGameState()` here, we make sure the GameManager takes control of **all necessary scene and state setup** before the player sees anything on screen.
+
+#
+
+#### 6. Create a GamManager Prefab
+Now that we have created our **GameManager** class, we will return to the Unity Editor setup or project.
+1. In the **project panel** , under **Scenes** right-click and create a **New Scene**
+   - Name this scene **Bootstrap**
+   - Delete everything from this scene
+
+#
+
+>[!NOTE]
+> The **Bootstrap scene** serves as a **single point of entry** for the game. It ensures that the GameManager and other core systems are initialized before any other scenes or gameplay elements load. Players never directly see this scene, as it immediately transitions to the first real game state.
+
+#
+
+2. In the **hierarchy panel**, right-click and choose **`Create > Create Empty`** 
+   - Name the new empty game object **GameManager**
+   - Add the **GameManager** class to the **GameManager** game object
+   - In the Inspector, ensure the **`Is Persistent`** property is set to true.
+
+#
+
+>[!NOTE]
+> Setting the GameManager as persistent isn’t strictly necessary in this setup because all scenes will load on top of the bootstrap scene. Since the bootstrap scene will never unload, the GameManger will always exist. However, **enabling persistence acts as a fail-safe** in our Singleton base class, ensuring that the GameManager exists even if this scene is accidentally unloaded. 
+
+#
+
+7. Press **Play** from the Unity Editor.
    - In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**.
    - The **`Console`** window should also display the **debug message "Game State: MainMenu"**, which is the message for the **GameState.MainMenu** which we setup in the `Start()` mehtod.
-7. Exit **Play** mode and save the scene.
+     
+8. Exit **Play** mode and save the scene.
    
 ---
 
@@ -183,7 +237,7 @@ In the inspector, you will see that the **`Is Persistent`** property. This prope
 Before adding additional logic to the **GameManager**, it’s important to verify that state changes are being properly managed. One way to do this is by having the **Player** trigger an event that tells the **GameManager** to change states.
 
 While technically any object could communicate with the **GameManager**, it’s important to limit which objects do.
-By limiting communications with the **GameManager** we: 
+By limiting communications with the **GameManager**, we: 
 - Reduce potential **conflicts and hidden dependencies**, because not every object is trying to control global state.
 - Maintain a **clean and logical line of communication**, making it **easier to track how and why state changes occur**.
 
@@ -208,27 +262,35 @@ using UnityEngine;
 
 public class Player: MonoBehaviour
 {
+    // Reference to the singleton GameManager instance
     private GameManager _gameManager;
 
+    // Start is called before the first frame update
     void Start()
     {
-        // Reference the GameManager Instance
+        // Get the GameManager instance to access global game state methods
         _gameManager = GameManager.Instance;
 
-     }//end Start()
+    }//end Start()
 
 
     private void OnTriggerEnter(Collider other)
     {
+        // Check if the player collides with an object tagged as "Goal"
         if (other.CompareTag("Goal"))
         {
+            // Log for debugging
             Debug.Log("Goal reached! Changing game state...");
+
+            // Trigger a game state change to GameOver
             _gameManager.ChangeGameState(GameState.GameOver);
+
         }//end if("Goal")
 
     }//end OnTriggerEnter()
 
 }//end Player
+
 ```
 #
 
@@ -266,54 +328,56 @@ Let's take a look at how we would implement some of these behaviors.
 ## :hammer_and_wrench: Switching Scenes with GameStates 
 Next, we will extend the **GameManager** to handle scene transitions and manage overall game flow through defined GameStates.
 
-Rather than completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**, stacking them on top of a single, empty **Bootstrap (or Idle) scene**.
+Rather than completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**, stacking them on top of our **Bootstrap scene**.
 
 ### Single Point of Entry
-The **Bootstrap scene** serves as a **single point of entry** for the game, initializing the GameManager and other core systems before any gameplay begins. It is always loaded in the background and ensures everything is ready for the player. **We don’t need a “Bootstrap” GameState**, because GameStates represent what the player experiences, menus, gameplay, or game over; while the Bootstrap scene is purely infrastructure. Once initialization is complete, the GameManager immediately transitions to the first real GameState, so players never notice the Bootstrap scene.
+The **Bootstrap scene** acts as the game's **single point of entry**, providing a consistent place to initialize the GameManager and other core systems. While players never directly see this scene, it ensures that all critical systems are ready before any gameplay or menus appear.
+
+Using a single point of entry is considered **good practice** because it:
+- Guarantees that essential systems are initialized in the correct order.
+- Reduces the risk of duplicate or missing managers across scenes.
+- Makes it easier to maintain persistence and state consistency throughout the game.
+- Simplifies debugging and future expansion, since all core systems start from a known, central location.
+
+Even as the game grows more complex, maintaining a single entry point helps keep initialization predictable and reliable, which is especially important when working with multiple additive scenes, overlays, or persistent managers.
 
 #
 
->[!NOTE]
-> Using a Bootstrap scene as a single point of entry ensures that scripts like the Player can safely access the GameManager. Other options, such as **lazy initialization** or **setting script execution order**, achieve the same goal: guaranteeing that all core systems exist before anything tries to use them.
+>[!TIP]
+> A single entry point is not the only way to achieve safe initialization. Other options include **lazy initialization** or adjusting the **script execution order** in Unity, which can also help to ensure that systems exist before being accessed.
 
 #
 
->[!NOTE]
-> **Lazy initialization** ensures safe access to objects by creating or assigning them only when they’re needed; not before. Best for secondary systems and not the core game loop. 
-
-#
-
-#### 1. Create a Bootstrap Scene
- 1. In the Unity Editor, create a new scene named `Bootstrap`
- 2. Place the **GameManager** prefab in the scene and save the scene.
- 3. Choose **File > Build Profile** and add the `Bootstrap` scene to the list
+#### 1. Update the Scenes List
+ 1. In the Unity Editor, choose **File > Build Profile** 
+ 2. Add the `Bootstrap` scene to the list
     - Ensure that the `Bootstrap` scene is the first scene in the list
-    - Add any additional scenes to the build list; the order is not important
-    - Only add scenes that are required for playing the game. Exclude test scenes.
+ 3. Add any additional scenes to the build list; the order is not important
+    - Only add scenes that are required for playing the game (e.g., MainMenu, GameOver, Level-01, Level-02) 
+    - Exclude test scenes.
+   
+#
+
+#### 2. Using Scene Managment
+To handle the transition scenes, the **GameManager** needs to interact with **Unity’s Scene Management system**.
+
+1. Edit the **GameManager** class to include the following: 
+
+```csharp
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+// The GameManager class is derived from the Singleton pattern to ensure there is only one instance of it in the game.
+public class GameManager: Singleton<GameManager>
+{ ...
+```
 
 #
 
->[!NOTE]
-> The **Bootstrap scene** exists to **initialize the GameManager** and other core systems before any gameplay begins. It is always loaded in the background and ensures everything is ready for the player. **We don’t need a “Bootstrap” GameState** because GameStates represent what the player experiences—menus, gameplay, pause, or game over; while the **Bootstrap scene is just infrastructure**. Once initialization is complete, the GameManager immediately transitions to the first real GameState, so players never actually notice the Bootstrap scene.
+####  3. Create Scene References
+Now that our scenes have been created and set up in the editor, we will need our game manager to have a reference to each of them. 
 
-#
-
-This approach gives the GameManager complete control over the game’s flow and ensures consistent behavior across every scene.
-
-Loading scenes additionally allows for:
-
-- **Single Point of Entry:** All gameplay begins from one persistent scene that contains the GameManager and other core systems.
-This makes the game easier to manage and debug, because every other scene—menus, levels, overlays—loads into a known, controlled environment.
-
-- **Guaranteed Initialization Order:** The GameManager loads before any other gameplay objects.
-This ensures that global systems like scoring, state tracking, or event management are ready and running before other scripts start referencing them.
-Without this structure, different scenes might initialize their objects first, leading to null reference errors or inconsistent game states.
-
-
-### Scene References
-Our first step is to create proper references to each of our scenes and a list for all gameplay levels (scenes). 
-
-####  1. Add the following fields to the GameManager
+1. Add the following fields to the GameManager
 
 ```csharp
    [Header("Scene Management")]
@@ -347,50 +411,63 @@ Our first step is to create proper references to each of our scenes and a list f
    private List<string> _loadedScenes = new List<string>();
 
 ```
-We have now created the primary fields for accessing and keeping track of all scenes in the game. 
+Next, we need to create dedicated methods for loading and unloading scenes.
 
-#### 2. Load and Unload Scenes
-While we could simply call the `SceneManagement.Load()` method in the `ManageGameState()` cases, if we add additional logic, it will quickly get bloated. Especially if each case does the same thing, with different values. In this instance, we not only want to load the scene, but also keep track of it in the `_loadedScenes` list.  Similarly, we will need to create a method for unloading a scene when a new scene is loaded, as well as removing it from the `_loadedScenes` list.
+While we could call `SceneManagement.Load()` directly in each `ManageGameState()` case, this approach quickly becomes repetitive and hard to maintain—especially when multiple cases perform similar operations with different scene names. By creating a centralized `LoadScene()` method, we can not only load a scene but also track it in the `_loadedScenes` list for easier management.
 
-1. Create the `LoadedScene()` method that
-   - Loads the scene passed to it
-   - Adds that scene to the `_loadedScenes` list
-   - Checks if the scene needs to be set as the current scene and sets it. 
+Similarly, we will create an `UnloadScene()` method to safely remove individual scenes when needed, as well as an `UnloadAllScenes()` method to quickly clear all currently loaded scenes. This approach keeps scene management organized, consistent, and easy to maintain as the game grows.
+
+#
+
+#### 4. Create the `LoadedScene()` method
+This method handles **loading a new scene additively** and keeping track of it in the `_loadedScenes` list. It also allows you to designate whether the scene should be considered the **current primary scene**.
+
+The method will:
+- Load the scene passed to it
+- Add the scene to the `_loadedScenes` list for tracking
+- Optionally set the scene as the `_currentScene` if it represents a primary scene (like a level or menu)
   
 ```csharp
 /// <summary>
 /// Loads a scene additively and tracks it in the _loadedScenes list.
-/// Helps manage active scenes cleanly across different game states.
 /// </summary>
 /// <param name="sceneName">The name of the scene to load.</param>
-
+/// <param name="setAsCurrent">
+/// If true, sets this scene as the current primary scene (e.g., main level or menu).
+/// If false, the scene is treated as an overlay (e.g., HUD, pause menu) and does not become the current scene.
+/// </param>
 private void LoadScene(string sceneName, bool setAsCurrent = true)
 {
+    // Load the scene additively so existing scenes are preserved
     SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
     
-    //Tracks loaded scenes
+    // Track the loaded scene
     _loadedScenes.Add(sceneName);
 
-   //Set scene as current if true
-   if(setAsCurrent)
-   {
-     _currentScene = sceneName;
-     
-   }//end if(setAsCurrent)
-    
-}//end LoadedScene()
+    // Optionally set as current scene
+    if (setAsCurrent)
+    {
+        _currentScene = sceneName;
+    }
+
+} // end LoadScene()
+
 ```
+#
+> [!NOTE]
+> The `setAsCurrent` boolean is useful for distinguishing primary scenes (levels, menus) from secondary overlay scenes (HUD, PauseMenu). Overlay scenes remain loaded but do not replace the `_currentScene`.
 
-The setAsCurrent boolean records primary scenes, like levels and menus, as current scenes, but ignores secondary scenes like HUDs and Pause that act as overlay seams. 
+#
 
-# 
+#### 5. Create the `UnloadedScene()` method
+This method handles **unloading a single scene** and ensures it is removed from the `_loadedScenes` list. It safely checks if the scene is loaded before attempting to unload it and avoids errors if the scene is not tracked.
 
-2. Create the `UnloadedScene()` method that
-   - Sets a reference to the actual scene
-     - Checks if the scene is loaded
-     - Unloads the scene
-   - Check if the scene is in the loaded scenes list
-     - Removes the scene from the `_loadedScenes` list
+The method will:
+- Get a reference to the scene being passed
+  - Check if the scene is currently loaded
+  - Unload the scene if it is loaded
+- Check if the scene exists in _loadedScenes
+  - Remove it from the list if present
   
 ```csharp
 /// <summary>
@@ -420,12 +497,19 @@ private void UnloadScene(string sceneName)
 }//end UnloadScene()
 ```
 #
+> [!NOTE]
+> The `UnloadScene()` method is ideal for removing temporary or overlay scenes, like the PauseMenu, without affecting other active scenes.
 
-3. Create the `UnloadAllScenes()` method that:
- -  Iterates through all scenes in the _loadedScenes list
-    - Calls `UnloadScene()` on each scene
-- Clears the `_loadedScenes` list to remove any remaining references
+#
 
+#### 6. Create the `UnloadAllScenes()` method
+This method allows you to **unload all currently loaded scenes** at once. It ensures the `_loadedScenes` list is cleared afterward. `UnloadAllScenes()` will be used when transitioning between major game states (like MainMenu → GamePlay) to reset the game environment cleanly.
+
+The method will:
+- Iterate through all scenes in `_loadedScenes`
+  - Call `UnloadScene()` on each scene
+- Clear the `_loadedScenes` list to remove any remaining references
+  
 ```csharp
 
 /// <summary>
@@ -448,71 +532,104 @@ private void UnloadAllScenes()
 
 # 
 
-Our GameManager has both `UnloadScene()` and `UnloadAllScenes()` to handle different scenarios:
-- `UnloadScene()` is used for individual scenes, such as temporary overlays (e.g., the PauseMenu) that you want to remove without affecting the rest of the game.
-- `UnloadAllScenes()` is used when transitioning between major game states (e.g., MainMenu → GamePlay → GameOver) to clean up all non-persistent scenes at once.
+#### 7. Update ManageGameState()
+Now that we have dedicated methods for loading and unloading scenes, we can simplify the GameManager’s state handling.
 
-Having both methods keeps scene management flexible, safe, and organized, allowing selective unloading or complete cleanup depending on the situation.
+The `ManageGameState()` method will be updated with the following features
+- Unloading all previously loaded scenes to reset the game environment
+- Updating the CurrentState to the new state
+- Loading the appropriate scenes for the new state, including overlays like the HUD
+- Handling any unexpected or invalid states with a default error check
 
-
-#### 2. Update ManageGameState()
+By centralizing scene management here, we keep the game flow clean, predictable, and easy to extend as more states or levels are added.
 
 ```csharp
     /// <summary>
     /// Executes logic for the current game state.
     /// </summary>
     private void ManageGameState(){
+       // Unload all previously loaded scenes
+       UnloadAllScenes();
 
-// Early exit if the state is already active
-    if (newState == CurrentState)
-        return;
-
-    // Unload all previously loaded scenes
-    UnloadAllScenes();
-
-    // Update the current state
-    CurrentState = newState;
-
-    // Load the appropriate scenes for the new state
-    switch (newState)
-    {
-        case GameState.MainMenu:
-            LoadScene(mainMenuScene);
-            break;
-
-        case GameState.GamePlay:
-            LoadScene(levelScenes[currentLevelIndex]);
-            LoadScene(hudScene, false); // HUD overlay
-            break;
-
-        case GameState.GameOver:
-            LoadScene(gameOverScene);
-            break;
-    }//end  switch(CurrentState)
+       // Load the appropriate scenes for the new state
+       switch (newState)
+       {
+           case GameState.MainMenu:
+               LoadScene(mainMenuScene);
+               break;
+   
+           case GameState.GamePlay:
+               //Load game level
+               LoadScene(levelScenes[currentLevelIndex]);
+   
+                // Load the HUD as an overlay without setting it as the current scene
+               LoadScene(hudScene, false); 
+               break;
+   
+           case GameState.GameOver:
+               LoadScene(gameOverScene);
+               break;
+   
+           default:
+              Debug.LogError($"[GameManager] Unknown GameState: {newState}. No scenes loaded.");
+           break;
+   
+       }//end  switch(CurrentState)
 
     }//end ManageGameState()
 ```
-#### How It Works
-- **using UnityEngine.SceneManagement** provides access to the **SceneMangment** namespaces for loading scenes in Unity.
--  Each game state corresponds to a specific scene or menu.
-- **Additive** loading is used for overlays like the pause menu, so gameplay continues underneath.
-
 
 #
 
 ### Managing Level Progression
 
-While `ManageGameState()` handles transitions between major game states like `MainMenu`, `GamePlay`, and `GameOver`, many games also include multiple levels or stages within the same gameplay session.
+While `ManageGameState()` handles transitions between major game states like `MainMenu`, `GamePlay`, and `GameOver`, many games include multiple levels or stages within the same gameplay session. Level progression differs from changing the game state: the player remains in `GamePlay`, but the environment, challenges, and level-specific content need to update.
 
-Switching levels is different from changing the game state: the player is still in the GamePlay state, but the environment, challenges, and level-specific content need to change. To handle this, we introduce the `LoadNextLevel()` method.
-The `LoadNextLevel()` method will:
-- Unload the current level scene
-- Load the next level scene
-- Update the GameManager’s tracking of the current level
+To handle this, we introduce the `LoadNextLevel()` method. This method will:
+- Check if a current level scene is loaded, and unload it **as a safety measure** if necessary.
+- Increment the level index to determine the next level
+- Check if the level index exceeds the available levels
+   - if so, resets the level counter
+   - Switch to GameOver
+   - Exits the method
+- Loads the next level scene and sets it as the current scene
 
-By using `LoadNextLevel()`, we can smoothly progress through levels without affecting the overall game state or player experience. This ensures that level transitions are clean, predictable, and maintain consistent UI and gameplay flow.
+By using `LoadNextLevel()`, we can smoothly progress through levels without affecting the overall game state or disrupting UI and gameplay flow.
+
+#### 1. Create the `LoadNextLevel()` method
 
 ```csharp
+/// <summary>
+/// Loads the next level in the levelScenes list while keeping the player in the GamePlay state.
+/// Unloads the current level, updates the current level index, and tracks the newly loaded scene.
+/// </summary>
+public void LoadNextLevel()
+{
+    // Unload the current level scene if one is loaded
+    if (_currentScene != null && _loadedScenes.Contains(_currentScene))
+    {
+        UnloadScene(_currentScene);
+
+    }//end if(_currentScene)
+
+    // Increment level index
+    currentLevelIndex++;
+
+    // If no more levels, reset index, switch to GameOver, and exit
+    if (currentLevelIndex >= levelScenes.Count)
+    {
+        currentLevelIndex = 0;
+        ChangeGameState(GameState.GameOver);
+        return;
+
+    }//end
+
+    // Load the next level and set it as the current scene
+    LoadScene(levelScenes[currentLevelIndex]);
+
+    Debug.Log($"Loaded Level: {levelScenes[currentLevelIndex]}");
+
+}//end LoadNextLevel()
 
 ```
 
@@ -659,6 +776,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
