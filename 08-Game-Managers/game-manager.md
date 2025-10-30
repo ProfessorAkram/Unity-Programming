@@ -17,26 +17,46 @@ The **GameManager (GM)** is a key component of a game's architecture. It's respo
 Game Managers (GMs) handle a variety of responsibilities, including **game state management, system coordination, and global functionality**. While a GM may also manage elements like score tracking, scene transitions, or event handling, in this section, we will focus specifically on how it manages **game states** and ensures smooth transitions between them. To demonstrate how this works in practice, we will be building the GameManager for our example game *One Wild Night*.  
 
 ### Game States
-**Game States** represent the various stages of a game, such as whether the game is running, paused, or over, and the transitions between these states. They are crucial in complex games where different systems (AI, UI, physics, etc.) need to interact in a specific sequence depending on the game's current state.
+GameStates define **what the game is doing right now**; for example, `MainMenu`, `GamePlay`, or `GameOver`. They represent mutually exclusive, player-visible modes. Systems like scoring, level progression, or UI updates are **not GameStates**; instead, they are **actions or systems that respond to the current state**.
 
-#
+For instance, the scoring system only updates during `GamePlay` and ignores input on other states. Similarly, level progression triggers only while the player is actively playing. By centralizing the current mode in a GameState, all other systems can **check the state and behave appropriately**, making the game logic easier to manage, more predictable, and scalable as new states are added.
 
->[!WARNING]
-> For this example our **GameManager** will handles game states by transitioning between different phases of gameplay, such as "GamePlay," "Pause," and "Game Over." To manage these states, there are generally two common approaches: the **State Pattern** and the **Finite State Machine (FSM)**.
->
->In this case, we implement the **FSM** method, which uses a predefined set of states and transitions between them in a clear and structured manner. This is a simpler and more efficient way to manage state changes, especially in our game where the states are not complex enough to require fully encapsulated behaviors per state, as the State Pattern would offer.
+#### State Pattern vs Finite State Machine (FSM)
+Beyond **GameStates**, states are used in many other contexts in games. For example, a character could have states like `Idle`, `Walk`, `Run`, and `Jump`, while an AI NPC might have states such as `Patrol`, `Attack`, or `Sleep`. Whether managing individual object states or overarching game states, there are two common approaches: the Finite State Machine (FSM) and the State Pattern. 
 
-#
+- **Finite State Machine (FSM):** are predefined states, typically represented as an enum. Transitions between states are controlled in a centralized system, such as the GameManager or the object the states relate to. Each state triggers the relevant logic when entered, but the behavior is handled in one place.
 
-Before we start development on the GM we need to have a rough idea of the game states we will have in the game and what takes place during that state. While these may vary, the most common states include: 
-- **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
-- **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or loss.
-- **Pause**: When the game is paused, the GM freezes gameplay systems, disables player input for movement, and opens the pause menu.
-- **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stopping all gameplay logic.
+**✅ Pros:**
+- Simple to implement and easy to read
+- Efficient for games with a small number of states
+- Centralized control makes debugging straightforward
+
+**❌ Cons:**
+- Can become cluttered if there are many states or complex behavior
+- Less flexible for objects with unique, independent state logic
+
+- **State Pattern:** invovles encapsulating each state as its own class with its own behavior and logic. Transitions between states are handled through methods within these state objects.
+
+**✅ Pros:**
+- Very flexible and modular — each state can define its own behavior independently
+- Easier to scale for complex objects or systems with many unique states
+- Reduces the risk of a centralized controller becoming too large
+
+**❌ Cons:**
+- More complicated to set up initially
+- Can be overkill for simple games with only a few states
+- More classes and files to manage, which may confuse beginners
+
+For our GameManager, we will be **implmenting the FSM approach**. This approach is beginer friendly, simple to implment and ideal for smalle scale prototype game projects. Using an FSM allows us to clearly manage state transitions, load and unload scenes, and control gameplay behavior without the extra complexity of creating separate classes for each state, as the State Pattern would require.
 
 ### Defining Game States
 
-To manage the various phases of the game, we will define the **game states** as an **Enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states, such as "MainMenu," "Playing," "Paused," and "GameOver." Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
+Since we are implment a **FSM** for our **game states**, we will wnat to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
+
+Before we start development on the GM we need to have a rough idea of the game states we will have in the game and what takes place during that state. While these may vary, the most **common core game states** include: 
+- **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
+- **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or loss.
+- **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stopping all gameplay logic.
 
 We can declare our **Enum** within the **GameManager** class or in its own separate class file. To keep things modular and flexible, we will declare the **GameState Enum** in its own class, ensuring that each state is decoupled from the core logic of the **GameManager**.
 
@@ -60,12 +80,7 @@ We can declare our **Enum** within the **GameManager** class or in its own separ
        GamePlay,   // Active gameplay
        GameOver    // Game over screen
    }
-   ```
-These three states represent the **core flow of most simple games**. Even in more complex games, all player experiences can be traced back to states like these.
-
-As games grow more complex, you could add additional states such as **Credits**, **Win**, **Loading**, or **Cutscene**. The important rule is: GameStates represent mutually exclusive, player-visible states, **while actions like pausing, restarting, or progressing to the next level are handled by methods** on top of those states.
-
-
+   ``   
 5. Save the class and return to Unity.
 
 ---
@@ -73,11 +88,11 @@ As games grow more complex, you could add additional states such as **Credits**,
 ## :hammer_and_wrench: Basic Game Manager 
 
 1.	In the **`Project`** window under **`Assets > Scripts > Managers`** right-click and create a new script.
-
-2.	Name this new script **`GameManager`** and open the file in your preferred IDE. 
+2.	Name this new script **`GameManager`** and open the file in your preferred IDE.
+3.	Convert the **`GameManager`** game object into a **prefab**. 
 
 ### Singleton Inheritance
-As mentioned earlier, a GM is typically designed using a **Singleton Design Pattern**. To implement this we will be making use of our **`Singleton`** base class we created previously. 
+As mentioned earlier, a **GameManager** is typically designed using a **Singleton Design Pattern**. To implement this we will be making use of our **`Singleton`** base class we created previously. 
 
 3. Type the following code below.
 
@@ -150,7 +165,7 @@ public class GameManager: Singleton<GameManager>
 
 - **ChangeState Method**: Changes the `CurrentState` to a new game state when called, allowing the game to transition between different states (e.g., from `MainMenu` to `Playing`).
 
-### GM Game Object
+### GamManager Game Object
 Now that we have created our GM class, we will return to Unity to actually apply the class to a GM object in our scene. 
 1. Open the included **`SampleScene`** in the project. 
 2. In the hierarchy under the **Managers** folder right-click and choose **`Create > Create Empty`** 
@@ -161,8 +176,7 @@ In the inspector you will see that the **`Is Persistent`** property. This proper
    - In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**.
    - The **`Console`** window should also display the **debug message "Game State: MainMenu"**, which is the message for the **GameState.MainMenu** which we setup in the `Start()` mehtod.
 7. Exit **Play** mode and save the scene.
-
-
+   
 ---
 
 ## :hammer_and_wrench: Implement the Player Call to GameManager
@@ -219,9 +233,7 @@ public class Player : MonoBehaviour
 #
 
 >[!IMPORTANT]
->The `_gameManager` reference is set in the `Start()` method of the **Player** class to ensure the **GameManager** instance is fully instantiated before the Player tries to access it.
-If you attempt to reference `GameManager.Instance` in `Awake()` or at declaration, there is a chance the **GameManager** has not yet been initialized, which could lead to null reference errors.
-Initializing in `Start()` helps avoid this issue.
+> In the **Player** class we set the reference to the `_gameManager` in `Start()` to ensure the **GameManager** exists before the Player accesses it. Referencing it in `Awake()` or at declaration may cause null errors. Other safe methods exist, which we’ll cover later.
 
 #
 
@@ -252,14 +264,28 @@ Let's take a look at how we would implement some of these behaviors.
 ---
 
 ## :hammer_and_wrench: Switching Scenes with GameStates 
-Next, we will extend the **GameManager** to handle scene transitions and manage the overall game flow through defined game states.
+Next, we will extend the **GameManager** to handle scene transitions and manage overall game flow through defined GameStates.
 
-Instead of completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**; stacking them on top of a single, empty **bootstrap (or idle) scene**.
+Rather than completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**, stacking them on top of a single, empty **Bootstrap (or Idle) scene**.
+
+### Single Point of Entry
+The **Bootstrap scene** serves as a **single point of entry** for the game, initializing the GameManager and other core systems before any gameplay begins. It is always loaded in the background and ensures everything is ready for the player. **We don’t need a “Bootstrap” GameState**, because GameStates represent what the player experiences, menus, gameplay, or game over; while the Bootstrap scene is purely infrastructure. Once initialization is complete, the GameManager immediately transitions to the first real GameState, so players never notice the Bootstrap scene.
+
+>[!NOTE]
+> Using a Bootstrap scene as a single point of entry ensures that scripts like the Player can safely access the GameManager. Other options, such as lazy initialization or setting script execution order, achieve the same goal: guaranteeing that all core systems exist before anything tries to use them.
+
+#### 1. Create a Bootstrap Scene
+ 1. In the Unity Editor Create a new scene named `Bootstrap`
+ 2. Place the **GameManager** prefab in the scene and save the scene.
+ 3. Choose **File > Build Profile** and add the `Bootstrap` scene to the list
+    - Ensure that the `Bootstrap` scene is the first scene in the list
+    - Add any additional scenes to the build list the order is not important
+    - Only add scenes that are required for playing the game. Exclude test scenes.
 
 #
 
 >[!NOTE]
->The **Bootstrap scene** exists to **initialize the GameManager** and other core systems before any gameplay begins. It is always loaded in the background and ensures everything is ready for the player. **We don’t need a “Bootstrap” GameState** because GameStates represent what the player experiences—menus, gameplay, pause, or game over; while the **Bootstrap scene is just infrastructure**. Once initialization is complete, the GameManager immediately transitions to the first real GameState, so players never actually notice the Bootstrap scene.
+> The **Bootstrap scene** exists to **initialize the GameManager** and other core systems before any gameplay begins. It is always loaded in the background and ensures everything is ready for the player. **We don’t need a “Bootstrap” GameState** because GameStates represent what the player experiences—menus, gameplay, pause, or game over; while the **Bootstrap scene is just infrastructure**. Once initialization is complete, the GameManager immediately transitions to the first real GameState, so players never actually notice the Bootstrap scene.
 
 #
 
@@ -536,6 +562,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
