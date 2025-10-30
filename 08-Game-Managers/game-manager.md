@@ -80,7 +80,7 @@ We can declare our **Enum** within the **GameManager** class or in its own separ
        GamePlay,   // Active gameplay
        GameOver    // Game over screen
    }
-   ``   
+```   
 5. Save the class and return to Unity.
 
 ---
@@ -633,6 +633,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
