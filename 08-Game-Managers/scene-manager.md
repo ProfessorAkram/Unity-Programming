@@ -1,4 +1,4 @@
-# Scene Flow Manager
+<!--- # Scene Flow Manager
 While the **GameManager** is responsible for overseeing the flow of the game, managing game states, controlling major systems, and maintaining global functionality, a common trap for beginners is trying to make the **GameManager** do everything. Just as we shouldn’t place every task in a single `Update()` method, the GameManager should only handle global functions that don’t fall under a more specific category.
 
 While using the **GameManager** for all tasks works for very simple projects, it mixes responsibilities, making your code harder to maintain and scale. Following this principle reinforces the **Single Responsibility Principle (SRP)**; each class should have a clear, focused purpose.
@@ -352,5 +352,6 @@ private void LoadGameLevel()
 -->
 
 
+--->
 
 
