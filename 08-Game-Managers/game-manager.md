@@ -4,7 +4,7 @@ The **GameManager (GM)** is a key component of a game's architecture. It's respo
 #
 
 >[!NOTE]
->In many cases Game Manager (GM) will implement a **Singleton Pattern** to maintain a single point of control over the game's flow and systems. This ensures that no matter where you are in the game, whether in a scene, menu, or during gameplay, the GM remains the same instance, providing a consistent and unified experience.  
+> In many cases, Game Manager (GM) will implement a **Singleton Pattern** to maintain a single point of control over the game's flow and systems. This ensures that no matter where you are in the game, whether in a scene, menu, or during gameplay, the GM remains the same instance, providing a consistent and unified experience.  
 >
 > **Why Use a Singleton for the Game Manager?**  
 > 1. **Global Access**: The GM needs to be easily accessible from UI, player input, AI, and other systems without manually passing references.  
@@ -24,7 +24,7 @@ For instance, the scoring system only updates during `GamePlay` and ignores inpu
 #### State Pattern vs Finite State Machine (FSM)
 Beyond **GameStates**, states are used in many other contexts in games. For example, a character could have states like `Idle`, `Walk`, `Run`, and `Jump`, while an AI NPC might have states such as `Patrol`, `Attack`, or `Sleep`. Whether managing individual object states or overarching game states, there are two common approaches: the Finite State Machine (FSM) and the State Pattern. 
 
-- **Finite State Machine (FSM):** are predefined states, typically represented as an enum. Transitions between states are controlled in a centralized system, such as the GameManager or the object the states relate to. Each state triggers the relevant logic when entered, but the behavior is handled in one place.
+- **Finite State Machine (FSM):** is are predefined states, typically represented as an enum. Transitions between states are controlled in a centralized system, such as the GameManager or the object the states relate to. Each state triggers the relevant logic when entered, but the behavior is handled in one place.
 
 **✅ Pros:**
 - Simple to implement and easy to read
@@ -32,10 +32,10 @@ Beyond **GameStates**, states are used in many other contexts in games. For exam
 - Centralized control makes debugging straightforward
 
 **❌ Cons:**
-- Can become cluttered if there are many states or complex behavior
+- Can become cluttered if there are many states or complex behaviors
 - Less flexible for objects with unique, independent state logic
 
-- **State Pattern:** invovles encapsulating each state as its own class with its own behavior and logic. Transitions between states are handled through methods within these state objects.
+- **State Pattern:** involves encapsulating each state as its own class with its own behavior and logic. Transitions between states are handled through methods within these state objects.
 
 **✅ Pros:**
 - Very flexible and modular — each state can define its own behavior independently
@@ -47,16 +47,16 @@ Beyond **GameStates**, states are used in many other contexts in games. For exam
 - Can be overkill for simple games with only a few states
 - More classes and files to manage, which may confuse beginners
 
-For our GameManager, we will be **implmenting the FSM approach**. This approach is beginer friendly, simple to implment and ideal for smalle scale prototype game projects. Using an FSM allows us to clearly manage state transitions, load and unload scenes, and control gameplay behavior without the extra complexity of creating separate classes for each state, as the State Pattern would require.
+For our GameManager, we will be **implementing the FSM approach**. This approach is beginner-friendly, simple to implement, and ideal for small-scale prototype game projects. Using an FSM allows us to clearly manage state transitions, load and unload scenes, and control gameplay behavior without the extra complexity of creating separate classes for each state, as the State Pattern would require.
 
 ### Defining Game States
 
-Since we are implment a **FSM** for our **game states**, we will wnat to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
+Since we are implementing an **FSM** for our **game states**, we will want to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
 
 Before we start development on the GM we need to have a rough idea of the game states we will have in the game and what takes place during that state. While these may vary, the most **common core game states** include: 
 - **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
-- **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or loss.
-- **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stopping all gameplay logic.
+- **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or a loss.
+- **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stop all gameplay logic.
 
 We can declare our **Enum** within the **GameManager** class or in its own separate class file. To keep things modular and flexible, we will declare the **GameState Enum** in its own class, ensuring that each state is decoupled from the core logic of the **GameManager**.
 
@@ -355,6 +355,7 @@ While we could simply call the `SceneManagement.Load()` method in the `ManageGam
 1. Create the `LoadedScene()` method that
    - Loads the scene passed to it
    - Adds that scene to the `_loadedScenes` list
+   - Checks if the scene needs to be set as the current scene and sets it. 
   
 ```csharp
 /// <summary>
@@ -363,17 +364,25 @@ While we could simply call the `SceneManagement.Load()` method in the `ManageGam
 /// </summary>
 /// <param name="sceneName">The name of the scene to load.</param>
 
-private void LoadScene(string sceneName)
+private void LoadScene(string sceneName, bool setAsCurrent = true)
 {
     SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
     
     //Tracks loaded scenes
     _loadedScenes.Add(sceneName);
 
-   _currentScene = sceneName;
+   //Set scene as current if true
+   if(setAsCurrent)
+   {
+     _currentScene = sceneName;
+     
+   }//end if(setAsCurrent)
     
 }//end LoadedScene()
 ```
+
+The setAsCurrent boolean records primary scenes, like levels and menus, as current scenes, but ignores secondary scenes like HUDs and Pause that act as overlay seams. 
+
 # 
 
 2. Create the `UnloadedScene()` method that
@@ -473,7 +482,7 @@ Having both methods keeps scene management flexible, safe, and organized, allowi
 
         case GameState.GamePlay:
             LoadScene(levelScenes[currentLevelIndex]);
-            LoadScene(hudScene); // HUD overlay
+            LoadScene(hudScene, false); // HUD overlay
             break;
 
         case GameState.GameOver:
@@ -650,6 +659,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
