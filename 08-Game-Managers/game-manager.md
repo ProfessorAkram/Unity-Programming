@@ -170,8 +170,8 @@ Now that we have created our GM class, we will return to Unity to actually apply
 1. Open the included **`SampleScene`** in the project. 
 2. In the hierarchy under the **Managers** folder right-click and choose **`Create > Create Empty`** 
 3. Name the new empty game object **GameManager**
-4. Add the GameManager component (i.e. class) from the **`Project`** window to the **`GameManager`** game object. 
-In the inspector you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
+4. Add the GameManager component (i.e., class) from the **`Project`** window to the **`GameManager`** game object. 
+In the inspector, you will see that the **`Is Persistent`** property. This property was inherited from the base **Singleton** class. Make sure that the **`Is Persistent`** property is set to true, doing so will ensure the GM will be persistent throughout the game. 
 5. Press **Play** from the Unity Editor.
    - In the **`Hierarchy`** window you should notice that **`GameManager`** object is now listed under **`DoNotDesotry`**.
    - The **`Console`** window should also display the **debug message "Game State: MainMenu"**, which is the message for the **GameState.MainMenu** which we setup in the `Start()` mehtod.
@@ -183,11 +183,11 @@ In the inspector you will see that the **`Is Persistent`** property. This proper
 Before adding additional logic to the **GameManager**, it’s important to verify that state changes are being properly managed. One way to do this is by having the **Player** trigger an event that tells the **GameManager** to change states.
 
 While technically any object could communicate with the **GameManager**, it’s important to limit which objects do.
-By limiting communcations with the **GameManager** we: 
+By limiting communications with the **GameManager** we: 
 - Reduce potential **conflicts and hidden dependencies**, because not every object is trying to control global state.
 - Maintain a **clean and logical line of communication**, making it **easier to track how and why state changes occur**.
 
-In many instances the **Player** class is a natural point of interaction in the game. Most events that affect game state — reaching a goal, taking damage, or completing a level — originate from the player's actions.
+In many instances, the **Player** class is a natural point of interaction in the game. Most events that affect game state — reaching a goal, taking damage, or completing a level — originate from the player's actions.
 By restricting communication to objects like the Player, the GameManager remains responsible for managing states without becoming entangled with unnecessary object interactions.
 
 #
@@ -206,7 +206,7 @@ By restricting communication to objects like the Player, the GameManager remains
 ```csharp
 using UnityEngine;
 
-public class Player : MonoBehaviour
+public class Player: MonoBehaviour
 {
     private GameManager _gameManager;
 
@@ -279,16 +279,16 @@ The **Bootstrap scene** serves as a **single point of entry** for the game, init
 #
 
 >[!NOTE]
-> **Lazy initalization** ensures safe access to objects by creating or assigning them only when they’re needed; not before. Best for secondary systems and not the core game loop. 
+> **Lazy initialization** ensures safe access to objects by creating or assigning them only when they’re needed; not before. Best for secondary systems and not the core game loop. 
 
 #
 
 #### 1. Create a Bootstrap Scene
- 1. In the Unity Editor Create a new scene named `Bootstrap`
+ 1. In the Unity Editor, create a new scene named `Bootstrap`
  2. Place the **GameManager** prefab in the scene and save the scene.
  3. Choose **File > Build Profile** and add the `Bootstrap` scene to the list
     - Ensure that the `Bootstrap` scene is the first scene in the list
-    - Add any additional scenes to the build list the order is not important
+    - Add any additional scenes to the build list; the order is not important
     - Only add scenes that are required for playing the game. Exclude test scenes.
 
 #
@@ -350,7 +350,7 @@ Our first step is to create proper references to each of our scenes and a list f
 We have now created the primary fields for accessing and keeping track of all scenes in the game. 
 
 #### 2. Load and Unload Scenes
-While we could simply call the `SceneManagment.Load()` method in the `ManageGameState()` cases, if we add additional logic it will quickly get bloated. Especially if each case does the same thing, with different values. In this instance we not only want to load the scene, but also keep track of it in the `_loadedScenes` list.  Similarly we will need to create a method for unloading a scene when a new scene is loaded, as well as removing it from the `_loadedScenes` list.
+While we could simply call the `SceneManagement.Load()` method in the `ManageGameState()` cases, if we add additional logic, it will quickly get bloated. Especially if each case does the same thing, with different values. In this instance, we not only want to load the scene, but also keep track of it in the `_loadedScenes` list.  Similarly, we will need to create a method for unloading a scene when a new scene is loaded, as well as removing it from the `_loadedScenes` list.
 
 1. Create the `LoadedScene()` method that
    - Loads the scene passed to it
@@ -368,14 +368,16 @@ private void LoadScene(string sceneName)
     SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
     
     //Tracks loaded scenes
-    _loadedScenes.Add(sceneName); 
+    _loadedScenes.Add(sceneName);
+
+   _currentScene = sceneName;
     
 }//end LoadedScene()
 ```
 # 
 
 2. Create the `UnloadedScene()` method that
-   - Set's a referene to teh actual scene
+   - Sets a reference to the actual scene
      - Checks if the scene is loaded
      - Unloads the scene
    - Check if the scene is in the loaded scenes list
@@ -388,10 +390,10 @@ private void LoadScene(string sceneName)
 /// <param name="sceneName">The name of the scene to unload.</param>
 private void UnloadScene(string sceneName)
 {
-    //Refrence to "this" scene being passed
+    //Reference to "this" scene being passed
     Scene _thisScene = SceneManager.GetSceneByName(sceneName);
 
-    // Checks if "this" scene is loaded and uloads
+    // Checks if "this" scene is loaded and unloads
     if (scene.isLoaded)
     {
         SceneManager.UnloadSceneAsync(sceneName);
@@ -408,14 +410,43 @@ private void UnloadScene(string sceneName)
     
 }//end UnloadScene()
 ```
+#
 
+3. Create the `UnloadAllScenes()` method that:
+ -  Iterates through all scenes in the _loadedScenes list
+    - Calls `UnloadScene()` on each scene
+- Clears the `_loadedScenes` list to remove any remaining references
 
+```csharp
 
+/// <summary>
+/// Unloads all currently loaded scenes except persistent ones
+/// and clears the _loadedScenes list.
+/// </summary>
+private void UnloadAllScenes()
+{
+    foreach (string sceneName in new List<string>(_loadedScenes))
+    {
+        // Unload each scene safely
+        UnloadScene(sceneName);
+    }
 
+    // Clear the list to remove any remaining references
+    _loadedScenes.Clear();
+    
+}//end UnloadAllScenes()
+```
+
+# 
+
+Our GameManager has both `UnloadScene()` and `UnloadAllScenes()` to handle different scenarios:
+- `UnloadScene()` is used for individual scenes, such as temporary overlays (e.g., the PauseMenu) that you want to remove without affecting the rest of the game.
+- `UnloadAllScenes()` is used when transitioning between major game states (e.g., MainMenu → GamePlay → GameOver) to clean up all non-persistent scenes at once.
+
+Having both methods keeps scene management flexible, safe, and organized, allowing selective unloading or complete cleanup depending on the situation.
 
 
 #### 2. Update ManageGameState()
-
 
 ```csharp
     /// <summary>
@@ -453,43 +484,29 @@ private void UnloadScene(string sceneName)
     }//end ManageGameState()
 ```
 #### How It Works
-- **using UnityEngine.SceneManagment** provides access to the **SceneMangment** namespaces for loading scenes in Unity.
+- **using UnityEngine.SceneManagement** provides access to the **SceneMangment** namespaces for loading scenes in Unity.
 -  Each game state corresponds to a specific scene or menu.
 - **Additive** loading is used for overlays like the pause menu, so gameplay continues underneath.
 
-#### 3. Unloading all Scenes
-We now have implmented scene loading, but we will eventually want to unload these scene. To do this we will want to call a method to unload all additive scenes that have loaded on top of the Bootstrap scene. 
-
-```csharp
-/// <summary>
-/// Unloads all currently loaded scenes except for the Bootstrap scene.
-/// </summary>
-public void UnloadAllScenes()
-{
-    // Loop through all currently loaded scenes
-    for (int i = 0; i < SceneManager.sceneCount; i++)
-    {
-        Scene scene = SceneManager.GetSceneAt(i);
-
-        // Only unload if it's not the Bootstrap scene
-        if (scene.name != "Bootstrap" && scene.isLoaded)
-        {
-            SceneManager.UnloadSceneAsync(scene);
-            
-        }//end If
-        
-    }//end for sceneCount
-    
-}//end UnloadedAllAdditiveScenes()
-
-```
 
 #
 
->[!TIP]
->For states like **GamePlay**, you might eventually want to create a `NextLevel()` method to determine which scene to load. In a simple one-level game, directly loading **"Level01"** works fine. However, as your game grows, separating the level-loading logic into its own method makes the code cleaner and easier to maintain.
->
->If there are many scenes to manage, delegating this responsibility to a dedicated **SceneFlowManager** can help keep the project organized and prevent the **GameManager** from becoming overloaded.
+### Managing Level Progression
+
+While `ManageGameState()` handles transitions between major game states like `MainMenu`, `GamePlay`, and `GameOver`, many games also include multiple levels or stages within the same gameplay session.
+
+Switching levels is different from changing the game state: the player is still in the GamePlay state, but the environment, challenges, and level-specific content need to change. To handle this, we introduce the `LoadNextLevel()` method.
+The `LoadNextLevel()` method will:
+- Unload the current level scene
+- Load the next level scene
+- Update the GameManager’s tracking of the current level
+
+By using `LoadNextLevel()`, we can smoothly progress through levels without affecting the overall game state or player experience. This ensures that level transitions are clean, predictable, and maintain consistent UI and gameplay flow.
+
+```csharp
+
+```
+
 
 ---
 
@@ -633,6 +650,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
