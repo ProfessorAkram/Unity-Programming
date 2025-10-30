@@ -404,7 +404,7 @@ private void UnloadScene(string sceneName)
     {
         _loadedScenes.Remove(sceneName);
         
-    }if (_loadedScenes.Contains(sceneName))
+    }//end if(_loadedScenes.Contains(sceneName))
     
 }//end UnloadScene()
 ```
@@ -633,6 +633,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
