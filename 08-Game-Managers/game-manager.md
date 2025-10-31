@@ -201,7 +201,7 @@ By calling `ChangeGameState()` here, we make sure the GameManager takes control 
 #
 
 #### 6. Create a GameManager Prefab
-Now that we have created our **GameManager** class, we will return to the Unity Editor setup or project.
+Now that we have created our **GameManager** class, we will return to the Unity Editor to implement it in our project.
 
 1. In the Unity Editor, return to one of the _sample scenes _
 
@@ -781,6 +781,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
