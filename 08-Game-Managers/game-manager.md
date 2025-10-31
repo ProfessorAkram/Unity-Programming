@@ -200,23 +200,18 @@ By calling `ChangeGameState()` here, we make sure the GameManager takes control 
 
 #
 
-#### 6. Create a GamManager Prefab
+#### 6. Create a GameManager Prefab
 Now that we have created our **GameManager** class, we will return to the Unity Editor setup or project.
-1. In the **project panel** , under **Scenes** right-click and create a **New Scene**
-   - Name this scene **Bootstrap**
-   - Delete everything from this scene
 
-#
-
->[!NOTE]
-> The **Bootstrap scene** serves as a **single point of entry** for the game. It ensures that the GameManager and other core systems are initialized before any other scenes or gameplay elements load. Players never directly see this scene, as it immediately transitions to the first real game state.
-
-#
+1. In the Unity Editor, return to one of the _sample scenes _
 
 2. In the **hierarchy panel**, right-click and choose **`Create > Create Empty`** 
    - Name the new empty game object **GameManager**
    - Add the **GameManager** class to the **GameManager** game object
    - In the Inspector, ensure the **`Is Persistent`** property is set to true.
+
+3. Convert the **GameManager** game object to a prefab
+   _(i.e., Drag and drop it from the **hierarchy panel** to the **project panel**)_
 
 #
 
@@ -328,7 +323,7 @@ Let's take a look at how we would implement some of these behaviors.
 ## :hammer_and_wrench: Switching Scenes with GameStates 
 Next, we will extend the **GameManager** to handle scene transitions and manage overall game flow through defined GameStates.
 
-Rather than completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**, stacking them on top of our **Bootstrap scene**.
+Rather than completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**, stacking them on top of a **Bootstrap scene**.
 
 ### Single Point of Entry
 The **Bootstrap scene** acts as the game's **single point of entry**, providing a consistent place to initialize the GameManager and other core systems. While players never directly see this scene, it ensures that all critical systems are ready before any gameplay or menus appear.
@@ -347,8 +342,18 @@ Even as the game grows more complex, maintaining a single entry point helps keep
 > A single entry point is not the only way to achieve safe initialization. Other options include **lazy initialization** or adjusting the **script execution order** in Unity, which can also help to ensure that systems exist before being accessed.
 
 #
+#### 1. Create a Bootstrap Scene
 
-#### 1. Update the Scenes List
+1. In Unity Editor, from the **project panel**
+   - Select the **Scenes** folder and right-click 
+   - Create a **New Scene** and name it **Bootstrap**
+2. Delete everything from this scene
+3. Add the **GameManager** prefab to the scene
+4. **Save** the scene
+
+#
+
+#### 2. Update the Scenes List
  1. In the Unity Editor, choose **File > Build Profile** 
  2. Add the `Bootstrap` scene to the list
     - Ensure that the `Bootstrap` scene is the first scene in the list
@@ -358,7 +363,7 @@ Even as the game grows more complex, maintaining a single entry point helps keep
    
 #
 
-#### 2. Using Scene Managment
+#### 3. Using Scene Managment
 To handle the transition scenes, the **GameManager** needs to interact with **Unity’s Scene Management system**.
 
 1. Edit the **GameManager** class to include the following: 
@@ -374,7 +379,7 @@ public class GameManager: Singleton<GameManager>
 
 #
 
-####  3. Create Scene References
+####  4. Create Scene References
 Now that our scenes have been created and set up in the editor, we will need our game manager to have a reference to each of them. 
 
 1. Add the following fields to the GameManager
@@ -419,7 +424,7 @@ Similarly, we will create an `UnloadScene()` method to safely remove individual 
 
 #
 
-#### 4. Create the `LoadedScene()` method
+#### 5. Create the `LoadedScene()` method
 This method handles **loading a new scene additively** and keeping track of it in the `_loadedScenes` list. It also allows you to designate whether the scene should be considered the **current primary scene**.
 
 The method will:
@@ -459,7 +464,7 @@ private void LoadScene(string sceneName, bool setAsCurrent = true)
 
 #
 
-#### 5. Create the `UnloadedScene()` method
+#### 6. Create the `UnloadedScene()` method
 This method handles **unloading a single scene** and ensures it is removed from the `_loadedScenes` list. It safely checks if the scene is loaded before attempting to unload it and avoids errors if the scene is not tracked.
 
 The method will:
@@ -502,7 +507,7 @@ private void UnloadScene(string sceneName)
 
 #
 
-#### 6. Create the `UnloadAllScenes()` method
+#### 7. Create the `UnloadAllScenes()` method
 This method allows you to **unload all currently loaded scenes** at once. It ensures the `_loadedScenes` list is cleared afterward. `UnloadAllScenes()` will be used when transitioning between major game states (like MainMenu → GamePlay) to reset the game environment cleanly.
 
 The method will:
@@ -532,7 +537,7 @@ private void UnloadAllScenes()
 
 # 
 
-#### 7. Update ManageGameState()
+#### 8. Update ManageGameState()
 Now that we have dedicated methods for loading and unloading scenes, we can simplify the GameManager’s state handling.
 
 The `ManageGameState()` method will be updated with the following features
@@ -776,6 +781,7 @@ case GameState.GamePlay:
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
 
 ---
+
 
 
 
