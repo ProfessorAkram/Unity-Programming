@@ -41,7 +41,7 @@ At the same time, we define a reference to the **current game state** using a pr
 
 By using a private set, we allow other scripts to **read** the game state, but only the GameManager itself can change it. This ensures that all state transitions are centralized, controlled, and predictable, preventing other scripts from inadvertently modifying the game flow.
 
-The property is initialized to **GameState.Bootstrap**, representing the game's single entry point where core systems are set up before any menus or gameplay scenes are loaded.
+The property is initialized to **GameState.Bootstrap**, representing the game’s **single entry point** where core systems are set up before any menus or gameplay scenes are loaded. We'll discuss the Bootstrap scene and how it manages core systems and scene transitions in more detail later, once we cover scene management.
 
 #
 
@@ -242,7 +242,7 @@ using UnityEngine;
 public class GameManager: Singleton<GameManager>
 {
     // Reference to the current state of the game
-    public GameState CurrentState {get; private set;}
+    public GameState CurrentState {get; private set;} = GameState.BootStrap;
     
     // Start is called before the first frame update
     void Start()
@@ -316,6 +316,7 @@ Building on our current framework, we will next implement scene switching.
 
 
 **[<< Return Game States tutorial](game-states.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
+
 
 
 
