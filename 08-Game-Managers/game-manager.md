@@ -108,7 +108,7 @@ using UnityEngine;
 public class GameManager: Singleton<GameManager>
 {
     // Reference to the current state of the game
-    public GameState CurrentState {get; private set;};
+    public GameState CurrentState {get; private set;}
 
 ```
 Here, we implement the **Singleton base class** to ensure there is **only one instance** of the GameManager in the game. At the same time, we define a reference to the **current game state** using a property with a `private set`.
@@ -305,10 +305,78 @@ The debug output on our `OnTriggerEnter()` in the **Player** class and the `Mana
 
 ---
 
-## Common GameManager Logic
-As mentioned previously, the **GameManager** primarily oversees the **flow of the game**, managing **game states** and controlling **major systems**. 
+# 🎉 New Achievement: GameManager Framework
+We now have a successful **GameManager** framework that we can build upon. 
 
-**In a small-scale game**, this typically includes:
+```csharp
+using UnityEngine;
+
+public class GameManager: Singleton<GameManager>
+{
+    // Reference to the current state of the game
+    public GameState CurrentState {get; private set;}
+    
+    // Start is called before the first frame update
+    void Start()
+    {
+        // Set the initial game state to Main Menu
+        ChangeGameState(GameState.MainMenu);
+
+    }//end Start()
+    
+    /// <summary>
+    /// Executes the logic associated with the current game state.
+    /// This method is called whenever ChangeGameState() updates the state.
+    /// </summary>
+    private void ManageGameState()
+    {
+        switch (CurrentState)
+        {
+            case GameState.MainMenu:
+                Debug.Log("Game State: MainMenu");
+                break;
+
+            case GameState.GamePlay:
+                Debug.Log("Game State: GamePlay");
+                break;
+
+            case GameState.GameOver:
+                Debug.Log("Game State: GameOver");
+                break;
+
+            default:
+                Debug.LogError($"[GameManager] Unknown GameState: {CurrentState}. No scenes loaded.");
+                break;
+
+        }//end switch(CurrentState)
+
+    }//end ManageGameState()
+    
+    /// <summary>
+    /// Changes the current game state and triggers corresponding logic
+    /// only if the new state is different from the current state.
+    /// </summary>
+    /// <param name="newState">The new game state to switch to.</param>
+    public void ChangeGameState(GameState newState)
+    {
+        // Early exit if already in this state
+        if (newState == CurrentState)
+            return;
+   
+        // Update the current state and manage scenes
+        CurrentState = newState;
+
+        ManageGameState();
+
+    }//end ChangeGameState
+ 
+}//end GameManager
+
+```
+---
+## Extending the GameManager Framework
+
+While the GameManager framework provides a foundation for handling game state and overall flow, it can be expanded to manage a wide variety of game-specific logic. Depending on the scope and design of your project, in a **small-scale game**, this typically includes:
 - **Starting and stopping gameplay** – initiating or ending a level.
 - **Displaying menus or overlays** – such as main menu, pause, or results screens.
 - **Pausing and resuming the game** – controlling game time and input.
@@ -316,10 +384,10 @@ As mentioned previously, the **GameManager** primarily oversees the **flow of th
 - **Handling game over or level completion** – triggering transitions to results or next levels.
 - **Basic global rules or systems** – things that don’t belong to a single object but affect the entire game.
 
-Let's take a look at how we would implement some of these behaviors. 
+Building upon our current framework, we will next implement switching scenes.
 
 
-
+**[<< Return Lesson Contents](unity-managers.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
 
 
 
