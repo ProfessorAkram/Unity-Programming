@@ -341,14 +341,34 @@ public void LoadNextLevel()
 
 ## :hammer_and_wrench: Manging Pause State 
 
-Another common function is implementing a **pause menu** in the game. Pausing typically involves opening a menu and stopping gameplay.
+Another common function in many games is implementing a **pause menu**. Pausing usually involves freezing gameplay and displaying a menu where players can resume, restart, or exit.
 
-In our current setup, the `"PauseMenu"` scene is loaded **additively**, meaning it appears on top of the current gameplay scene. However, this alone **does not actually pause the game**. Additionally, if we were to rely only on switching states in the `ManageGameState()` method, returning from pause to gameplay could unintentionally reload the current level, which is not what we want.
+When the `PauseMenu` is triggered, the menu will load as an **additive** scene, and we will stop all gameplay, adjusting the `Time.timeScale` property. When exiting pause, we will do the reverse, and because the same button or trigger will turn on and off the pause, we can do all this in a single `TogglePause ()` method that can check against a single bool. 
 
-To handle this correctly, we need to:
-- Avoid reloading the current gameplay scene when toggling pause.
-- Stop or resume gameplay, usually by adjusting `Time.timeScale`.
-- Manage additive loading/unloading of the pause menu as needed.
+
+#### 1. Create a Boolean to Track Pause
+
+To determine if the game is currently paused, we define a **read-only boolean property**:
+
+```csharp
+public bool IsPaused => Time.timeScale == 0;
+```
+
+>[!NOTE]
+> `IsPaused` is declared using shorthand for a getter using the **expression-bodied syntax** that is equivalent to: 
+> ```csharp
+>  public bool IsPaused
+> {
+>    get
+>    {
+>        return Time.timeScale == 0;
+>    }
+>}
+>```
+
+This property is **read-only**, meaning its value cannot be set directly. Instead, it automatically reflects the current pause state: it returns true when `Time.timeScale` is 0 (paused) and `false` otherwise. Changing the `Time.timeScale` elsewhere in the game will automatically update the value of `IsPaused`.
+
+.
 
 #
  
@@ -356,28 +376,30 @@ To handle this correctly, we need to:
 
 ```csharp
 /// <summary>
-/// Toggles between GamePlay and Pause states.
-/// Freezes or resumes gameplay using Time.timeScale
-/// and loads/unloads the additive pause menu.
+/// Toggles the pause state of the game.
+/// Freezes or resumes gameplay using Time.timeScale,
+/// and loads/unloads the PauseMenu scene.
 /// </summary>
 public void TogglePause()
 {
-    if (CurrentState == GameState.GamePlay)
+    // Only allow pausing/unpausing during gameplay
+    if (CurrentState != GameState.GamePlay && !IsPaused)
+        return;
+
+    //If the game is not paused
+    if (!IsPaused)
     {
-        ChangeGameState(GameState.Pause);
-        // Freeze gameplay 
-        Time.timeScale = 0f; 
+        // Pause the game
+        Time.timeScale = 0f;
+        LoadScene(_pauseMenu);
     }
-    else if (CurrentState == GameState.Pause)
+    else
     {
-        ChangeGameState(GameState.GamePlay);
-        // Resume gameplay 
-        Time.timeScale = 1f; 
+        // Resume the game
+        Time.timeScale = 1f;
+        unloadScene(_pauseMenu);
 
-        // Unload the pause menu
-        SceneManager.UnloadSceneAsync("PauseMenu");
-
-   }//end if(GamePlay/Pause)
+    }//end if (!IsPaused)
 
 }//end TogglePause()
 
@@ -421,7 +443,7 @@ One way to handle this is by tracking whether the gameplay has already started.
 
 1. Create a flag to check if gameplay has started
 ```csharp
-      // Flag to tracks whether gameplay has started
+      // Flag to track whether gameplay has started
       private void _hasGameplayStarted() = false; 
 ```
 
@@ -477,6 +499,7 @@ case GameState.GamePlay:
 > - **Detect when there are no more levels** and switch to the GameOver state.
 >   
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
+
 
 
 
