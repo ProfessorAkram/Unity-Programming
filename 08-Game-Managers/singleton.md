@@ -21,7 +21,7 @@ By using a base class for the Singleton pattern, you:
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     // Static instance that holds the reference to the Singleton
-    public static T Instance {get; private set;};
+    public static T Instance {get; private set;}
 
     // Unity's Awake method, called when the script instance is being loaded
     private void Awake()
@@ -132,3 +132,4 @@ Now we will create the `CheckForPersistance()` method:
 
 
 **[<< Return Lesson Contents](unity-managers.md)** | **[Continue to Game Manager tutorial >>](game-manager.md)**
+
