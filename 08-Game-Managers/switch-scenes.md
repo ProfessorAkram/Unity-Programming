@@ -344,12 +344,24 @@ We’ll first update the **MainMenu** class to trigger a game state change throu
 
 #### 1. Update the MainMenu Class
 1. Open the **MainMenu** class and add a reference to the **GameManager** instance
+
+```csharp
+    // Reference to the singleton GameManager instance
+    private GameManager _gameManager;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        // Get the GameManager instance to access global game state methods
+        _gameManager = GameManager.Instance;
+
+    }//end Start()
+```
+
 2. Next upddated the `PlayGame()` method from the previous lesson.
 3. Update the method to call the GameManager’s `ChangeGameState()` method instead of directly loading the scene:
    
 ```csharp
-    // Reference to the singleton GameManager instance
-    private GameManager _gameManager;
 
      // Loads the first level of the game
        public void PlayGame()
@@ -409,6 +421,7 @@ With this foundation, you now have a robust framework for switching scenes, keep
 
 
 **[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Observer Pattern Lesson >>](obsserver-pattern.md)**
+
 
 
 
