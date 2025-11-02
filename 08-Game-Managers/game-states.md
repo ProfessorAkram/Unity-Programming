@@ -49,10 +49,17 @@ In many projects, game states are managed by a **Game Manager**; a centralized s
 Since we are implementing an **FSM** for our **game states**, we will want to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
 
 Before we start development on the Game Manager, we need to have a rough idea of the game states we will have in the game and what takes place during each state. While these may vary, the most **common core game states** include: 
-- **Bootstrap**: Single entry point, initializes the GameManager and other core systems before any gameplay or menus appear. 
+- **Bootstrap**: The game will boot here and initialize the GameManager and other core systems before any gameplay or menus appear. 
 - **MainMenu**: The game starts here. The GameManager will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
 - **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or a loss.
 - **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stop all gameplay logic.
+
+#
+
+>[!NOTE]
+> The **Bootstrap** game state corresponds to a persistent **Bootstrap scene**, which ensures the game starts from a consistent foundation. We'll discuss the details of this scene and how it manages core systems later, when we build the GameManager framework.
+
+#
 
 We can declare our **Enum** within the **GameManager** class or in its own separate class file. To keep things modular and flexible, we will declare the **GameState Enum** in its own class, ensuring that each state is decoupled from the core logic of the **GameManager**.
 
