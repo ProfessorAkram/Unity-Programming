@@ -358,7 +358,7 @@ We’ll first update the **MainMenu** class to trigger a game state change throu
             _gameManager.ChangeGameState(GameState.Gameplay);
 
        }//end PlayGame()
-
+```
 ---
 
 #### 2. Update the Player Class
@@ -409,6 +409,7 @@ With this foundation, you now have a robust framework for switching scenes, keep
 
 
 **[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Observer Pattern Lesson >>](obsserver-pattern.md)**
+
 
 
 
