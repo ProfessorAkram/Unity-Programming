@@ -1,12 +1,14 @@
+# Scene Management
+In larger-scale games, scene loading and transitions are often managed by a dedicated **scene manager** to keep responsibilities clearly separated. However, for smaller projects or prototypes, it’s perfectly reasonable to consolidate this functionality within the **GameManager**, allowing it to control both the active game state and the flow between scenes. This not only simplifies our architecture for smaller projects but also provides a clear example of how state management and scene flow work together.
+
 ---
 
-## :hammer_and_wrench: Switching Scenes with GameStates 
-Next, we will extend the **GameManager** to handle scene transitions and manage overall game flow through defined GameStates.
+## Single Point of Entry
+To manage multiple scenes efficiently and ensure that core systems remain active throughout the game, we use a **single persistent entry point**, a scene from which the game always starts and in which core systems persist for the lifetime of the application. All other scenes, such as levels, menus, or overlays, are loaded on top of this starting scene, ensuring the game always begins from a known, consistent location.
 
-Rather than completely replacing the scene each time the player moves between menus or levels, we will **load all scenes additively**, stacking them on top of a **Bootstrap scene**.
+This foundational scene is typically called the **Bootstrap** scene. While players never see it directly, it provides a stable place to initialize critical systems such as the **GameManager**, audio managers, and other global components before any gameplay or UI appears.
 
-### Single Point of Entry
-The **Bootstrap scene** acts as the game's **single point of entry**, providing a consistent place to initialize the GameManager and other core systems. While players never directly see this scene, it ensures that all critical systems are ready before any gameplay or menus appear.
+Rather than completely unloading and replacing the scene each time the player moves between menus or levels, we'll take a more efficient approach, **loading scenes additively** on top of the Bootstrap scene. This setup allows us to stack and manage different layers of the game without disrupting the core systems.
 
 Using a single point of entry is considered **good practice** because it:
 - Guarantees that essential systems are initialized in the correct order.
@@ -16,12 +18,18 @@ Using a single point of entry is considered **good practice** because it:
 
 Even as the game grows more complex, maintaining a single entry point helps keep initialization predictable and reliable, which is especially important when working with multiple additive scenes, overlays, or persistent managers.
 
-#
+# 
 
 >[!TIP]
 > A single entry point is not the only way to achieve safe initialization. Other options include **lazy initialization** or adjusting the **script execution order** in Unity, which can also help to ensure that systems exist before being accessed.
 
 #
+
+
+## :hammer_and_wrench: Setting up Scenes
+
+Before we can start switching between levels, menus, and overlays, we need to set up our project with a **Bootstrap scene**. In addition, we'll also organize our scene lists in the Build Settings. This ensures that all scenes we plan to load additively—such as menus, gameplay levels, and overlays—are properly recognized by Unity and can be loaded dynamically during runtime.
+
 #### 1. Create a Bootstrap Scene
 
 1. In Unity Editor, from the **project panel**
@@ -41,14 +49,20 @@ Even as the game grows more complex, maintaining a single entry point helps keep
     - Only add scenes that are required for playing the game (e.g., MainMenu, GameOver, Level-01, Level-02) 
     - Exclude test scenes.
    
-#
+---
 
-#### 3. Using Scene Managment
+## :hammer_and_wrench: Managing Scene Transitions with the GameManager
+For the **GameManager** to control scene transitions, we need to define which scenes exist and how they are loaded or unloaded. This allows menus, gameplay levels, and overlays to appear seamlessly during gameplay.
+
+
+#### 1. Using Scene Managment
 To handle the transition scenes, the **GameManager** needs to interact with **Unity’s Scene Management system**.
-
+We will also record these scenes into a list, which will require the C# **System.Collections.Generic** namespace.
+**
 1. Edit the **GameManager** class to include the following: 
 
 ```csharp
+using System.Collections.Generic; 
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -59,7 +73,7 @@ public class GameManager: Singleton<GameManager>
 
 #
 
-####  4. Create Scene References
+####  2. Create Scene References
 Now that our scenes have been created and set up in the editor, we will need our game manager to have a reference to each of them. 
 
 1. Add the following fields to the GameManager
@@ -104,7 +118,7 @@ Similarly, we will create an `UnloadScene()` method to safely remove individual 
 
 #
 
-#### 5. Create the `LoadedScene()` method
+#### 3. Create the `LoadedScene()` method
 This method handles **loading a new scene additively** and keeping track of it in the `_loadedScenes` list. It also allows you to designate whether the scene should be considered the **current primary scene**.
 
 The method will:
@@ -144,7 +158,7 @@ private void LoadScene(string sceneName, bool setAsCurrent = true)
 
 #
 
-#### 6. Create the `UnloadedScene()` method
+#### 4. Create the `UnloadedScene()` method
 This method handles **unloading a single scene** and ensures it is removed from the `_loadedScenes` list. It safely checks if the scene is loaded before attempting to unload it and avoids errors if the scene is not tracked.
 
 The method will:
@@ -162,10 +176,10 @@ The method will:
 private void UnloadScene(string sceneName)
 {
     //Reference to "this" scene being passed
-    Scene _thisScene = SceneManager.GetSceneByName(sceneName);
+    Scene thisScene = SceneManager.GetSceneByName(sceneName);
 
     // Checks if "this" scene is loaded and unloads
-    if (scene.isLoaded)
+    if (thisScene.isLoaded)
     {
         SceneManager.UnloadSceneAsync(sceneName);
 
@@ -187,7 +201,7 @@ private void UnloadScene(string sceneName)
 
 #
 
-#### 7. Create the `UnloadAllScenes()` method
+#### 5. Create the `UnloadAllScenes()` method
 This method allows you to **unload all currently loaded scenes** at once. It ensures the `_loadedScenes` list is cleared afterward. `UnloadAllScenes()` will be used when transitioning between major game states (like MainMenu → GamePlay) to reset the game environment cleanly.
 
 The method will:
@@ -217,7 +231,7 @@ private void UnloadAllScenes()
 
 # 
 
-#### 8. Update ManageGameState()
+#### 6. Update ManageGameState()
 Now that we have dedicated methods for loading and unloading scenes, we can simplify the GameManager’s state handling.
 
 The `ManageGameState()` method will be updated with the following features
@@ -229,37 +243,42 @@ The `ManageGameState()` method will be updated with the following features
 By centralizing scene management here, we keep the game flow clean, predictable, and easy to extend as more states or levels are added.
 
 ```csharp
-    /// <summary>
-    /// Executes logic for the current game state.
+  /// <summary>
+    /// Executes the logic associated with the current game state.
+    /// This method is called whenever ChangeGameState() updates the state.
     /// </summary>
-    private void ManageGameState(){
-       // Unload all previously loaded scenes
-       UnloadAllScenes();
+    private void ManageGameState()
+    {
+        // Unload all previously loaded scenes
+        UnloadAllScenes();
+        
+        switch (CurrentState)
+        {
+            case GameState.MainMenu:
+                Debug.Log("Game State: MainMenu");
+                LoadScene(_mainMenuScene);
+                break;
 
-       // Load the appropriate scenes for the new state
-       switch (newState)
-       {
-           case GameState.MainMenu:
-               LoadScene(mainMenuScene);
-               break;
-   
-           case GameState.GamePlay:
-               //Load game level
-               LoadScene(levelScenes[currentLevelIndex]);
+            case GameState.GamePlay:
+                Debug.Log("Game State: GamePlay");
+                
+                //Load game level
+                LoadScene(_gameLevels[_currentLevelIndex]);
    
                 // Load the HUD as an overlay without setting it as the current scene
-               LoadScene(hudScene, false); 
-               break;
-   
-           case GameState.GameOver:
-               LoadScene(gameOverScene);
-               break;
-   
-           default:
-              Debug.LogError($"[GameManager] Unknown GameState: {newState}. No scenes loaded.");
-           break;
-   
-       }//end  switch(CurrentState)
+                LoadScene(_hudScene, false); 
+                break;
+
+            case GameState.GameOver:
+                Debug.Log("Game State: GameOver");
+                LoadScene(_gameOverScene);
+                break;
+
+            default:
+                Debug.LogError($"[GameManager] Unknown GameState: {CurrentState}. No scenes loaded.");
+                break;
+
+        }//end switch(CurrentState)
 
     }//end ManageGameState()
 ```
@@ -317,7 +336,6 @@ public void LoadNextLevel()
 }//end LoadNextLevel()
 
 ```
-
 
 ---
 
@@ -459,5 +477,6 @@ case GameState.GamePlay:
 > - **Detect when there are no more levels** and switch to the GameOver state.
 >   
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
+
 
 
