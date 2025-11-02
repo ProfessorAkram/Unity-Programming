@@ -2,12 +2,12 @@
 
 The **Singleton pattern** is a widely used design pattern for ensuring that a class has only one instance throughout the lifetime of the application. This pattern provides a way to control access to shared, global resources without the need for multiple instances, which can help avoid unexpected behavior or performance issues due to redundant processing
 
-## Signleton in Game Development 
+## Singleton in Game Development 
 
-In game development a common use case for a singleton is in the creation of a **single instance of a manager or controller class (e.g. AudioManager, GameManager, or PlayerControler)** where creating multiple instances could lead to conflicts or inefficiencies. By implementing the Singleton pattern, you can ensure that no matter how many times the object is requested or instantiated, only one instance will exist.
+In game development, a common use case for a singleton is in the creation of a **single instance of a manager or controller class (e.g., AudioManager, GameManager, or PlayerController)** where creating multiple instances could lead to conflicts or inefficiencies. By implementing the Singleton pattern, you can ensure that no matter how many times the object is requested or instantiated, only one instance will exist.
 
 ## Singleton Base Class
-Since there are many instances that require Singleton behavior, rewriting the behavior can be time consuming, while copying and pasting the Singleton code can lead to redundancy and potential bugs. To increase efficiency a base Singleton class that any class can inherit from. This simplifies implementation and makes the codebase more maintainable and scalable.
+Since there are many instances that require Singleton behavior, rewriting the behavior can be time-consuming, while copying and pasting the Singleton code can lead to redundancy and potential bugs. To increase efficiency, a base Singleton class that any class can inherit from. This simplifies implementation and makes the codebase more maintainable and scalable.
 
 By using a base class for the Singleton pattern, you:
 - **Reduce Code Duplication:** Avoid rewriting the Singleton logic for each class.
@@ -62,7 +62,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 **Awake Method:** In Unity, the Awake method is called when the script is loaded. Here, it's used to trigger the `CheckForSingleton` method, which ensures only one instance of the class exists.
 
 **CheckForSingleton Method:** This method checks whether the **Instance** is null.
-- If it is null , it assigns the current object as the Singleton.
+- If it is null, it assigns the current object as the Singleton.
 - If an instance already exists and it's not the current object, the new instance is destroyed to prevent multiple instances.
 
 **Debug Logging:** The `Debug.Log(Instance)` statement logs the current instance, which can be useful for verifying the Singleton behavior during development.
@@ -80,7 +80,7 @@ This approach allows us to reuse the same Singleton base class for both persiste
 
 #### Create a Boolean for Persistence
 
-In our singleton base class add the following field: 
+In our singleton base class, add the following field: 
 
 ```csharp
 [SerlizedField]
@@ -89,7 +89,7 @@ private bool _isPersistant = true;
 
 ```
 
-Next we will updated our `CheckForSingleton()` method to call method for persistance. 
+Next, we will update our `CheckForSingleton()` method to call the method for persistence. 
 
 ``` csharp
     // Ensures that only one instance of the Singleton exists
@@ -126,11 +126,9 @@ Now we will create the `CheckForPersistance()` method:
 ```
 
 
-**[<< Return Lesson Contents](unity-managers.md)** | **[Continue to Game Manager tutorial >>](game-manager.md)**
-
-
 
 >[!NOTE]
 >The `DontDestroyOnLoad` method only works if the object is a root object in the scene (i.e., it has no parent). If your Singleton instance has a parent object, it will not persist as expected. To ensure persistence in such cases, you **must detach the object from its parent** before calling `DontDestroyOnLoad`, as we have done in the example above.
 
 
+**[<< Return Lesson Contents](unity-managers.md)** | **[Continue to Game Manager tutorial >>](game-manager.md)**
