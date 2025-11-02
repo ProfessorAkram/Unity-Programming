@@ -336,6 +336,63 @@ public void LoadNextLevel()
 }//end LoadNextLevel()
 
 ```
+---
+## :hammer_and_wrench: Communicating with the GameManager 
+Before we wrap up scene switching, it’s a good idea to test our game and make sure everything is connected correctly.
+
+We’ll first update the **MainMenu** class to trigger a game state change through the GameManager, and then update the **Player** class to trigger a level load when a goal is reached. This demonstrates how using a centralized GameManager keeps our game flow predictable and consistent.
+
+#### 1. Update the MainMenu Class
+1. Open the **MainMenu** class and add a reference to the **GameManager** instance
+2. Next upddated the `PlayGame()` method from the previous lesson.
+3. Update the method to call the GameManager’s `ChangeGameState()` method instead of directly loading the scene:
+   
+```csharp
+    // Reference to the singleton GameManager instance
+    private GameManager _gameManager;
+
+     // Loads the first level of the game
+       public void PlayGame()
+       {
+          // Trigger a game state change to GameOver
+            _gameManager.ChangeGameState(GameState.Gameplay);
+
+       }//end PlayGame()
+
+---
+
+#### 2. Update the Player Class
+Next, we will update the **Player** class so that colliding with the goal game object calls the **GameManager’s** `LoadNextLevel()` method, instead of directly changing the game state:
+
+```csharp
+private void OnTriggerEnter(Collider other)
+    {
+        // Check if the player collides with an object tagged as "Goal"
+        if (other.CompareTag("Goal"))
+        {
+            // Log for debugging
+            Debug.Log("Goal reached! Changing game state...");
+
+            // Load the next game level
+            _gameManager.LoadNextLevel(); 
+
+        }//end if("Goal")
+
+    }//end OnTriggerEnter()
+
+```
+This approach ensures that **all level transitions are centralized** in the GameManager.
+Furthermore, the player class does not need to know the details of scene loading or game state management; it simply notifies the GameManager that the goal was reached.
+
+#
+
+#### 3. Test from the Bootstrap Scene
+1. Return to the **Bootstrap** scene in the Unity Editor.
+2. Press **Play** to test the game:
+   - The Main Menu should load.
+   - Press the **Play Game** button; the game state should change to `GamePlay` and the first game level should load.
+   - Move the player to the goal — on collision, the next game level should load.
+3. Check the **Console** to ensure the correct debug messages from the GameManager are triggering.
 
 ---
 
@@ -350,10 +407,9 @@ By now, we've updated our **GameManager** to handle core **scene management** in
 
 With this foundation, you now have a robust framework for switching scenes, keeping gameplay smooth and predictable.
 
-Next, we'll build on this system by adding a pause menu, allowing players to temporarily freeze gameplay and resume seamlessly,  while still leveraging our additive scene and GameState structure.
 
+**[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Observer Pattern Lesson >>](obsserver-pattern.md)**
 
-**[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Game Pause tutorial >>](game-pause.md)**
 
 
 
