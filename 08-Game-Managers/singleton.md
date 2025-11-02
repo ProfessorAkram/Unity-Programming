@@ -125,6 +125,12 @@ Now we will create the `CheckForPersistance()` method:
         }//end CheckForPersitance()
 ```
 
+
+**[<< Return Lesson Contents](unity-managers.md)** | **[Continue to Game Manager tutorial >>](game-manager.md)**
+
+
+
 >[!NOTE]
 >The `DontDestroyOnLoad` method only works if the object is a root object in the scene (i.e., it has no parent). If your Singleton instance has a parent object, it will not persist as expected. To ensure persistence in such cases, you **must detach the object from its parent** before calling `DontDestroyOnLoad`, as we have done in the example above.
+
 
