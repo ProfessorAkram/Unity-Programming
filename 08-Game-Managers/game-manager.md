@@ -57,7 +57,8 @@ For our GameManager, we will be **implementing the FSM approach**. This approach
 Since we are implementing an **FSM** for our **game states**, we will want to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
 
 Before we start development on the Game Manager, we need to have a rough idea of the game states we will have in the game and what takes place during each state. While these may vary, the most **common core game states** include: 
-- **MainMenu**: The game starts here. The GM will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
+- **Bootstrap**: Single entry point, initializes the GameManager and other core systems before any gameplay or menus appear. 
+- **MainMenu**: The game starts here. The GameManager will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
 - **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or a loss.
 - **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stop all gameplay logic.
 
@@ -80,6 +81,7 @@ We can declare our **Enum** within the **GameManager** class or in its own separ
 ```csharp
    public enum GameState
    {
+       BootStrap,  // Initial boot state
        MainMenu,   // Main menu screen
        GamePlay,   // Active gameplay
        GameOver    // Game over screen
@@ -108,12 +110,16 @@ using UnityEngine;
 public class GameManager: Singleton<GameManager>
 {
     // Reference to the current state of the game
-    public GameState CurrentState {get; private set;}
+    public GameState CurrentState {get; private set;} = GameState.BootStrap;
 
 ```
-Here, we implement the **Singleton base class** to ensure there is **only one instance** of the GameManager in the game. At the same time, we define a reference to the **current game state** using a property with a `private set`.
+Here, we implement the **Singleton base class** to ensure there is **only one instance** of the GameManager in the game. 
 
-The `private set` ensures that while other scripts can **read** the value of `CurrentState`, **only the GameManager itself can modify it**, maintaining control over the game's state transitions.
+At the same time, we define a reference to the **current game state** using a property with a `private set`.
+
+By using a private set, we allow other scripts to **read** the game state, but only the GameManager itself can change it. This ensures that all state transitions are centralized, controlled, and predictable, preventing other scripts from inadvertently modifying the game flow.
+
+The property is initialized to **GameState.Bootstrap**, representing the game's single entry point where core systems are set up before any menus or gameplay scenes are loaded.
 
 #
 
@@ -388,6 +394,7 @@ Building upon our current framework, we will next implement switching scenes.
 
 
 **[<< Return Singelton tutorial](singleton.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
+
 
 
 
