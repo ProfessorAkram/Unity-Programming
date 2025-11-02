@@ -11,47 +11,7 @@ The **GameManager** is a key component of a game's architecture. It's responsibl
 > 2. **Consistency**: Prevents multiple instances with conflicting states, ensuring game-wide synchronization.  
 > 3. **Efficiency**: Reduces memory usage and improves performance by eliminating redundant instances.
 
-# 
-
-## Game States
-One of the core responsibilities of a Game Manager is **game state management**. GameStates define **what the game is doing right now**; for example, `MainMenu`, `GamePlay`, or `GameOver`. They represent mutually exclusive, player-visible modes. Systems like scoring, level progression, or UI updates are **not GameStates**; instead, they are **actions or systems that respond to the current state**.
-
-For instance, the scoring system only updates during `GamePlay` and ignores input in other states. Similarly, level progression triggers only while the player is actively playing. By centralizing the current mode in a GameState, all other systems can **check the state and behave appropriately**, making the game logic easier to manage, more predictable, and scalable as new states are added.
-
-### State Pattern vs Finite State Machine (FSM)
-Beyond **GameStates**, states are used in many other contexts in games. For example, a character could have states like `Idle`, `Walk`, `Run`, and `Jump`, while an AI NPC might have states such as `Patrol`, `Attack`, or `Sleep`. Whether managing individual object states or overarching game states, there are two common approaches: the **Finite State Machine (FSM)** and the **State Pattern**. 
-
-**Finite State Machine (FSM):** is are predefined states, typically represented as an enum. Transitions between states are controlled in a centralized system, such as the GameManager or the object the states relate to. Each state triggers the relevant logic when entered, but the behavior is handled in one place.
-
-**✅ Pros:**
-- Simple to implement and easy to read
-- Efficient for games with a small number of states
-- Centralized control makes debugging straightforward
-
-**❌ Cons:**
-- Can become cluttered if there are many states or complex behaviors
-- Less flexible for objects with unique, independent state logic
-
-# 
-
-**State Pattern:** involves encapsulating each state as its own class with its own behavior and logic. Transitions between states are handled through methods within these state objects.
-
-**✅ Pros:**
-- Very flexible and modular — each state can define its own behavior independently
-- Easier to scale for complex objects or systems with many unique states
-- Reduces the risk of a centralized controller becoming too large
-
-**❌ Cons:**
-- More complicated to set up initially
-- Can be overkill for simple games with only a few states
-- More classes and files to manage, which may confuse beginners
-
-#
-
-
-
-#
-
+---
 
 ## :hammer_and_wrench: Basic Game Manager 
 Now that we have our game states established, we can start to build out our Game Manager, which inherits from our **Singleton** base class. This guarantees that there is **only one instance** of the GameManager at any time. Singleton-based managers are ideal for **global systems** like game state management, scoring, or persistent data.
@@ -356,6 +316,7 @@ Building on our current framework, we will next implement scene switching.
 
 
 **[<< Return Game States tutorial](game-states.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
+
 
 
 
