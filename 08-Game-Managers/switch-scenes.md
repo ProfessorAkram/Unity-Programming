@@ -345,74 +345,6 @@ Another common function in many games is implementing a **pause menu**. Pausing 
 
 When the `PauseMenu` is triggered, the menu will load as an **additive** scene, and we will stop all gameplay, adjusting the `Time.timeScale` property. When exiting pause, we will do the reverse, and because the same button or trigger will turn on and off the pause, we can do all this in a single `TogglePause ()` method that can check against a single bool. 
 
-
-#### 1. Create a Boolean to Track Pause
-
-To determine if the game is currently paused, we define a **read-only boolean property**:
-
-```csharp
-public bool IsPaused => Time.timeScale == 0;
-```
-
->[!NOTE]
-> `IsPaused` is declared using shorthand for a getter using the **expression-bodied syntax** that is equivalent to: 
-> ```csharp
->  public bool IsPaused
-> {
->    get
->    {
->        return Time.timeScale == 0;
->    }
->}
->```
-
-This property is **read-only**, meaning its value cannot be set directly. Instead, it automatically reflects the current pause state: it returns true when `Time.timeScale` is 0 (paused) and `false` otherwise. Changing the `Time.timeScale` elsewhere in the game will automatically update the value of `IsPaused`.
-
-.
-
-#
- 
-#### 1. Create a TogglePause() method
-
-```csharp
-/// <summary>
-/// Toggles the pause state of the game.
-/// Freezes or resumes gameplay using Time.timeScale,
-/// and loads/unloads the PauseMenu scene.
-/// </summary>
-public void TogglePause()
-{
-    // Only allow pausing/unpausing during gameplay
-    if (CurrentState != GameState.GamePlay && !IsPaused)
-        return;
-
-    //If the game is not paused
-    if (!IsPaused)
-    {
-        // Pause the game
-        Time.timeScale = 0f;
-        LoadScene(_pauseMenu);
-    }
-    else
-    {
-        // Resume the game
-        Time.timeScale = 1f;
-        unloadScene(_pauseMenu);
-
-    }//end if (!IsPaused)
-
-}//end TogglePause()
-
-```
-
-#### How it Works
-- Checks the **current game state** to determine whether to pause or resume gameplay.
-   - If the game is running (`GamePlay`), it switches to Pause and freezes the game by setting Time.timeScale = 0.
-   - If the game is already paused (`Pause`), it switches back to GamePlay and resumes time (Time.timeScale = 1).
-- Uses **additive scene loading** for the pause menu, allowing the menu to overlay the gameplay without unloading the level.
-- **Unloads the pause men**u when returning to gameplay, ensuring the overlay is removed.
-- Keeps pause logic **isolated** so other game state changes don’t unintentionally affect the time scale or UI.
-
 ---
 > ### ⏱️ TIME.timeScale
 > In Unity, `Time.timeScale` is a **global multiplier** for how fast time progresses in the game. It affects **all time-dependent systems**, including:
@@ -432,73 +364,73 @@ public void TogglePause()
 
 ---
 
-#### 2. Handle Game Level Loads
-When returning from a **Pause** state back to **GamePlay**, we want to **avoid reloading the current level**. Reloading unnecessarily could reset the player’s progress or interrupt gameplay.
 
-One way to handle this is by tracking whether the gameplay has already started.
-- If it has, we simply resume gameplay without reloading the level.
-- If not, we load the first level only once.
+#### 1. Create a Boolean to Track Pause
+
+To determine if the game is currently paused, we define a **read-only boolean property**:
+
+```csharp
+// Read-only property that returns true if the game is currently paused
+public bool IsPaused => Time.timeScale == 0;
+```
+
+>[!NOTE]
+> `IsPaused` is declared using shorthand for a getter using the **expression-bodied syntax** that is equivalent to: 
+> ```csharp
+>  public bool IsPaused
+> {
+>    get
+>    {
+>        return Time.timeScale == 0;
+>    }
+>}
+>```
+
+This property is **read-only**, meaning its value cannot be set directly. Instead, it automatically reflects the current pause state: it returns true when `Time.timeScale` is 0 (paused) and `false` otherwise. Changing the `Time.timeScale` elsewhere in the game will automatically update the value of `IsPaused`.
 
 #
-
-1. Create a flag to check if gameplay has started
-```csharp
-      // Flag to track whether gameplay has started
-      private void _hasGameplayStarted() = false; 
-```
-
-2. Create a StartGameplay() method
+ 
+#### 1. Create a TogglePause() method
 
 ```csharp
-
-/// <summary>
-/// Starts gameplay by loading the first level and setting the gameplay flag.
-/// This method should only be called the first time the game enters the GamePlay state.
-/// </summary>
-private void StartGameplay()
-{
-    //Load the first game level
-    SceneManager.LoadScene("Level01");
-
-    //Set the started flag to true
-    _hasGameplayStarted = true;
-
-}//end StartGameplay()
-
-```
-
-3. Update the GamePlay case in the state switch
-
-```csharp
-case GameState.GamePlay:
-    // Gameplay logic
-    Debug.Log("Game State: GamePlay");
-
-    // Load the first level only if gameplay hasn't started
-    if (!_hasGameplayStarted)
+    /// <summary>
+    /// Toggles the pause state of the game.
+    /// Freezes or resumes gameplay using Time.timeScale,
+    /// and loads/unloads the PauseMenu scene.
+    /// </summary>
+    public void TogglePause()
     {
-        StartGameplay();
-    }
+        // Only allow pausing/unpausing during gameplay
+        if (CurrentState != GameState.GamePlay && !IsPaused)
+            return;
 
-    break;
+        //If the game is not paused
+        if (!IsPaused)
+        {
+            // Pause the game
+            Time.timeScale = 0f;
+            LoadScene(_pauseMenuScene);
+        }
+        else
+        {
+            // Resume the game
+            Time.timeScale = 1f;
+            UnloadScene(_pauseMenuScene);
+
+        }//end if (!IsPaused)
+
+    }//end TogglePause()
+
 ```
+**How it Works**
+- `TogglePause()` only allows pausing if the game is in the `GamePlay` state, preventing accidental pauses in menus or GameOver screens.
+- When the game is **not paused**, `TogglePause()` freezes gameplay (`Time.timeScale = 0`) and loads the pause menu additively.
+- When the game is **already paused**, `TogglePause()` resumes gameplay (`Time.timeScale = 1`) and unloads the pause menu.
+- This approach ensures a smooth transition between gameplay and pause without reloading the level or losing game state.
 
-#### How it Works
-- The `_hasGameplayStarted` flag prevents unnecessary reloading when switching between Pause and GamePlay.
-- `StartGameplay()` loads the first level and marks the flag as true.
-- Once gameplay is active, returning from Pause simply resumes the game instead of restarting the scene.
 
-#
 
->[!CAUTION]
-> This simple setup only handles loading the first gameplay level.
->
-> Additional logic would be required to:
-> - **Load the next level** when a goal is reached.
-> - **Reset the current level** after a player loss or restart.
-> - **Detect when there are no more levels** and switch to the GameOver state.
->   
-> These features can be added later through a `NextLevel()` or **SceneFlowManager**.
+
 
 
 
