@@ -7,7 +7,7 @@ The **GameManager** is a key component of a game's architecture. It's responsibl
 > In many cases, Game Manager will implement a **Singleton Pattern** to maintain a single point of control over the game's flow and systems. This ensures that no matter where you are in the game, whether in a scene, menu, or during gameplay, the GM remains the same instance, providing a consistent and unified experience.  
 >
 > **Why Use a Singleton for the Game Manager?**  
-> 1. **Global Access**: The GM needs to be easily accessible from UI, player input, AI, and other systems without manually passing references.  
+> 1. **Global Access**: The GameManager needs to be easily accessible from UI, player input, AI, and other systems without manually passing references.  
 > 2. **Consistency**: Prevents multiple instances with conflicting states, ensuring game-wide synchronization.  
 > 3. **Efficiency**: Reduces memory usage and improves performance by eliminating redundant instances.
 
@@ -394,6 +394,7 @@ Building upon our current framework, we will next implement switching scenes.
 
 
 **[<< Return Singelton tutorial](singleton.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
+
 
 
 
