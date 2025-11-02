@@ -48,48 +48,10 @@ Beyond **GameStates**, states are used in many other contexts in games. For exam
 
 #
 
-For our GameManager, we will be **implementing the FSM approach**. This approach is beginner-friendly, simple to implement, and ideal for small-scale prototype game projects. Using an FSM allows us to clearly manage state transitions, load and unload scenes, and control gameplay behavior without the extra complexity of creating separate classes for each state, as the State Pattern would require.
+
 
 #
 
-### Defining Game States
-
-Since we are implementing an **FSM** for our **game states**, we will want to define each state as an **enum**. Enums are ideal for this purpose, as they allow us to clearly define a set of named values representing the possible game states. Using an Enum makes the code more readable and reduces the risk of mistakes that could arise from using raw integers or strings.
-
-Before we start development on the Game Manager, we need to have a rough idea of the game states we will have in the game and what takes place during each state. While these may vary, the most **common core game states** include: 
-- **Bootstrap**: Single entry point, initializes the GameManager and other core systems before any gameplay or menus appear. 
-- **MainMenu**: The game starts here. The GameManager will load any necessary UI components for the main menu and wait for user input to either start the game, load a saved game, or exit.
-- **GamePlay**: The core of the game, in which the player is actively playing. The GM continuously checks if the game conditions are met for a win or a loss.
-- **GameOver**: When the player loses or when the game is over, the GM will display the Game Over screen and stop all gameplay logic.
-
-We can declare our **Enum** within the **GameManager** class or in its own separate class file. To keep things modular and flexible, we will declare the **GameState Enum** in its own class, ensuring that each state is decoupled from the core logic of the **GameManager**.
-
-# 
-
->[!TIP]
-> While we refer to **game states** in the plural, it's important to note that we're essentially defining a new **data type**, called **`GameState`** (singular), which will have multiple potential values, each representing a different phase of the game.
----
-
-## :hammer_and_wrench: Creating Game States
-
-1.	Open the **example project** in Unity
-2.	In the **`project panel`** under **`Assets > Scripts >`** right-click and create a new folder named **`Managers`**
-3.	In the newly created **`Managers`** folder, right-click and **create a new script**.
-4.	Name this new script **`GameState`** and open the file in your preferred IDE. 
-5. Clear any default class information and instead define the **`enum`** as shown below.
-
-```csharp
-   public enum GameState
-   {
-       BootStrap,  // Initial boot state
-       MainMenu,   // Main menu screen
-       GamePlay,   // Active gameplay
-       GameOver    // Game over screen
-   }
-```   
-5. Save the class and return to Unity.
-
----
 
 ## :hammer_and_wrench: Basic Game Manager 
 Now that we have our game states established, we can start to build out our Game Manager, which inherits from our **Singleton** base class. This guarantees that there is **only one instance** of the GameManager at any time. Singleton-based managers are ideal for **global systems** like game state management, scoring, or persistent data.
@@ -390,10 +352,11 @@ While the GameManager framework provides a foundation for handling game state an
 - **Handling game over or level completion** – triggering transitions to results or next levels.
 - **Basic global rules or systems** – things that don’t belong to a single object but affect the entire game.
 
-Building upon our current framework, we will next implement switching scenes.
+Building on our current framework, we will next implement scene switching.
 
 
-**[<< Return Singelton tutorial](singleton.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
+**[<< Return Game States tutorial](game-states.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
+
 
 
 
