@@ -82,19 +82,19 @@ Now that our scenes have been created and set up in the editor, we will need our
    [Header("Scene Management")]
    [SerializeField]
    [Tooltip("The main menu scene that loads when the game starts.")]
-   private string _mainMenuScene = "MainMenu";
+   private string _mainMenuScene;
    
    [SerializeField]
    [Tooltip("The HUD overlay that appears during gameplay.")]
-   private string _hudScene = "HUD";
+   private string _hudScene;
    
    [SerializeField]
    [Tooltip("The pause menu overlay that appears when the game is paused.")]
-   private string _pauseMenuScene = "PauseMenu";
+   private string _pauseMenuScene;
    
    [SerializeField]
    [Tooltip("The Game Over scene that loads when the player loses or finishes the game.")]
-   private string _gameOverScene = "GameOver";
+   private string _gameOverScene;
    
    [SerializeField]
    [Tooltip("All the level scenes in the game, in the order they should be played.")]
@@ -477,6 +477,7 @@ case GameState.GamePlay:
 > - **Detect when there are no more levels** and switch to the GameOver state.
 >   
 > These features can be added later through a `NextLevel()` or **SceneFlowManager**.
+
 
 
 
