@@ -88,3 +88,80 @@ This property is **read-only**, meaning its value cannot be set directly. Instea
 - When the game is **already paused**, `TogglePause()` resumes gameplay (`Time.timeScale = 1`) and unloads the pause menu.
 - This approach ensures a smooth transition between gameplay and pause without reloading the level or losing game state.
 
+---
+
+## :hammer_and_wrench: Triggering Pause via Player Input
+
+Now that we have created the  `TogglePause()` method in the GameManager, the next step is to allow players to trigger it using input. This ensures the game can pause or resume dynamically without requiring any manual calls in code.
+
+We'll allow the player to pause the game by adding a **Pause action** to our existing **PlayerController Input Action Asset**. This **action is independent of any specific object in the scene**, so the persistent GameManager in the Bootstrap scene can reference it and listen for input at any time. Using the **Observer pattern**, the GameManager will subscribe to the Pause action event, meaning it will automatically react whenever the player presses the assigned button—triggering TogglePause() without any constant polling or manual checks.
+
+--- 
+#### 1. Add a Pause Action to the PlayerController Input Action Asset
+1. In the Unity Editor, **projoect panel**, double-click on the **PlayerController Input Action Asset**
+2. In the **Input Action Window**, add a new action
+   - (e.g., Pause, and bind it to a key or button such as Escape, Start, or P.)
+3. This action will represent the player's intent to pause the game.
+
+>[!WARNING]
+> Even though the asset is named **PlayerController**, it doesn’t have to live on the player object;  it’s just **a container for input definitions**.
+
+#
+
+#### 2. Input Action Assets Are Independent
+
+1. Our **GameManager** will need a reference to the **PlayerController Input Action Asset**
+
+```csharp
+[Header("Input")]
+[SerializeField]
+[Tooltip("Reference to the PlayerController Input Action Asset used to handle pause and other input.")]
+private PlayerController _inputActions;
+
+```
+
+2. In the Unity Editor, select the **GameManager** prefab from the **Bootstrap** scene, in the **hierarchy panel** 
+3. In the **Inspector panel**, Drag your **PlayerController Input Action Asset** into the **Input Actions** field.
+   - The GameManager can now enable the action map and subscribe to the Pause action.
+4. **Applie Overides** to the **GameManager** prefab
+
+#
+
+Using the Observer Pattern to Listen for Pause
+
+Rather than checking input every frame, we use the Observer pattern to react to input events:
+
+The Input Action is the subject: it emits an event whenever the player performs the action.
+
+The GameManager is the observer: it subscribes to the event and reacts automatically.
+
+Subscription:
+```csharp
+private void OnEnable()
+{
+    InputActions.Player.Enable();
+    InputActions.Player.Pause.performed += OnPausePressed;
+}
+
+private void OnDisable()
+{
+    InputActions.Player.Pause.performed -= OnPausePressed;
+    InputActions.Player.Disable();
+}
+
+private void OnPausePressed(InputAction.CallbackContext context)
+{
+    TogglePause();
+}
+```
+
+Whenever the player presses the pause button, the Input System triggers the event, and the GameManager’s OnPausePressed() is called.
+
+TogglePause() then pauses or resumes the game, loads/unloads the pause menu, and updates the game state.
+
+✅ Key takeaway: This decouples input handling from gameplay logic, works across all additive scenes, and is a clean, event-driven way to manage game actions.
+
+
+
+
+
