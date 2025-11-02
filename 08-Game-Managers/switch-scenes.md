@@ -374,7 +374,7 @@ We’ll first update the **MainMenu** class to trigger a game state change throu
 ---
 
 #### 2. Update the Player Class
-Next, we will update the **Player** class so that colliding with the goal game object calls the **GameManager’s** `LoadNextLevel()` method, instead of directly changing the game state:
+Next, we will update the **Player** class so that **colliding with the goal** game object calls the **GameManager’s** `LoadNextLevel()` method, instead of directly changing the game state:
 
 ```csharp
 private void OnTriggerEnter(Collider other)
@@ -421,6 +421,7 @@ With this foundation, you now have a robust framework for switching scenes, keep
 
 
 **[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Observer Pattern Lesson >>](obsserver-pattern.md)**
+
 
 
 
