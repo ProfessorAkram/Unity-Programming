@@ -387,12 +387,7 @@ While the GameManager framework provides a foundation for handling game state an
 Building upon our current framework, we will next implement switching scenes.
 
 
-**[<< Return Lesson Contents](unity-managers.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
-
-
-
-
-
+**[<< Return Singelton tutorial](singleton.md)** | **[Continue to Switching Scenes tutorial >>](switch-scenes.md)**
 
 
 
