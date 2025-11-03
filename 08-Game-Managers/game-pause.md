@@ -127,41 +127,65 @@ private PlayerController _inputActions;
 
 #
 
-Using the Observer Pattern to Listen for Pause
+## Using the Observer Pattern to Listen for Pause
 
-Rather than checking input every frame, we use the Observer pattern to react to input events:
+As we discussed in the previous lesson, the [Observer pattern](observer-pattern.md) allows one object to broadcast a notification while other objects independently react. This decouples systems and avoids hard-coded dependencies.
 
-The Input Action is the subject: it emits an event whenever the player performs the action.
+In Unity, the **new Input System** provides a perfect example of this in action. Instead of constantly checking for input in every `Update()` loop, we can **subscribe to input events** and react only when they occur:
+- The **Input Action** acts as the **Subject**, emitting an event whenever the player performs an action (e.g., pressing the Pause button).
+- The **GameManager** acts as the **Observer**, subscribing to the event and responding automatically.
 
-The GameManager is the observer: it subscribes to the event and reacts automatically.
 
-Subscription:
+#### 1. Subscribe to the Pause
+1. Add the following `OnEnable()`method to the GameManager class
+   
 ```csharp
 private void OnEnable()
 {
-    InputActions.Player.Enable();
-    InputActions.Player.Pause.performed += OnPausePressed;
+    _inputActions.Player.Enable();
+    _inputActions.Player.Pause.performed += OnPausePressed;
 }
+```
+The `_inputActions` contains all the input actions for our player (like Move, Jump, Pause).
+- `Calling.Enable()` activates this map so that the **GameManager** can start listening for input events. 
+  - Even if the action asset is physically on the Player, the events won’t fire unless the action map is enabled.
+- `Pause.performed` is an event that triggers whenever the player presses the key/button bound to the Pause action.
+   - `+= OnPausePressed` means that whenever `Pause.performed`  happens, call the `OnPausePressed()` method.
+
+#
+
+#### 2. Unsubscribe from Pause
+1. Add the following `OneDisable()`method to the GameManager class
+
+```chsarp
 
 private void OnDisable()
 {
-    InputActions.Player.Pause.performed -= OnPausePressed;
-    InputActions.Player.Disable();
+     _inputActions.Player.Pause.performed -= OnPausePressed;
+     _inputActions.Player.Disable();
 }
+```
+Essentially, the `OnDisable ()` method will unscribe from the `Pause.performed` event and disable listening to the `_inputAction` 
+- This **prevents memory leaks or unwanted behavior**, especially if the object is destroyed but the event could still fire.
+- It’s best practice in C# and Unity to always unsubscribe from events when the listener is no longer active.
 
+#
+
+#### 3. Create a `OnPausePressed()` method
+When using Unity’s **new Input System**, every **input action triggers an event**. These **events expect a method with a specific signature** so they know what to call when the action occurs. That’s why we define an `OnPausePressed()`
+
+- The event expects a method that takes a single `InputAction.CallbackContext` parameter.
+- Even if you don’t need any data from the input, the method **must have the same signature**;  otherwise, the compiler will complain.
+
+Inside `OnPausePressed()`, we call our `TogglePause()` method.
+ - This keeps input handling separate from gameplay logic, and it allows the GameManager to react to the pause action without the Player object needing to know anything about it.
+
+```csharp
 private void OnPausePressed(InputAction.CallbackContext context)
 {
     TogglePause();
 }
 ```
-
-Whenever the player presses the pause button, the Input System triggers the event, and the GameManager’s OnPausePressed() is called.
-
-TogglePause() then pauses or resumes the game, loads/unloads the pause menu, and updates the game state.
-
-✅ Key takeaway: This decouples input handling from gameplay logic, works across all additive scenes, and is a clean, event-driven way to manage game actions.
-
-
 
 
 
