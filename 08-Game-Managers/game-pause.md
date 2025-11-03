@@ -202,5 +202,22 @@ private void OnPausePressed(InputAction.CallbackContext context)
 }//end OnPausePressed
 ```
 
+---
 
+## :hammer_and_wrench: Testing Pause
 
+Now that the GameManager is set up to listen for the pause input, we can test the behavior in Unity.
+
+1. Open the **Bootstrap** scene and select the GameManager prefab.
+  - Drag the **PlayerController Input Action Asset** from the **Project panel** into the I**nput Action** field in the **Inspector**.
+2. Save the scene.
+3. Ensure the **PauseMenu** scene is included in the **Build Settings → Scenes In Build** list.
+4. Press **Play** to start the game.
+   - Enter the **gameplay** state (first game level).
+   - Test player controls to verify everything works normally.
+   - Press the **Escape** key to open the pause menu.
+   - Press **Escape** again to resume the game.
+     
+This confirms that the GameManager correctly subscribes to the pause input and toggles the pause state without directly coupling to the Player object.
+
+---
