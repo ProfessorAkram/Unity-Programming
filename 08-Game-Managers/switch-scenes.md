@@ -420,7 +420,8 @@ By now, we've updated our **GameManager** to handle core **scene management** in
 With this foundation, you now have a robust framework for switching scenes, keeping gameplay smooth and predictable.
 
 
-**[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Observer Pattern Lesson >>](obsserver-pattern.md)**
+**[<< Return GameManager tutorial](game-manager.md)** | **[Continue to Observer Pattern Lesson >>](observer-pattern.md)**
+
 
 
 
