@@ -69,7 +69,9 @@ This property is **read-only**, meaning its value cannot be set directly. Instea
         {
             // Pause the game
             Time.timeScale = 0f;
-            LoadScene(_pauseMenuScene);
+
+            //Load the pause menu scene, do not set it as the current scene
+            LoadScene(_pauseMenuScene, false);
         }
         else
         {
